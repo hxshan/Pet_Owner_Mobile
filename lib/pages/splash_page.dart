@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -39,10 +40,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Navigate to next screen after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
-      // Navigator.pushReplacement(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-      // );
+      context.goNamed('WelcomePage');
     });
   }
 
@@ -146,7 +144,7 @@ class _SplashScreenState extends State<SplashScreen>
                         width: sw * 0.4,
                         height: sw * 0.4,
 
-                        child: Image.asset('asserts/logo.png'),
+                        child: Image.asset('assets/logo.png'),
                         // child: Stack(
                         //   alignment: Alignment.center,
                         //   children: [

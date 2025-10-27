@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/pages/splash_page.dart';
+import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -13,6 +14,11 @@ final GoRouter appRouter = GoRouter(
       path: '/splash',
       name: 'splash',
       builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/welcome',
+      name: 'WelcomePage',
+      builder: (context, state) => const WelcomePage(),
     ),
     // GoRoute(
     //   path: '/login',
@@ -46,7 +52,6 @@ final GoRouter appRouter = GoRouter(
   errorBuilder: (context, state) =>
       Scaffold(body: Center(child: Text('Page not found: ${state.error}'))),
 );
-
 
 // NavBar Shell
 class NavBarShell extends StatefulWidget {
