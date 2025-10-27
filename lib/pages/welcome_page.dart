@@ -30,11 +30,11 @@ class WelcomePage extends StatelessWidget {
                 right: -sw * 0.05,
                 child: Transform(
                   alignment: Alignment.center,
-                  transform: Matrix4.rotationY(math.pi), // flip horizontally
+                  transform: Matrix4.rotationY(math.pi), 
                   child: Opacity(
                     opacity: 0.4,
                     child: Image.asset(
-                      'assets/logo.png', // make sure it's 'assets', not 'assets'
+                      'assets/logo.png', 
                       width: sw * 0.4,
                       height: sw * 0.4,
                       fit: BoxFit.contain,
