@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/pages/account_info_page.dart';
+import 'package:pet_owner_mobile/pages/animal_info_page.dart';
+import 'package:pet_owner_mobile/pages/get_started_page.dart';
+import 'package:pet_owner_mobile/pages/login_page.dart';
+import 'package:pet_owner_mobile/pages/personal_info_page.dart';
 import 'package:pet_owner_mobile/pages/splash_page.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
@@ -20,11 +25,33 @@ final GoRouter appRouter = GoRouter(
       name: 'WelcomePage',
       builder: (context, state) => const WelcomePage(),
     ),
-    // GoRoute(
-    //   path: '/login',
-    //   name: 'login',
-    //   builder: (context, state) => const LoginPage(),
-    // ),
+    GoRoute(
+      path: '/getstarted',
+      name: 'GetStartedPage',
+      builder: (context, state) => const GetStartedPage(),
+    ),
+    GoRoute(
+      path: '/register',
+      name: 'PersonalInfoPage',
+      builder: (context, state) => const PersonalInfoPage(),
+    ),
+    GoRoute(
+      path: '/accountinfo',
+      name: 'AccountInfoPage',
+      builder: (context, state) => const AccountInfoPage(),
+    ),
+
+    GoRoute(
+      path: '/login',
+      name: 'LoginPage',
+      builder: (context, state) => const LoginPage(),
+    ),
+
+    GoRoute(
+      path: '/animalinfo',
+      name: 'AnimalInfoPage',
+      builder: (context, state) => const AnimalInfoPage(),
+    ),
 
     // Pages with NavBar
     ShellRoute(
