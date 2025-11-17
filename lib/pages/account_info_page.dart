@@ -1,88 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 
-class PersonalInfoPage extends StatefulWidget {
-  const PersonalInfoPage({super.key});
+class AccountInfoPage extends StatefulWidget {
+  const AccountInfoPage({super.key});
 
   @override
-  State<PersonalInfoPage> createState() => _RegistrationPageState();
+  State<AccountInfoPage> createState() => _RegistrationPageState();
 }
 
-class _RegistrationPageState extends State<PersonalInfoPage> {
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController nicController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
+class _RegistrationPageState extends State<AccountInfoPage> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
+  // Password visibility toggles
+  bool isPasswordVisible = false;
+  bool isConfirmPasswordVisible = false;
 
   // Error messages
-  String? firstNameError;
-  String? lastNameError;
-  String? nicError;
-  String? phoneError;
-  String? addressError;
+  String? emailError;
+  String? passwordError;
+  String? confirmPasswordError;
 
   @override
   void dispose() {
-    firstNameController.dispose();
-    lastNameController.dispose();
-    nicController.dispose();
-    phoneController.dispose();
-    addressController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  // Email validation
+  bool isValidEmail(String email) {
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegex.hasMatch(email);
+  }
+
+  // Password validation
+  String? validatePassword(String password) {
+    if (password.isEmpty) {
+      return 'Password is required';
+    }
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    return null;
   }
 
   // Submit form
   void validateAndSubmit() {
     setState(() {
       // Reset all errors
-      firstNameError = null;
-      lastNameError = null;
-      nicError = null;
-      phoneError = null;
-      addressError = null;
+      emailError = null;
+      passwordError = null;
+      confirmPasswordError = null;
 
-      // Validate each field
-      if (firstNameController.text.isEmpty) {
-        firstNameError = 'First name is required';
+      // Validate email
+      if (emailController.text.isEmpty) {
+        emailError = 'Email is required';
+      } else if (!isValidEmail(emailController.text.trim())) {
+        emailError = 'Please enter a valid email address';
       }
-      if (lastNameController.text.isEmpty) {
-        lastNameError = 'Last name is required';
-      }
-      if (nicController.text.isEmpty) {
-        nicError = 'NIC number is required';
-      }
-      if (phoneController.text.isEmpty) {
-        phoneError = 'Phone number is required';
-      }
-      if (addressController.text.isEmpty) {
-        addressError = 'Home address is required';
+
+      // Validate password
+      passwordError = validatePassword(passwordController.text);
+
+      // Validate confirm password
+      if (confirmPasswordController.text.isEmpty) {
+        confirmPasswordError = 'Please confirm your password';
+      } else if (passwordController.text != confirmPasswordController.text) {
+        confirmPasswordError = 'Passwords do not match';
       }
     });
 
     // Check if all fields are valid
-    if (firstNameError == null &&
-        lastNameError == null &&
-        nicError == null &&
-        phoneError == null &&
-        addressError == null) {
-      // For now, just print values
-      print('First Name: ${firstNameController.text}');
-      print('Last Name: ${lastNameController.text}');
-      print('NIC: ${nicController.text}');
-      print('Phone: ${phoneController.text}');
-      print('Address: ${addressController.text}');
-
+    if (emailError == null &&
+        passwordError == null &&
+        confirmPasswordError == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('All fields are valid!'),
+        const SnackBar(
+          content: Text('Account created successfully!'),
           backgroundColor: Colors.green,
         ),
       );
-
-      context.pushNamed('AccountInfoPage');
     }
   }
 
@@ -170,21 +174,16 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: sh * 0.03),
-                  // Personal Info Header
+                  // Account Info Header
                   Container(
-                    padding: EdgeInsets.only(
-                      bottom: sh * 0.0001,
-                    ), 
-                    decoration: BoxDecoration(
+                    padding: EdgeInsets.only(bottom: sh * 0.0001),
+                    decoration: const BoxDecoration(
                       border: Border(
-                        bottom: BorderSide(
-                          color: Colors.black, 
-                          width: 2, 
-                        ),
+                        bottom: BorderSide(color: Colors.black, width: 2),
                       ),
                     ),
                     child: Text(
-                      'Personal Info',
+                      'Account Info',
                       style: TextStyle(
                         fontSize: sw * 0.045,
                         fontWeight: FontWeight.bold,
@@ -192,62 +191,52 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
                       ),
                     ),
                   ),
-
                   SizedBox(height: sh * 0.025),
 
-                  // First Name Field
+                  // Email Field
                   _buildTextField(
                     context,
-                    'First Name',
+                    'Email',
                     sw,
                     sh,
-                    firstNameController,
-                    firstNameError,
+                    emailController,
+                    emailError,
                   ),
                   SizedBox(height: sh * 0.02),
 
-                  // Last Name Field
-                  _buildTextField(
+                  // Password Field
+                  _buildPasswordField(
                     context,
-                    'Last Name',
+                    'Password',
                     sw,
                     sh,
-                    lastNameController,
-                    lastNameError,
+                    passwordController,
+                    passwordError,
+                    isPasswordVisible,
+                    () {
+                      setState(() {
+                        isPasswordVisible = !isPasswordVisible;
+                      });
+                    },
                   ),
                   SizedBox(height: sh * 0.02),
 
-                  // NIC Number Field
-                  _buildTextField(
+                  // Confirm Password Field
+                  _buildPasswordField(
                     context,
-                    'NIC Number (National Id Number)',
+                    'Confirm Password',
                     sw,
                     sh,
-                    nicController,
-                    nicError,
+                    confirmPasswordController,
+                    confirmPasswordError,
+                    isConfirmPasswordVisible,
+                    () {
+                      setState(() {
+                        isConfirmPasswordVisible = !isConfirmPasswordVisible;
+                      });
+                    },
                   ),
-                  SizedBox(height: sh * 0.02),
 
-                  // Phone Number Field
-                  _buildTextField(
-                    context,
-                    'Phone Number',
-                    sw,
-                    sh,
-                    phoneController,
-                    phoneError,
-                  ),
-                  SizedBox(height: sh * 0.02),
-
-                  // Home Address Field
-                  _buildTextField(
-                    context,
-                    'Home Address',
-                    sw,
-                    sh,
-                    addressController,
-                    addressError,
-                  ),
                   SizedBox(height: sh * 0.04),
 
                   // Get Started Button
@@ -288,6 +277,7 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
       children: [
         TextField(
           controller: controller,
+          keyboardType: TextInputType.emailAddress,
           style: TextStyle(fontSize: sw * 0.04),
           decoration: InputDecoration(
             hintText: hint,
@@ -297,6 +287,89 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
             contentPadding: EdgeInsets.symmetric(
               horizontal: sw * 0.04,
               vertical: sh * 0.018,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: errorText != null
+                    ? AppColors.errorMessage
+                    : Colors.grey[300]!,
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: errorText != null
+                    ? AppColors.errorMessage
+                    : Colors.grey[300]!,
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: errorText != null
+                    ? AppColors.errorMessage
+                    : AppColors.mainColor,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+        // Error message
+        SizedBox(
+          height: sh * 0.025,
+          child: errorText != null
+              ? Padding(
+                  padding: EdgeInsets.only(top: sh * 0.005, left: sw * 0.01),
+                  child: Text(
+                    errorText,
+                    style: TextStyle(
+                      color: AppColors.errorMessage,
+                      fontSize: sw * 0.032,
+                    ),
+                  ),
+                )
+              : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField(
+    BuildContext context,
+    String hint,
+    double sw,
+    double sh,
+    TextEditingController controller,
+    String? errorText,
+    bool isVisible,
+    VoidCallback onToggleVisibility,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          obscureText: !isVisible,
+          style: TextStyle(fontSize: sw * 0.04),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: sw * 0.04),
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: sw * 0.04,
+              vertical: sh * 0.018,
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                isVisible ? Icons.visibility : Icons.visibility_off,
+                color: Colors.grey[600],
+                size: sw * 0.055,
+              ),
+              onPressed: onToggleVisibility,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
