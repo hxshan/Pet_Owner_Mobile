@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 
@@ -14,6 +16,8 @@ class _RegistrationPageState extends State<AccountInfoPage> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+
+  bool isTermsAccepted = false;
 
   // Password visibility toggles
   bool isPasswordVisible = false;
@@ -87,6 +91,8 @@ class _RegistrationPageState extends State<AccountInfoPage> {
           backgroundColor: Colors.green,
         ),
       );
+
+      context.pushNamed('AnimalInfoPage');
     }
   }
 
@@ -236,14 +242,55 @@ class _RegistrationPageState extends State<AccountInfoPage> {
                       });
                     },
                   ),
+                  SizedBox(height: sh * 0.001),
 
+                  // Terms & Conditions Checkbox
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isTermsAccepted,
+                        activeColor: AppColors.mainColor,
+                        onChanged: (value) {
+                          setState(() {
+                            isTermsAccepted = value ?? false;
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            text: "I agree to the ",
+                            style: TextStyle(
+                              fontSize: sw * 0.039,
+                              color: Color.fromRGBO(0, 0, 0, 1),
+                              fontWeight: FontWeight.w500
+                            ),
+                            children: [
+                              TextSpan(
+                                text: "Terms and Conditions",
+                                style: TextStyle(
+                                  fontSize: sw * 0.039,
+                                  color: Color.fromRGBO(19, 65, 249, 1),
+                                  fontWeight: FontWeight.w500
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    
+                                  },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   SizedBox(height: sh * 0.04),
 
                   // Get Started Button
                   SizedBox(
                     width: sw,
                     child: ElevatedButton(
-                      onPressed: validateAndSubmit,
+                      onPressed: isTermsAccepted ? validateAndSubmit : null,
                       style: AppButtonStyles.blackButton(context),
                       child: Text(
                         'Get Started',

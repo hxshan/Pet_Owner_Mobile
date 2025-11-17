@@ -257,7 +257,7 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
                       onPressed: validateAndSubmit,
                       style: AppButtonStyles.blackButton(context),
                       child: Text(
-                        'Get Started',
+                        'Next',
                         style: TextStyle(
                           fontSize: sw * 0.045,
                           fontWeight: FontWeight.w600,
