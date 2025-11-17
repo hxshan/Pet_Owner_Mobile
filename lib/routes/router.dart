@@ -105,7 +105,7 @@ class _NavBarShellState extends State<NavBarShell> {
   void _onItemTapped(int index) {
     switch (index) {
       case 0:
-        context.goNamed('home');
+        context.goNamed('DashboardScreen');
         break;
       case 1:
         context.goNamed('shop');

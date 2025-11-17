@@ -49,7 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello, Sarah!',
+              'Hello, Buruwa!',
               style: TextStyle(
                 fontSize: sw * 0.07,
                 fontWeight: FontWeight.bold,
@@ -66,7 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 SizedBox(width: sw * 0.01),
                 Text(
-                  'San Antonio, TX',
+                  'Angoda, Sri Lanka',
                   style: TextStyle(
                     fontSize: sw * 0.035,
                     color: Colors.black54,
