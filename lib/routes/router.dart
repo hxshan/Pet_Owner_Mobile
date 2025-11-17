@@ -95,7 +95,7 @@ class NavBarShell extends StatefulWidget {
 class _NavBarShellState extends State<NavBarShell> {
   int _calculateSelectedIndex() {
     final location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/home')) return 0;
+    if (location.startsWith('/dashboard')) return 0;
     if (location.startsWith('/shop')) return 1;
     if (location.startsWith('/my-pets')) return 2;
     if (location.startsWith('/profile')) return 3;
