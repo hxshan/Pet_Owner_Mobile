@@ -5,9 +5,9 @@ import 'package:pet_owner_mobile/routes/router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 void main() {
-  // runApp(const MyApp());
+  runApp(const MyApp());
 
-  runApp(DevicePreview(enabled: true, builder: (context) => MyApp()));
+  // runApp(DevicePreview(enabled: true, builder: (context) => MyApp()));
 }
 
 class MyApp extends StatelessWidget {
