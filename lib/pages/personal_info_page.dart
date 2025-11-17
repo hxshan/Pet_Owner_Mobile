@@ -231,6 +231,7 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
                     sh,
                     phoneController,
                     phoneError,
+                    isNumber: true
                   ),
                   SizedBox(height: sh * 0.02),
 
@@ -276,13 +277,15 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
     double sw,
     double sh,
     TextEditingController controller,
-    String? errorText,
-  ) {
+    String? errorText, {
+    bool isNumber = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
           controller: controller,
+          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           style: TextStyle(fontSize: sw * 0.04),
           decoration: InputDecoration(
             hintText: hint,
