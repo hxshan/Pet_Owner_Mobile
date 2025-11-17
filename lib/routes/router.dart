@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/pages/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/animal_info_page.dart';
 import 'package:pet_owner_mobile/pages/get_started_page.dart';
+import 'package:pet_owner_mobile/pages/login_page.dart';
 import 'package:pet_owner_mobile/pages/personal_info_page.dart';
 import 'package:pet_owner_mobile/pages/splash_page.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
@@ -38,6 +39,12 @@ final GoRouter appRouter = GoRouter(
       path: '/accountinfo',
       name: 'AccountInfoPage',
       builder: (context, state) => const AccountInfoPage(),
+    ),
+
+    GoRoute(
+      path: '/login',
+      name: 'LoginPage',
+      builder: (context, state) => const LoginPage(),
     ),
 
     GoRoute(
