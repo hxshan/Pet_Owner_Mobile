@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/pages/account_info_page.dart';
+import 'package:pet_owner_mobile/pages/animal_info_page.dart';
 import 'package:pet_owner_mobile/pages/get_started_page.dart';
 import 'package:pet_owner_mobile/pages/personal_info_page.dart';
 import 'package:pet_owner_mobile/pages/splash_page.dart';
@@ -16,7 +17,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/splash',
       name: 'splash',
-      builder: (context, state) => const SplashScreen(),
+      builder: (context, state) => const AccountInfoPage(),
     ),
     GoRoute(
       path: '/welcome',
@@ -37,6 +38,12 @@ final GoRouter appRouter = GoRouter(
       path: '/accountinfo',
       name: 'AccountInfoPage',
       builder: (context, state) => const AccountInfoPage(),
+    ),
+
+    GoRoute(
+      path: '/animalinfo',
+      name: 'AnimalInfoPage',
+      builder: (context, state) => const AnimalInfoPage(),
     ),
 
     // Pages with NavBar
