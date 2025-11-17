@@ -7,4 +7,6 @@ class AppColors {
   static const Color blackButtonText = Color.fromRGBO(255, 255, 255, 1);
 
   static const Color errorMessage = Color.fromRGBO(236, 32, 32, 1);
+
+  static const Color lightGray = Color(0xFFF5F5F5);
 }

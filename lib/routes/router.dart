@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/pages/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/animal_info_page.dart';
+import 'package:pet_owner_mobile/pages/dashboard_page.dart';
 import 'package:pet_owner_mobile/pages/get_started_page.dart';
 import 'package:pet_owner_mobile/pages/login_page.dart';
 import 'package:pet_owner_mobile/pages/personal_info_page.dart';
 import 'package:pet_owner_mobile/pages/splash_page.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
+import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
   debugLogDiagnostics: true,
-
   routes: [
     // Pages without NavBar
     GoRoute(
@@ -40,13 +41,11 @@ final GoRouter appRouter = GoRouter(
       name: 'AccountInfoPage',
       builder: (context, state) => const AccountInfoPage(),
     ),
-
     GoRoute(
       path: '/login',
       name: 'LoginPage',
       builder: (context, state) => const LoginPage(),
     ),
-
     GoRoute(
       path: '/animalinfo',
       name: 'AnimalInfoPage',
@@ -58,24 +57,28 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state, child) => NavBarShell(child: child),
       routes: [
         GoRoute(
-          path: '/home',
-          name: 'home',
-          builder: (context, state) => const SplashScreen(),
+          path: '/dashboard',
+          name: 'DashboardScreen',
+          builder: (context, state) => const DashboardScreen(),
         ),
-        // GoRoute(
-        //   path: '/search',
-        //   name: 'search',
-        //   builder: (context, state) => const SearchPage(),
-        // ),
-        // GoRoute(
-        //   path: '/profile',
-        //   name: 'profile',
-        //   builder: (context, state) => const ProfilePage(),
-        // ),
+        GoRoute(
+          path: '/shop',
+          name: 'shop',
+          builder: (context, state) => const PlaceholderPage(title: 'Shop'),
+        ),
+        GoRoute(
+          path: '/my-pets',
+          name: 'my-pets',
+          builder: (context, state) => const PlaceholderPage(title: 'My Pets'),
+        ),
+        GoRoute(
+          path: '/profile',
+          name: 'profile',
+          builder: (context, state) => const PlaceholderPage(title: 'Profile'),
+        ),
       ],
     ),
   ],
-
   errorBuilder: (context, state) =>
       Scaffold(body: Center(child: Text('Page not found: ${state.error}'))),
 );
@@ -93,8 +96,9 @@ class _NavBarShellState extends State<NavBarShell> {
   int _calculateSelectedIndex() {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/search')) return 1;
-    if (location.startsWith('/profile')) return 2;
+    if (location.startsWith('/shop')) return 1;
+    if (location.startsWith('/my-pets')) return 2;
+    if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
@@ -104,9 +108,12 @@ class _NavBarShellState extends State<NavBarShell> {
         context.goNamed('home');
         break;
       case 1:
-        context.goNamed('search');
+        context.goNamed('shop');
         break;
       case 2:
+        context.goNamed('my-pets');
+        break;
+      case 3:
         context.goNamed('profile');
         break;
     }
@@ -119,6 +126,26 @@ class _NavBarShellState extends State<NavBarShell> {
       bottomNavigationBar: BottomNavigationBarComponent(
         currentIndex: _calculateSelectedIndex(),
         onTap: _onItemTapped,
+      ),
+    );
+  }
+}
+
+// Placeholder page for unimplemented screens
+class PlaceholderPage extends StatelessWidget {
+  final String title;
+
+  const PlaceholderPage({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Text(
+          '$title Page',
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }

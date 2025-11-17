@@ -57,7 +57,7 @@ class _RegistrationPageState extends State<LoginPage> {
         ),
       );
 
-      context.pushNamed('AnimalInfoPage');
+      context.goNamed('DashboardScreen');
     }
   }
 

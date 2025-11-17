@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 
@@ -255,6 +256,8 @@ class _AnimalInfoPageState extends State<AnimalInfoPage> {
           backgroundColor: Colors.green,
         ),
       );
+
+      context.goNamed('DashboardScreen');
     }
   }
 
@@ -266,6 +269,7 @@ class _AnimalInfoPageState extends State<AnimalInfoPage> {
         backgroundColor: Colors.blue,
       ),
     );
+    context.goNamed('DashboardScreen');
   }
 
   @override
