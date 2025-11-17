@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({Key? key}) : super(key: key);
@@ -220,30 +221,33 @@ class WelcomePage extends StatelessWidget {
                   const Spacer(),
 
                   // Bottom right paw icon
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        right: sw * 0.06,
-                        bottom: sh * 0.03,
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.all(sw * 0.025),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                  GestureDetector(
+                    onTap: () => context.pushNamed('GetStartedPage'),
+                    child: Align(
+                      alignment: Alignment.bottomRight,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: sw * 0.06,
+                          bottom: sh * 0.03,
                         ),
-                        child: Icon(
-                          Icons.pets,
-                          size: sw * 0.065,
-                          color: Colors.black,
+                        child: Container(
+                          padding: EdgeInsets.all(sw * 0.025),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.pets,
+                            size: sw * 0.065,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
                     ),

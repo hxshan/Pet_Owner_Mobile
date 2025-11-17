@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:device_preview/device_preview.dart';
+
 import 'package:pet_owner_mobile/routes/router.dart';
+import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 void main() {
-  runApp(const MyApp());
+  // runApp(const MyApp());
+
+  runApp(DevicePreview(enabled: true, builder: (context) => MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -12,11 +17,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.mainColor),
         scaffoldBackgroundColor: Colors.white,
         textSelectionTheme: TextSelectionThemeData(
-          cursorColor: Color.fromRGBO(0, 104, 55, 1),
-          selectionHandleColor: Color.fromRGBO(0, 104, 55, 1),
+          cursorColor: AppColors.mainColor,
+          selectionHandleColor: AppColors.mainColor,
         ),
         fontFamily: 'Inter',
       ),
