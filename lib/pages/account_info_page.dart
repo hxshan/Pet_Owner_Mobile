@@ -263,7 +263,7 @@ class _RegistrationPageState extends State<AccountInfoPage> {
                             style: TextStyle(
                               fontSize: sw * 0.039,
                               color: Color.fromRGBO(0, 0, 0, 1),
-                              fontWeight: FontWeight.w500
+                              fontWeight: FontWeight.w500,
                             ),
                             children: [
                               TextSpan(
@@ -271,12 +271,10 @@ class _RegistrationPageState extends State<AccountInfoPage> {
                                 style: TextStyle(
                                   fontSize: sw * 0.039,
                                   color: Color.fromRGBO(19, 65, 249, 1),
-                                  fontWeight: FontWeight.w500
+                                  fontWeight: FontWeight.w500,
                                 ),
                                 recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    
-                                  },
+                                  ..onTap = () {},
                               ),
                             ],
                           ),
