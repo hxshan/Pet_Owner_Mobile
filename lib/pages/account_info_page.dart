@@ -293,7 +293,7 @@ class _RegistrationPageState extends State<AccountInfoPage> {
                       child: Text(
                         'Get Started',
                         style: TextStyle(
-                          fontSize: sw * 0.045,
+                          fontSize: sw * 0.06,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

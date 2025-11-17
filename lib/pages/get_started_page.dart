@@ -42,9 +42,12 @@ class GetStartedPage extends StatelessWidget {
                     context.pushNamed('PersonalInfoPage');
                   },
                   style: AppButtonStyles.blackButton(context),
-                  child: const Text(
+                  child: Text(
                     "Sign Up",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    style: TextStyle(
+                      fontSize: sw * 0.06,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -55,11 +58,16 @@ class GetStartedPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    context.pushNamed('LoginPage');
+                  },
                   style: AppButtonStyles.blackButton(context),
-                  child: const Text(
+                  child: Text(
                     "Login",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    style: TextStyle(
+                      fontSize: sw * 0.06,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

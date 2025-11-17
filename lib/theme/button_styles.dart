@@ -10,10 +10,10 @@ class AppButtonStyles {
       backgroundColor: AppColors.blackButtonBg,
       foregroundColor: AppColors.blackButtonText,
       padding: EdgeInsets.symmetric(
-        horizontal: sw * 0.06, // 6% of screen width
-        vertical: sh * 0.015, // 1.5% of screen height
+        horizontal: sw * 0.06, 
+        vertical: sh * 0.008, 
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
     );
   }
 }

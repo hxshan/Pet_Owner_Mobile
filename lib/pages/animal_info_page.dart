@@ -446,7 +446,7 @@ class _AnimalInfoPageState extends State<AnimalInfoPage> {
                       child: Text(
                         'Get Started',
                         style: TextStyle(
-                          fontSize: sw * 0.045,
+                          fontSize: sw * 0.06,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

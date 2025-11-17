@@ -172,15 +172,10 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
                   SizedBox(height: sh * 0.03),
                   // Personal Info Header
                   Container(
-                    padding: EdgeInsets.only(
-                      bottom: sh * 0.0001,
-                    ), 
+                    padding: EdgeInsets.only(bottom: sh * 0.0001),
                     decoration: BoxDecoration(
                       border: Border(
-                        bottom: BorderSide(
-                          color: Colors.black, 
-                          width: 2, 
-                        ),
+                        bottom: BorderSide(color: Colors.black, width: 2),
                       ),
                     ),
                     child: Text(
@@ -259,7 +254,7 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
                       child: Text(
                         'Next',
                         style: TextStyle(
-                          fontSize: sw * 0.045,
+                          fontSize: sw * 0.06,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
