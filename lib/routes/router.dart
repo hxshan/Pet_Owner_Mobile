@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/pages/get_started_page.dart';
+import 'package:pet_owner_mobile/pages/personal_info_page.dart';
 import 'package:pet_owner_mobile/pages/splash_page.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
@@ -25,6 +26,11 @@ final GoRouter appRouter = GoRouter(
       path: '/getstarted',
       name: 'GetStartedPage',
       builder: (context, state) => const GetStartedPage(),
+    ),
+    GoRoute(
+      path: '/register',
+      name: 'PersonalInfoPage',
+      builder: (context, state) => const PersonalInfoPage(),
     ),
 
     // Pages with NavBar

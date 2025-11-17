@@ -20,8 +20,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.mainColor),
         scaffoldBackgroundColor: Colors.white,
         textSelectionTheme: TextSelectionThemeData(
-          cursorColor: AppColors.mainColor,
-          selectionHandleColor: AppColors.mainColor,
+          cursorColor: AppColors.darkPink,
+          selectionHandleColor: AppColors.darkPink,
         ),
         fontFamily: 'Inter',
       ),

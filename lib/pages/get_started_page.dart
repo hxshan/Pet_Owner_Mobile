@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 
 class GetStartedPage extends StatelessWidget {
@@ -37,7 +38,9 @@ class GetStartedPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    context.pushNamed('PersonalInfoPage');
+                  },
                   style: AppButtonStyles.blackButton(context),
                   child: const Text(
                     "Sign Up",
