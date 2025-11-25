@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/pages/notification_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
@@ -81,6 +82,11 @@ final GoRouter appRouter = GoRouter(
           path: '/profile',
           name: 'profile',
           builder: (context, state) => const PlaceholderPage(title: 'Profile'),
+        ),
+        GoRoute(
+          path: '/notifications',
+          name: 'NotificationsScreen',
+          builder: (context, state) => NotificationsScreen(),
         ),
 
         GoRoute(

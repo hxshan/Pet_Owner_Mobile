@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -76,32 +77,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        Container(
-          padding: EdgeInsets.all(sw * 0.02),
-          decoration: BoxDecoration(
-            color: AppColors.lightGray,
-            borderRadius: BorderRadius.circular(sw * 0.03),
-          ),
-          child: Stack(
-            children: [
-              Icon(
-                Icons.notifications_outlined,
-                size: sw * 0.07,
-                color: Colors.black87,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: sw * 0.025,
-                  height: sw * 0.025,
-                  decoration: const BoxDecoration(
-                    color: AppColors.darkPink,
-                    shape: BoxShape.circle,
+        GestureDetector(
+          onTap: () => {
+            context.pushNamed('NotificationsScreen')
+          },
+          child: Container(
+            padding: EdgeInsets.all(sw * 0.02),
+            decoration: BoxDecoration(
+              color: AppColors.lightGray,
+              borderRadius: BorderRadius.circular(sw * 0.03),
+            ),
+            child: Stack(
+              children: [
+                Icon(
+                  Icons.notifications_outlined,
+                  size: sw * 0.07,
+                  color: Colors.black87,
+                ),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    width: sw * 0.025,
+                    height: sw * 0.025,
+                    decoration: const BoxDecoration(
+                      color: AppColors.darkPink,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
