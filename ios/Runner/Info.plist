@@ -29,6 +29,17 @@
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
+
+	<!-- Storage Access  -->
+	<key>NSCameraUsageDescription</key>
+	<string>App needs access to camera</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>App needs access to photo library</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>App needs to save photos</string>
+
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>

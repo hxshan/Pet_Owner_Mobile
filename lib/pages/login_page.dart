@@ -57,7 +57,7 @@ class _RegistrationPageState extends State<LoginPage> {
         ),
       );
 
-      context.pushNamed('AnimalInfoPage');
+      context.goNamed('DashboardScreen');
     }
   }
 
@@ -68,93 +68,95 @@ class _RegistrationPageState extends State<LoginPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: sh * 0.08,
-            horizontal: sw * 0.08,
-          ),
-          child: Column(
-            children: [
-              // Form Section
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: sh * 0.03),
-                  // Account Info Header
-                  Center(
-                    child: Text(
-                      'Login',
-                      style: TextStyle(
-                        fontSize: sw * 0.07,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: sh * 0.025),
-
-                  // Email Field
-                  _buildTextField(
-                    context,
-                    'NIC Number (National Id Number)',
-                    sw,
-                    sh,
-                    nicController,
-                    nicError,
-                  ),
-                  SizedBox(height: sh * 0.02),
-
-                  // Password Field
-                  _buildPasswordField(
-                    context,
-                    'Password',
-                    sw,
-                    sh,
-                    passwordController,
-                    passwordError,
-                    isPasswordVisible,
-                    () {
-                      setState(() {
-                        isPasswordVisible = !isPasswordVisible;
-                      });
-                    },
-                  ),
-                  SizedBox(height: sh * 0.01),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'Forgot Password',
-                      style: TextStyle(
-                        fontSize: sw * 0.038,
-                        fontWeight: FontWeight.w400,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: sh * 0.03),
-
-                  // Get Started Button
-                  SizedBox(
-                    width: sw,
-                    child: ElevatedButton(
-                      onPressed: validateAndSubmit,
-                      style: AppButtonStyles.blackButton(context),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: sh * 0.06,
+              horizontal: sw * 0.08,
+            ),
+            child: Column(
+              children: [
+                // Form Section
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: sh * 0.03),
+                    // Account Info Header
+                    Center(
                       child: Text(
                         'Login',
                         style: TextStyle(
-                          fontSize: sw * 0.06,
-                          fontWeight: FontWeight.w600,
+                          fontSize: sw * 0.07,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: sh * 0.03),
-                ],
-              ),
-            ],
+                    SizedBox(height: sh * 0.025),
+        
+                    // Email Field
+                    _buildTextField(
+                      context,
+                      'NIC Number (National Id Number)',
+                      sw,
+                      sh,
+                      nicController,
+                      nicError,
+                    ),
+                    SizedBox(height: sh * 0.02),
+        
+                    // Password Field
+                    _buildPasswordField(
+                      context,
+                      'Password',
+                      sw,
+                      sh,
+                      passwordController,
+                      passwordError,
+                      isPasswordVisible,
+                      () {
+                        setState(() {
+                          isPasswordVisible = !isPasswordVisible;
+                        });
+                      },
+                    ),
+                    SizedBox(height: sh * 0.01),
+        
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'Forgot Password',
+                        style: TextStyle(
+                          fontSize: sw * 0.038,
+                          fontWeight: FontWeight.w400,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+        
+                    SizedBox(height: sh * 0.03),
+        
+                    // Get Started Button
+                    SizedBox(
+                      width: sw,
+                      child: ElevatedButton(
+                        onPressed: validateAndSubmit,
+                        style: AppButtonStyles.blackButton(context),
+                        child: Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: sw * 0.06,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: sh * 0.03),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
