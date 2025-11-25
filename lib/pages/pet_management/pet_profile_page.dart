@@ -209,7 +209,7 @@ class PetProfileScreen extends StatelessWidget {
 
                   // Vaccination History Section
                   _buildSectionHeader(sw, sh, 'Vaccination History', () {
-                    // Navigate to full vaccination history page
+                    context.pushNamed('VaccinationsScreen');
                   }),
 
                   SizedBox(height: sh * 0.015),
