@@ -104,7 +104,9 @@ class MyPetsScreen extends StatelessWidget {
                 // View All Button
                 Center(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.pushNamed('ViewAllPetsScreen');
+                    },
                     style: AppButtonStyles.blackButton(context),
                     child: Text(
                       'View All',
