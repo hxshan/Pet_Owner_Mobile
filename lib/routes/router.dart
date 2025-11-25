@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/pages/add_pet_page.dart';
 import 'package:pet_owner_mobile/pages/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/signup/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/animal_info_page.dart';
@@ -13,7 +14,7 @@ import 'package:pet_owner_mobile/widgets/navbar.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/splash',
+  initialLocation: '/dashboard',
   debugLogDiagnostics: true,
   routes: [
     // Pages without NavBar
@@ -76,6 +77,12 @@ final GoRouter appRouter = GoRouter(
           path: '/profile',
           name: 'profile',
           builder: (context, state) => const PlaceholderPage(title: 'Profile'),
+        ),
+
+        GoRoute(
+          path: '/addpet',
+          name: 'add-pet',
+          builder: (context, state) => AddPetScreen(),
         ),
       ],
     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 import 'package:pet_owner_mobile/widgets/pet_card_widget.dart';
@@ -37,7 +38,9 @@ class MyPetsScreen extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () {
+                        context.pushNamed('add-pet');
+                      },
                       child: Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: sw * 0.04,
