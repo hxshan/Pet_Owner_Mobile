@@ -39,7 +39,7 @@ class MyPetsScreen extends StatelessWidget {
                     ),
                     GestureDetector(
                       onTap: () {
-                        context.pushNamed('add-pet');
+                        context.pushNamed('AddPetScreen');
                       },
                       child: Container(
                         padding: EdgeInsets.symmetric(
