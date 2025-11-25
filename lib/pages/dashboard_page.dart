@@ -130,7 +130,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                context.pushNamed('MyPetsScreen');
+              },
               child: Text(
                 'View all',
                 style: TextStyle(

@@ -75,7 +75,7 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: '/my-pets',
-          name: 'my-pets',
+          name: 'MyPetsScreen',
           builder: (context, state) => const MyPetsScreen(),
         ),
         GoRoute(
@@ -154,7 +154,7 @@ class _NavBarShellState extends State<NavBarShell> {
         context.goNamed('shop');
         break;
       case 2:
-        context.goNamed('my-pets');
+        context.goNamed('MyPetsScreen');
         break;
       case 3:
         context.goNamed('profile');
