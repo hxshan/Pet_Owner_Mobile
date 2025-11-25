@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pet_owner_mobile/pages/account_info_page.dart';
+import 'package:pet_owner_mobile/pages/signup/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/animal_info_page.dart';
 import 'package:pet_owner_mobile/pages/dashboard_page.dart';
 import 'package:pet_owner_mobile/pages/get_started_page.dart';
 import 'package:pet_owner_mobile/pages/login_page.dart';
-import 'package:pet_owner_mobile/pages/personal_info_page.dart';
+import 'package:pet_owner_mobile/pages/signup/personal_info_page.dart';
 import 'package:pet_owner_mobile/pages/splash_page.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
