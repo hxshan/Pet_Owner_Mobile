@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
 import 'package:pet_owner_mobile/pages/signup/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/signup/animal_info_page.dart';
 import 'package:pet_owner_mobile/pages/dashboard_page.dart';
@@ -80,8 +81,13 @@ final GoRouter appRouter = GoRouter(
 
         GoRoute(
           path: '/addpet',
-          name: 'add-pet',
+          name: 'AddPetScreen',
           builder: (context, state) => AddPetScreen(),
+        ),
+        GoRoute(
+          path: '/petprofile',
+          name: 'PetProfileScreen',
+          builder: (context, state) => PetProfileScreen(),
         ),
       ],
     ),

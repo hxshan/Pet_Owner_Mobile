@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 class PetCard extends StatelessWidget {
@@ -160,7 +161,9 @@ class PetCard extends StatelessWidget {
               SizedBox(
                 width: sw * 0.23,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    context.pushNamed('PetProfileScreen');
+                  },
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size.zero,
                     backgroundColor: Colors.white,
