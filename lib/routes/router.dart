@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
@@ -106,6 +107,11 @@ final GoRouter appRouter = GoRouter(
           path: '/vaccinations',
           name: 'VaccinationsScreen',
           builder: (context, state) => VaccinationsScreen(),
+        ),
+        GoRoute(
+          path: '/medicalrecords',
+          name: 'MedicalReportsScreen',
+          builder: (context, state) => MedicalReportsScreen(),
         ),
       ],
     ),

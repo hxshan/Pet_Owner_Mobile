@@ -249,7 +249,7 @@ class PetProfileScreen extends StatelessWidget {
 
                   // Medical Reports Section
                   _buildSectionHeader(sw, sh, 'Medical Reports', () {
-                    // Navigate to full medical reports page
+                    context.pushNamed('MedicalReportsScreen');
                   }),
 
                   SizedBox(height: sh * 0.015),
