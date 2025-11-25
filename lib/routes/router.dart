@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/pages/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/signup/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/animal_info_page.dart';
 import 'package:pet_owner_mobile/pages/dashboard_page.dart';
@@ -69,7 +70,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/my-pets',
           name: 'my-pets',
-          builder: (context, state) => const PlaceholderPage(title: 'My Pets'),
+          builder: (context, state) => const MyPetsScreen(),
         ),
         GoRoute(
           path: '/profile',
