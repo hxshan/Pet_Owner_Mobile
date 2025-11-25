@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:pet_owner_mobile/widgets/pet_card_widget.dart';
+import 'package:pet_owner_mobile/widgets/pet_management/Appointment_card.dart';
 
-class ViewAllPetsScreen extends StatefulWidget {
-  const ViewAllPetsScreen({super.key});
+class UpcomingAppointmentsScreen extends StatefulWidget {
+  const UpcomingAppointmentsScreen({super.key});
 
   @override
-  State<ViewAllPetsScreen> createState() => _MyWidgetState();
+  State<UpcomingAppointmentsScreen> createState() => _MyWidgetState();
 }
 
-class _MyWidgetState extends State<ViewAllPetsScreen> {
+class _MyWidgetState extends State<UpcomingAppointmentsScreen> {
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
@@ -21,10 +21,14 @@ class _MyWidgetState extends State<ViewAllPetsScreen> {
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Icon(Icons.arrow_back_ios, color: Colors.black, size: sw * 0.06),
+          child: Icon(
+            Icons.arrow_back_ios,
+            color: Colors.black,
+            size: sw * 0.06,
+          ),
         ),
         title: Text(
-          'My Pets',
+          'Upcoming Appointments',
           style: TextStyle(
             fontSize: sw * 0.05,
             fontWeight: FontWeight.bold,
@@ -42,14 +46,14 @@ class _MyWidgetState extends State<ViewAllPetsScreen> {
             itemBuilder: (context, index) {
               return Column(
                 children: [
-                  PetCard(
-                    sw: sw,
-                    sh: sh,
-                    petName: 'Pet $index',
-                    animal: 'Dog',
-                    breed: 'German Shepherd',
-                    lifeStatus: 'Alive',
-                    overallHealth: 'Good',
+                  appointmentCard(
+                    sw,
+                    sh,
+                    'Annual Checkup',
+                    'Dr. Sarah Johnson',
+                    '25/03/2025',
+                    '10:30 AM',
+                    Colors.blue,
                   ),
 
                   SizedBox(height: sh * 0.015),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/view_all_pets_page.dart';
 import 'package:pet_owner_mobile/pages/signup/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/signup/animal_info_page.dart';
@@ -94,6 +95,11 @@ final GoRouter appRouter = GoRouter(
           path: '/viewallpets',
           name: 'ViewAllPetsScreen',
           builder: (context, state) => ViewAllPetsScreen(),
+        ),
+        GoRoute(
+          path: '/upcomingappointments',
+          name: 'UpcomingAppointmentsScreen',
+          builder: (context, state) => UpcomingAppointmentsScreen(),
         ),
       ],
     ),

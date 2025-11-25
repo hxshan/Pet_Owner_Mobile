@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Appointment_card.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Vaccination_card.dart';
@@ -177,7 +178,7 @@ class PetProfileScreen extends StatelessWidget {
                 children: [
                   // Upcoming Appointments Section
                   _buildSectionHeader(sw, sh, 'Upcoming Appointments', () {
-                    // Navigate to full appointments page
+                    context.pushNamed('UpcomingAppointmentsScreen');
                   }),
 
                   SizedBox(height: sh * 0.015),
@@ -344,5 +345,4 @@ class PetProfileScreen extends StatelessWidget {
       ],
     );
   }
-
 }
