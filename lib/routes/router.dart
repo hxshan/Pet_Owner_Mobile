@@ -8,6 +8,7 @@ import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/vaccinations_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/view_all_pets_page.dart';
+import 'package:pet_owner_mobile/pages/profile_page.dart';
 import 'package:pet_owner_mobile/pages/signup/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/signup/animal_info_page.dart';
 import 'package:pet_owner_mobile/pages/dashboard_page.dart';
@@ -80,8 +81,8 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: '/profile',
-          name: 'profile',
-          builder: (context, state) => const PlaceholderPage(title: 'Profile'),
+          name: 'ProfileScreen',
+          builder: (context, state) => ProfileScreen(),
         ),
         GoRoute(
           path: '/notifications',
@@ -157,7 +158,7 @@ class _NavBarShellState extends State<NavBarShell> {
         context.goNamed('MyPetsScreen');
         break;
       case 3:
-        context.goNamed('profile');
+        context.goNamed('ProfileScreen');
         break;
     }
   }
