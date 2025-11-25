@@ -151,7 +151,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Icon(Icons.arrow_back, color: Colors.black, size: sw * 0.06),
+          child: Icon(Icons.arrow_back_ios, color: Colors.black, size: sw * 0.06),
         ),
         title: Text(
           'Add New Pet',
