@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
 import 'package:pet_owner_mobile/pages/notification_page.dart';
@@ -125,14 +126,24 @@ final GoRouter appRouter = GoRouter(
 
         // Ecoommerce Routes
         GoRoute(
-          path: '/ecommerce/dahboard',
+          path: '/ecommerce',
           name: 'EcommerceDashboardScreen',
-          builder: (context, state) => EcommerceDashboardScreen(),
-        ),
-        GoRoute(
-          path: '/ecommerce/product-detail',
-          name: 'ProductDetailScreen',
-          builder: (context, state) => ProductDetailScreen(productId: ''),
+          builder: (context, state) => const EcommerceDashboardScreen(),
+          routes: [
+            GoRoute(
+              path: 'product-detail',
+              name: 'ProductDetailScreen',
+              builder: (context, state) {
+                final productId = state.pathParameters['productId'] ?? '';
+                return ProductDetailScreen(productId: productId);
+              },
+            ),
+            GoRoute(
+              path: 'cart',
+              name: 'CartScreen',
+              builder: (context, state) => const CartScreen(),
+            ),
+          ],
         ),
       ],
     ),
