@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/ecommerce/product_card.dart';
 
@@ -199,14 +200,19 @@ class _ShopHomePageState extends State<EcommerceDashboardScreen> {
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
-        return ProductCard(
-          name: product['name'] as String,
-          price: product['price'] as String,
-          rating: product['rating'] as double,
-          icon: product['image'] as IconData,
-          color: product['color'] as Color,
-          sw: sw,
-          sh: sh,
+        return GestureDetector(
+          onTap: () {
+            context.pushNamed('ProductDetailScreen');
+          },
+          child: ProductCard(
+            name: product['name'] as String,
+            price: product['price'] as String,
+            rating: product['rating'] as double,
+            icon: product['image'] as IconData,
+            color: product['color'] as Color,
+            sw: sw,
+            sh: sh,
+          ),
         );
       },
     );
