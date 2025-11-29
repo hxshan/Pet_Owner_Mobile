@@ -404,48 +404,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisSpacing: sh * 0.02,
           childAspectRatio: 0.85, // Fixed: Adjusted ratio to prevent overflow
           children: [
-            _buildServiceItem(sw, sh, Icons.pets, 'Adoption', AppColors.mainColor),
-            _buildServiceItem(sw, sh, Icons.shopping_bag, 'Shop', AppColors.mainColor),
-            _buildServiceItem(sw, sh, Icons.restaurant, 'Nutrition', Colors.orange),
-            _buildServiceItem(sw, sh, Icons.local_hospital, 'Vet Care', Colors.red[400]!),
+            _buildServiceItem(sw, sh, Icons.pets, 'Adoption', AppColors.mainColor, ''),
+            _buildServiceItem(sw, sh, Icons.shopping_bag, 'Shop', AppColors.mainColor, 'EcommerceDashboardScreen'),
+            _buildServiceItem(sw, sh, Icons.restaurant, 'Nutrition', Colors.orange, ''),
+            _buildServiceItem(sw, sh, Icons.local_hospital, 'Vet Care', Colors.red[400]!, ''),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildServiceItem(double sw, double sh, IconData icon, String label, Color color) {
-    return Column(
-      mainAxisSize: MainAxisSize.min, // Fixed: Prevents overflow
-      children: [
-        Container(
-          width: sw * 0.15,
-          height: sw * 0.15,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(sw * 0.03),
-          ),
-          child: Icon(
-            icon,
-            size: sw * 0.08,
-            color: color,
-          ),
-        ),
-        SizedBox(height: sh * 0.006), // Fixed: Reduced spacing
-        Flexible( // Fixed: Wrapped text to prevent overflow
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: sw * 0.03,
-              color: Colors.black54,
-              fontWeight: FontWeight.w500,
+  Widget _buildServiceItem(double sw, double sh, IconData icon, String label, Color color, String route) {
+    return GestureDetector(
+      onTap: () => {
+        context.pushNamed(route)
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min, 
+        children: [
+          Container(
+            width: sw * 0.15,
+            height: sw * 0.15,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(sw * 0.03),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            child: Icon(
+              icon,
+              size: sw * 0.08,
+              color: color,
+            ),
           ),
-        ),
-      ],
+          SizedBox(height: sh * 0.006), // Fixed: Reduced spacing
+          Flexible( // Fixed: Wrapped text to prevent overflow
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: sw * 0.03,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

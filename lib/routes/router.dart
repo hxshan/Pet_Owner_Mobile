@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
 import 'package:pet_owner_mobile/pages/notification_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
@@ -120,6 +123,28 @@ final GoRouter appRouter = GoRouter(
           name: 'MedicalReportsScreen',
           builder: (context, state) => MedicalReportsScreen(),
         ),
+
+        // Ecoommerce Routes
+        GoRoute(
+          path: '/ecommerce',
+          name: 'EcommerceDashboardScreen',
+          builder: (context, state) => const EcommerceDashboardScreen(),
+          routes: [
+            GoRoute(
+              path: 'product-detail',
+              name: 'ProductDetailScreen',
+              builder: (context, state) {
+                final productId = state.pathParameters['productId'] ?? '';
+                return ProductDetailScreen(productId: productId);
+              },
+            ),
+            GoRoute(
+              path: 'cart',
+              name: 'CartScreen',
+              builder: (context, state) => const CartScreen(),
+            ),
+          ],
+        ),
       ],
     ),
   ],
@@ -140,7 +165,7 @@ class _NavBarShellState extends State<NavBarShell> {
   int _calculateSelectedIndex() {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/dashboard')) return 0;
-    if (location.startsWith('/shop')) return 1;
+    if (location.startsWith('/ecommerce')) return 1;
     if (location.startsWith('/my-pets')) return 2;
     if (location.startsWith('/profile')) return 3;
     return 0;
@@ -152,7 +177,7 @@ class _NavBarShellState extends State<NavBarShell> {
         context.goNamed('DashboardScreen');
         break;
       case 1:
-        context.goNamed('shop');
+        context.goNamed('EcommerceDashboardScreen');
         break;
       case 2:
         context.goNamed('MyPetsScreen');
