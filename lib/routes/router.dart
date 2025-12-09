@@ -23,7 +23,7 @@ import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/dashboard',
+  initialLocation: '/splash',
   debugLogDiagnostics: true,
   routes: [
     // Pages without NavBar
