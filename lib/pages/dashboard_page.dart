@@ -50,7 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello, Buruwa!',
+              'Hello, User!',
               style: TextStyle(
                 fontSize: sw * 0.07,
                 fontWeight: FontWeight.bold,
