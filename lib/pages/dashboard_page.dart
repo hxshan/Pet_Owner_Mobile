@@ -382,17 +382,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Colors.black87,
               ),
             ),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                'View all',
-                style: TextStyle(
-                  fontSize: sw * 0.038,
-                  color: AppColors.darkPink,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+            // TextButton(
+            //   onPressed: () {},
+            //   child: Text(
+            //     'View all',
+            //     style: TextStyle(
+            //       fontSize: sw * 0.038,
+            //       color: AppColors.darkPink,
+            //       fontWeight: FontWeight.w600,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
         SizedBox(height: sh * 0.015),
@@ -406,7 +406,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             _buildServiceItem(sw, sh, Icons.pets, 'Adoption', AppColors.mainColor, ''),
             _buildServiceItem(sw, sh, Icons.shopping_bag, 'Shop', AppColors.mainColor, 'EcommerceDashboardScreen'),
-            _buildServiceItem(sw, sh, Icons.restaurant, 'Nutrition', Colors.orange, ''),
+            _buildServiceItem(sw, sh, Icons.restaurant, 'Nutrition', Colors.orange, 'NutritionPlanScreen'),
             _buildServiceItem(sw, sh, Icons.local_hospital, 'Vet Care', Colors.red[400]!, ''),
           ],
         ),

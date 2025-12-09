@@ -4,6 +4,8 @@ import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
 import 'package:pet_owner_mobile/pages/notification_page.dart';
+import 'package:pet_owner_mobile/pages/nutrition/meal_plan_details_page%20.dart';
+import 'package:pet_owner_mobile/pages/nutrition/nutrition_plan_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
@@ -142,6 +144,26 @@ final GoRouter appRouter = GoRouter(
               path: 'cart',
               name: 'CartScreen',
               builder: (context, state) => const CartScreen(),
+            ),
+          ],
+        ),
+
+        // Nutrition Routes
+        GoRoute(
+          path: '/nutrition',
+          name: 'NutritionPlanScreen',
+          builder: (context, state) => const NutritionPlanScreen(),
+          routes: [
+            GoRoute(
+              path: 'details',
+              name: 'NutritionPlanDetailsScreen',
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>;
+                return MealPlanDetailsScreen(
+                  petName: extra['petName'] ?? '',
+                  petBreed: extra['petBreed'] ?? '',
+                );
+              },
             ),
           ],
         ),
