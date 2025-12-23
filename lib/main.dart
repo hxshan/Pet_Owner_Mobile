@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:pet_owner_mobile/routes/router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
@@ -15,18 +16,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.mainColor),
-        scaffoldBackgroundColor: Colors.white,
-        textSelectionTheme: TextSelectionThemeData(
-          cursorColor: AppColors.darkPink,
-          selectionHandleColor: AppColors.darkPink,
-        ),
-        fontFamily: 'Inter',
-      ),
-      routerConfig: appRouter,
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.mainColor),
+            scaffoldBackgroundColor: Colors.white,
+            textSelectionTheme: TextSelectionThemeData(
+              cursorColor: AppColors.darkPink,
+              selectionHandleColor: AppColors.darkPink,
+            ),
+            fontFamily: 'Inter',
+          ),
+          routerConfig: appRouter,
+        );
+      },
     );
   }
 }

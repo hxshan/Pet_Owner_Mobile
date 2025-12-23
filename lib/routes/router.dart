@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/adoption/pet_model.dart';
+import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
+import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
@@ -124,6 +127,23 @@ final GoRouter appRouter = GoRouter(
           path: '/medicalrecords',
           name: 'MedicalReportsScreen',
           builder: (context, state) => MedicalReportsScreen(),
+        ),
+
+        // Adoption Routes
+        GoRoute(
+          path: '/adoption',
+          name: 'PetListingDashboard',
+          builder: (context, state) => const PetListingDashboard(),
+          routes: [
+            GoRoute(
+              path: 'pet-detail',
+              name: 'PetDetailsPage',
+              builder: (context, state) {
+                final pet = state.extra as Pet;
+                return PetDetailsPage(pet: pet);
+              },
+            ),
+          ],
         ),
 
         // Ecoommerce Routes

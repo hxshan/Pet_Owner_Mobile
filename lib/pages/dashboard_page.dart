@@ -404,7 +404,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisSpacing: sh * 0.02,
           childAspectRatio: 0.85, // Fixed: Adjusted ratio to prevent overflow
           children: [
-            _buildServiceItem(sw, sh, Icons.pets, 'Adoption', AppColors.mainColor, ''),
+            _buildServiceItem(sw, sh, Icons.pets, 'Adoption', AppColors.mainColor, 'PetListingDashboard'),
             _buildServiceItem(sw, sh, Icons.shopping_bag, 'Shop', AppColors.mainColor, 'EcommerceDashboardScreen'),
             _buildServiceItem(sw, sh, Icons.restaurant, 'Nutrition', Colors.orange, 'NutritionPlanScreen'),
             _buildServiceItem(sw, sh, Icons.local_hospital, 'Vet Care', Colors.red[400]!, ''),
