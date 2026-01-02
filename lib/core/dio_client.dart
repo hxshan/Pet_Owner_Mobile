@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:pet_owner_mobile/consts/api_consts.dart';
 
 class DioClient {
   static final DioClient _instance = DioClient._internal();
@@ -9,7 +10,7 @@ class DioClient {
   DioClient._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://192.168.1.17:5000/api/v1/',
+        baseUrl: backendUrl,
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         sendTimeout: const Duration(seconds: 15),

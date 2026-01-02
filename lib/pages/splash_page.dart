@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/utils/secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -39,15 +40,27 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     // Navigate to next screen after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      context.goNamed('WelcomePage');
-    });
+    validateAndNavigate();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> validateAndNavigate() async {
+     await Future.delayed(const Duration(seconds: 2));
+
+     final token = await SecureStorage.getToken();
+
+     if(!mounted) return;
+
+     if (token != null && token.isNotEmpty) {
+       context.goNamed('DashboardScreen');
+     } else {
+       context.goNamed('WelcomePage');
+     }
   }
 
   @override
