@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/utils/secure_storage.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -10,6 +11,25 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  late String firstName;
+
+  @override
+  initState() {
+    super.initState();
+
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final name = await SecureStorage.getData('first_name');
+
+    if (!mounted) return;
+
+    setState(() {
+      firstName = name ?? 'User';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
@@ -50,7 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello, User!',
+              'Hello, $firstName!',
               style: TextStyle(
                 fontSize: sw * 0.07,
                 fontWeight: FontWeight.bold,
@@ -68,19 +88,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 SizedBox(width: sw * 0.01),
                 Text(
                   'Angoda, Sri Lanka',
-                  style: TextStyle(
-                    fontSize: sw * 0.035,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: sw * 0.035, color: Colors.black54),
                 ),
               ],
             ),
           ],
         ),
         GestureDetector(
-          onTap: () => {
-            context.pushNamed('NotificationsScreen')
-          },
+          onTap: () => {context.pushNamed('NotificationsScreen')},
           child: Container(
             padding: EdgeInsets.all(sw * 0.02),
             decoration: BoxDecoration(
@@ -150,9 +165,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _buildPetCard(sw, sh, 'Max', 'Golden Retriever', '3 years old', Colors.amber[100]!),
+              _buildPetCard(
+                sw,
+                sh,
+                'Max',
+                'Golden Retriever',
+                '3 years old',
+                Colors.amber[100]!,
+              ),
               SizedBox(width: sw * 0.04),
-              _buildPetCard(sw, sh, 'Luna', 'Persian Cat', '2 years old', Colors.purple[100]!),
+              _buildPetCard(
+                sw,
+                sh,
+                'Luna',
+                'Persian Cat',
+                '2 years old',
+                Colors.purple[100]!,
+              ),
               SizedBox(width: sw * 0.04),
               _buildAddPetCard(sw, sh),
             ],
@@ -162,7 +191,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildPetCard(double sw, double sh, String name, String breed, String age, Color bgColor) {
+  Widget _buildPetCard(
+    double sw,
+    double sh,
+    String name,
+    String breed,
+    String age,
+    Color bgColor,
+  ) {
     return Container(
       width: sw * 0.42,
       padding: EdgeInsets.all(sw * 0.04),
@@ -187,11 +223,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.pets,
-              size: sw * 0.08,
-              color: Colors.grey[400],
-            ),
+            child: Icon(Icons.pets, size: sw * 0.08, color: Colors.grey[400]),
           ),
           SizedBox(height: sh * 0.015),
           Text(
@@ -205,18 +237,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           SizedBox(height: sh * 0.005),
           Text(
             breed,
-            style: TextStyle(
-              fontSize: sw * 0.032,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: sw * 0.032, color: Colors.black54),
           ),
           SizedBox(height: sh * 0.002),
           Text(
             age,
-            style: TextStyle(
-              fontSize: sw * 0.03,
-              color: Colors.black45,
-            ),
+            style: TextStyle(fontSize: sw * 0.03, color: Colors.black45),
           ),
         ],
       ),
@@ -245,11 +271,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: AppColors.mainColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.add,
-              color: Colors.white,
-              size: sw * 0.07,
-            ),
+            child: Icon(Icons.add, color: Colors.white, size: sw * 0.07),
           ),
           SizedBox(height: sh * 0.015),
           Text(
@@ -310,17 +332,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 SizedBox(height: sh * 0.008),
                 Text(
                   'Everything Pet & Reliable',
-                  style: TextStyle(
-                    fontSize: sw * 0.032,
-                    color: Colors.white70,
-                  ),
+                  style: TextStyle(fontSize: sw * 0.032, color: Colors.white70),
                 ),
                 Text(
                   'Care at Your Fingertip',
-                  style: TextStyle(
-                    fontSize: sw * 0.032,
-                    color: Colors.white70,
-                  ),
+                  style: TextStyle(fontSize: sw * 0.032, color: Colors.white70),
                 ),
                 SizedBox(height: sh * 0.015),
                 ElevatedButton(
@@ -356,11 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(sw * 0.03),
             ),
-            child: Icon(
-              Icons.pets,
-              size: sw * 0.15,
-              color: Colors.white,
-            ),
+            child: Icon(Icons.pets, size: sw * 0.15, color: Colors.white),
           ),
         ],
       ),
@@ -404,23 +416,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisSpacing: sh * 0.02,
           childAspectRatio: 0.85, // Fixed: Adjusted ratio to prevent overflow
           children: [
-            _buildServiceItem(sw, sh, Icons.pets, 'Adoption', AppColors.mainColor, 'PetListingDashboard'),
-            _buildServiceItem(sw, sh, Icons.shopping_bag, 'Shop', AppColors.mainColor, 'EcommerceDashboardScreen'),
-            _buildServiceItem(sw, sh, Icons.restaurant, 'Nutrition', Colors.orange, 'NutritionPlanScreen'),
-            _buildServiceItem(sw, sh, Icons.local_hospital, 'Vet Care', Colors.red[400]!, ''),
+            _buildServiceItem(
+              sw,
+              sh,
+              Icons.pets,
+              'Adoption',
+              AppColors.mainColor,
+              'PetListingDashboard',
+            ),
+            _buildServiceItem(
+              sw,
+              sh,
+              Icons.shopping_bag,
+              'Shop',
+              AppColors.mainColor,
+              'EcommerceDashboardScreen',
+            ),
+            _buildServiceItem(
+              sw,
+              sh,
+              Icons.restaurant,
+              'Nutrition',
+              Colors.orange,
+              'NutritionPlanScreen',
+            ),
+            _buildServiceItem(
+              sw,
+              sh,
+              Icons.local_hospital,
+              'Vet Care',
+              Colors.red[400]!,
+              '',
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildServiceItem(double sw, double sh, IconData icon, String label, Color color, String route) {
+  Widget _buildServiceItem(
+    double sw,
+    double sh,
+    IconData icon,
+    String label,
+    Color color,
+    String route,
+  ) {
     return GestureDetector(
-      onTap: () => {
-        context.pushNamed(route)
-      },
+      onTap: () => {context.pushNamed(route)},
       child: Column(
-        mainAxisSize: MainAxisSize.min, 
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: sw * 0.15,
@@ -429,14 +474,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: color.withOpacity(0.15),
               borderRadius: BorderRadius.circular(sw * 0.03),
             ),
-            child: Icon(
-              icon,
-              size: sw * 0.08,
-              color: color,
-            ),
+            child: Icon(icon, size: sw * 0.08, color: color),
           ),
           SizedBox(height: sh * 0.006), // Fixed: Reduced spacing
-          Flexible( // Fixed: Wrapped text to prevent overflow
+          Flexible(
+            // Fixed: Wrapped text to prevent overflow
             child: Text(
               label,
               style: TextStyle(
@@ -467,23 +509,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         SizedBox(height: sh * 0.015),
-        _buildReminderCard(sw, sh, 'Max - Vaccination', 'Tomorrow, 10:00 AM', Icons.vaccines, Colors.blue),
+        _buildReminderCard(
+          sw,
+          sh,
+          'Max - Vaccination',
+          'Tomorrow, 10:00 AM',
+          Icons.vaccines,
+          Colors.blue,
+        ),
         SizedBox(height: sh * 0.012),
-        _buildReminderCard(sw, sh, 'Luna - Grooming', 'Nov 20, 2:00 PM', Icons.content_cut, Colors.pink),
+        _buildReminderCard(
+          sw,
+          sh,
+          'Luna - Grooming',
+          'Nov 20, 2:00 PM',
+          Icons.content_cut,
+          Colors.pink,
+        ),
       ],
     );
   }
 
-  Widget _buildReminderCard(double sw, double sh, String title, String time, IconData icon, Color color) {
+  Widget _buildReminderCard(
+    double sw,
+    double sh,
+    String title,
+    String time,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: EdgeInsets.all(sw * 0.04),
       decoration: BoxDecoration(
         color: AppColors.lightGray,
         borderRadius: BorderRadius.circular(sw * 0.03),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Row(
         children: [
@@ -494,11 +554,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: color.withOpacity(0.15),
               borderRadius: BorderRadius.circular(sw * 0.025),
             ),
-            child: Icon(
-              icon,
-              size: sw * 0.06,
-              color: color,
-            ),
+            child: Icon(icon, size: sw * 0.06, color: color),
           ),
           SizedBox(width: sw * 0.04),
           Expanded(
@@ -516,19 +572,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 SizedBox(height: sh * 0.003),
                 Text(
                   time,
-                  style: TextStyle(
-                    fontSize: sw * 0.033,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: sw * 0.033, color: Colors.black54),
                 ),
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right,
-            size: sw * 0.06,
-            color: Colors.black38,
-          ),
+          Icon(Icons.chevron_right, size: sw * 0.06, color: Colors.black38),
         ],
       ),
     );
