@@ -1,6 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/auth/signup_draft.dart';
+import 'package:pet_owner_mobile/models/auth/signup_request.dart';
+import 'package:pet_owner_mobile/services/auth.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 
@@ -12,6 +15,9 @@ class AccountInfoPage extends StatefulWidget {
 }
 
 class _RegistrationPageState extends State<AccountInfoPage> {
+  late SignupDraft personalInfo;
+  final AuthService _authService = AuthService();
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -27,6 +33,15 @@ class _RegistrationPageState extends State<AccountInfoPage> {
   String? emailError;
   String? passwordError;
   String? confirmPasswordError;
+
+  bool isLoading = false;
+  String? apiError;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    personalInfo = GoRouterState.of(context).extra as SignupDraft;
+  }
 
   @override
   void dispose() {
@@ -56,12 +71,13 @@ class _RegistrationPageState extends State<AccountInfoPage> {
   }
 
   // Submit form
-  void validateAndSubmit() {
+  Future<void> validateAndSubmit() async {
     setState(() {
       // Reset all errors
       emailError = null;
       passwordError = null;
       confirmPasswordError = null;
+      apiError = null;
 
       // Validate email
       if (emailController.text.isEmpty) {
@@ -85,14 +101,50 @@ class _RegistrationPageState extends State<AccountInfoPage> {
     if (emailError == null &&
         passwordError == null &&
         confirmPasswordError == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      personalInfo.email = emailController.text.trim();
+      personalInfo.password = passwordController.text;
 
-      context.pushNamed('AnimalInfoPage');
+      setState(() {
+        isLoading = true;
+      });
+
+      try {
+        final request = SignupRequest(
+          firstname: personalInfo.firstName,
+          lastname: personalInfo.lastName,
+          nicNumber: personalInfo.nicNumber,
+          phone: personalInfo.phone,
+          address: personalInfo.address,
+          email: personalInfo.email!,
+          password: personalInfo.password!,
+        );
+
+        final response = await _authService.signupPetOwner(request);
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        context.pushNamed('AnimalInfoPage');
+      } catch (e) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -288,15 +340,21 @@ class _RegistrationPageState extends State<AccountInfoPage> {
                   SizedBox(
                     width: sw,
                     child: ElevatedButton(
-                      onPressed: isTermsAccepted ? validateAndSubmit : null,
-                      style: AppButtonStyles.blackButton(context),
-                      child: Text(
-                        'Get Started',
-                        style: TextStyle(
-                          fontSize: sw * 0.06,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      onPressed: !isLoading && isTermsAccepted ? validateAndSubmit : null,
+                      style: isLoading ? AppButtonStyles.disableButton(context) : AppButtonStyles.blackButton(context),
+                      child: isLoading
+                          ? CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                              
+                            )
+                          : Text(
+                              'Get Started',
+                              style: TextStyle(
+                                fontSize: sw * 0.06,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                   SizedBox(height: sh * 0.03),
