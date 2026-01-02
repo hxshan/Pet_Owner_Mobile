@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/services/auth.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoggingOut = false;
 
   @override
   Widget build(BuildContext context) {
@@ -48,9 +56,9 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      
+
                       SizedBox(height: sh * 0.02),
-                      
+
                       // Profile Avatar
                       Stack(
                         children: [
@@ -105,9 +113,9 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      
+
                       SizedBox(height: sh * 0.015),
-                      
+
                       // User Name
                       Text(
                         'John Doe',
@@ -117,9 +125,9 @@ class ProfileScreen extends StatelessWidget {
                           color: Colors.black,
                         ),
                       ),
-                      
+
                       SizedBox(height: sh * 0.005),
-                      
+
                       // Email
                       Text(
                         'john.doe@email.com',
@@ -128,9 +136,9 @@ class ProfileScreen extends StatelessWidget {
                           color: Colors.grey.shade600,
                         ),
                       ),
-                      
+
                       SizedBox(height: sh * 0.02),
-                      
+
                       // Stats Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -142,16 +150,16 @@ class ProfileScreen extends StatelessWidget {
                           _buildStatItem(sw, sh, '28', 'Records'),
                         ],
                       ),
-                      
+
                       SizedBox(height: sh * 0.02),
                     ],
                   ),
                 ),
               ),
             ),
-      
+
             SizedBox(height: sh * 0.02),
-      
+
             // Menu Items
             Padding(
               padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
@@ -159,7 +167,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   // Account Section
                   _buildSectionHeader(sw, 'Account'),
-      
+
                   _buildMenuItem(
                     sw,
                     sh,
@@ -170,7 +178,7 @@ class ProfileScreen extends StatelessWidget {
                       // Navigate to edit profile
                     },
                   ),
-      
+
                   _buildMenuItem(
                     sw,
                     sh,
@@ -181,7 +189,7 @@ class ProfileScreen extends StatelessWidget {
                       // Navigate to change password
                     },
                   ),
-      
+
                   _buildMenuItem(
                     sw,
                     sh,
@@ -192,12 +200,12 @@ class ProfileScreen extends StatelessWidget {
                       // Navigate to addresses
                     },
                   ),
-      
+
                   SizedBox(height: sh * 0.02),
-      
+
                   // Support Section
                   _buildSectionHeader(sw, 'Support'),
-      
+
                   _buildMenuItem(
                     sw,
                     sh,
@@ -208,7 +216,7 @@ class ProfileScreen extends StatelessWidget {
                       // Navigate to help
                     },
                   ),
-      
+
                   _buildMenuItem(
                     sw,
                     sh,
@@ -219,7 +227,7 @@ class ProfileScreen extends StatelessWidget {
                       // Navigate to terms
                     },
                   ),
-      
+
                   _buildMenuItem(
                     sw,
                     sh,
@@ -230,7 +238,7 @@ class ProfileScreen extends StatelessWidget {
                       // Navigate to privacy
                     },
                   ),
-      
+
                   _buildMenuItem(
                     sw,
                     sh,
@@ -241,9 +249,9 @@ class ProfileScreen extends StatelessWidget {
                       // Navigate to about
                     },
                   ),
-      
+
                   SizedBox(height: sh * 0.03),
-      
+
                   // Logout Button
                   GestureDetector(
                     onTap: () {
@@ -281,7 +289,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-      
+
                   SizedBox(height: sh * 0.03),
                 ],
               ),
@@ -490,18 +498,44 @@ class ProfileScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(sw * 0.02),
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          context.goNamed('LoginPage');
-                        },
-                        child: Text(
-                          "Logout",
-                          style: TextStyle(
-                            fontSize: sw * 0.038,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        onPressed: _isLoggingOut
+                            ? null
+                            : () async {
+                                setState(() => _isLoggingOut = true);
+
+                                try {
+                                  final authService = AuthService();
+                                  await authService.logout(); // Clear storage
+                                  Navigator.pop(context); // Close dialog
+                                  context.goNamed(
+                                    'LoginPage',
+                                  ); // Navigate to login
+                                } catch (e) {
+                                  setState(() => _isLoggingOut = false);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Logout failed: $e'),
+                                    ),
+                                  );
+                                }
+                              },
+                        child: _isLoggingOut
+                            ? SizedBox(
+                                height: sw * 0.05,
+                                width: sw * 0.05,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                "Logout",
+                                style: TextStyle(
+                                  fontSize: sw * 0.038,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],
