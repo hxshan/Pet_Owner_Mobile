@@ -1,8 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/auth/login_request.dart';
+import 'package:pet_owner_mobile/services/auth.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
+import 'package:pet_owner_mobile/utils/secure_storage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,6 +27,8 @@ class _RegistrationPageState extends State<LoginPage> {
   String? nicError;
   String? passwordError;
 
+  bool isLoading = false;
+
   @override
   void dispose() {
     nicController.dispose();
@@ -32,7 +37,7 @@ class _RegistrationPageState extends State<LoginPage> {
   }
 
   // Submit form
-  void validateAndSubmit() {
+  Future<void> validateAndSubmit() async {
     setState(() {
       // Reset all errors
       nicError = null;
@@ -48,16 +53,54 @@ class _RegistrationPageState extends State<LoginPage> {
       }
     });
 
-    // Check if all fields are valid
-    if (nicError == null && passwordError == null) {
+    // // Check if all fields are valid
+    // if (nicError == null && passwordError == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text('Signed In successfully!'),
+    //       backgroundColor: Colors.green,
+    //     ),
+    //   );
+
+    //   // context.goNamed('DashboardScreen');
+    // }
+
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final request = LoginRequest(
+        nic: nicController.text,
+        password: passwordController.text,
+      );
+
+      final response = await AuthService().login(request);
+
+      await SecureStorage.saveToken(response.token);
+      await SecureStorage.saveData('first_name', response.user.firstname);
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Signed In successfully!'),
+        SnackBar(
+          content: Text(response.message),
           backgroundColor: Colors.green,
         ),
       );
 
       context.goNamed('DashboardScreen');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -94,7 +137,7 @@ class _RegistrationPageState extends State<LoginPage> {
                       ),
                     ),
                     SizedBox(height: sh * 0.025),
-        
+
                     // Email Field
                     _buildTextField(
                       context,
@@ -105,7 +148,7 @@ class _RegistrationPageState extends State<LoginPage> {
                       nicError,
                     ),
                     SizedBox(height: sh * 0.02),
-        
+
                     // Password Field
                     _buildPasswordField(
                       context,
@@ -122,7 +165,7 @@ class _RegistrationPageState extends State<LoginPage> {
                       },
                     ),
                     SizedBox(height: sh * 0.01),
-        
+
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
@@ -134,22 +177,29 @@ class _RegistrationPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-        
+
                     SizedBox(height: sh * 0.03),
-        
+
                     // Get Started Button
                     SizedBox(
                       width: sw,
                       child: ElevatedButton(
-                        onPressed: validateAndSubmit,
-                        style: AppButtonStyles.blackButton(context),
-                        child: Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: sw * 0.06,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        onPressed: !isLoading ? validateAndSubmit : null,
+                        style: isLoading
+                            ? AppButtonStyles.disableButton(context)
+                            : AppButtonStyles.blackButton(context),
+                        child: isLoading
+                            ? CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              )
+                            : Text(
+                                'Login',
+                                style: TextStyle(
+                                  fontSize: sw * 0.06,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                     SizedBox(height: sh * 0.03),
