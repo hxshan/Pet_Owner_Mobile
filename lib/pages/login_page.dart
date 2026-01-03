@@ -93,7 +93,7 @@ class _RegistrationPageState extends State<LoginPage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Login failed: $e'),
+          content: Text(e.toString().replaceFirst('Exception', '')),
           backgroundColor: Colors.red,
         ),
       );
