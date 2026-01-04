@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/pet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/adoption/adoption_pet_card.dart';
+import 'package:pet_owner_mobile/widgets/adoption/pet_matching_model.dart';
 
 class PetListingDashboard extends StatefulWidget {
   const PetListingDashboard({Key? key}) : super(key: key);
@@ -361,6 +362,13 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showAiPetMatchModal(context);
+        },
+        backgroundColor: AppColors.darkPink,
+        child: Icon(Icons.auto_awesome, color: Colors.white, size: 28.sp),
       ),
     );
   }
