@@ -281,6 +281,16 @@ class PetProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          context.pushNamed('ChatScreen');
+        },
+        backgroundColor: AppColors.darkPink,
+        child: const Icon(
+          Icons.chat_bubble,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 

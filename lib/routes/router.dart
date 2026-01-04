@@ -10,6 +10,7 @@ import 'package:pet_owner_mobile/pages/notification_page.dart';
 import 'package:pet_owner_mobile/pages/nutrition/meal_plan_details_page%20.dart';
 import 'package:pet_owner_mobile/pages/nutrition/nutrition_plan_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/chat_screen.dart';
 import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
@@ -107,6 +108,11 @@ final GoRouter appRouter = GoRouter(
           path: '/petprofile',
           name: 'PetProfileScreen',
           builder: (context, state) => PetProfileScreen(),
+        ),
+        GoRoute(
+          path: '/aichat',
+          name: 'ChatScreen',
+          builder: (context, state) => ChatScreen(),
         ),
         GoRoute(
           path: '/viewallpets',
