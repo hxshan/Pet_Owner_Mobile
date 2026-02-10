@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'dart:io';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
@@ -123,18 +125,50 @@ class _AddPetScreenState extends State<AddPetScreen> {
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // Process form submission
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Pet "${_petNameController.text}" added successfully!'),
-        ),
-      );
-      // Navigate back or clear form
-      Future.delayed(Duration(seconds: 1), () {
-        Navigator.pop(context);
-      });
+      try {
+        final petService = PetService();
+
+        final response = await petService.createPet(
+          name: _petNameController.text,
+          breed: _breedController.text,
+          animalType: _selectedAnimal!,
+          dob: _selectedDOB!,
+          age: _ageController.text,
+          weight: _weightController.text,
+          color: _colorController.text,
+          health: _selectedHealth!,
+          lifeStatus: _selectedLifeStatus!,
+          image: _selectedImage,
+        );
+
+        if (!mounted) return;
+
+        String message = 'Pet added successfully!';
+        if (response.containsKey('message')) {
+          message = response['message'];
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.green),
+        );
+
+        Future.delayed(Duration(seconds: 1), () {
+          Navigator.pop(context);
+        });
+      } on DioException catch (e) {
+        String message = 'Failed to add pet';
+        if (e.response?.data is Map &&
+            e.response!.data.containsKey('message')) {
+          message = e.response!.data['message'];
+        } else if (e.message != null) {
+          message = e.message!;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -151,7 +185,11 @@ class _AddPetScreenState extends State<AddPetScreen> {
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Icon(Icons.arrow_back_ios, color: Colors.black, size: sw * 0.06),
+          child: Icon(
+            Icons.arrow_back_ios,
+            color: Colors.black,
+            size: sw * 0.06,
+          ),
         ),
         title: Text(
           'Add New Pet',
@@ -220,9 +258,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       ),
                     ),
                   ),
-        
+
                   SizedBox(height: sh * 0.03),
-        
+
                   // Pet Name Field
                   _buildLabel('Pet Name', sw * 0.035),
                   _buildTextField(
@@ -237,9 +275,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Animal Type Dropdown
                   _buildLabel('Animal Type', sw * 0.035),
                   _buildDropdown(
@@ -260,9 +298,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Breed Field
                   _buildLabel('Breed', sw * 0.035),
                   _buildTextField(
@@ -277,9 +315,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Date of Birth
                   _buildLabel('Date of Birth', sw * 0.035),
                   _buildDateField(
@@ -294,9 +332,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Age Field
                   _buildLabel('Age (years)', sw * 0.035),
                   _buildTextField(
@@ -312,9 +350,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Weight Field
                   _buildLabel('Weight (kg)', sw * 0.035),
                   _buildTextField(
@@ -330,9 +368,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Color/Appearance Field
                   _buildLabel('Color/Appearance', sw * 0.035),
                   _buildTextField(
@@ -347,9 +385,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Overall Health Dropdown
                   _buildLabel('Overall Health', sw * 0.035),
                   _buildDropdown(
@@ -370,9 +408,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Life Status Dropdown
                   _buildLabel('Life Status', sw * 0.035),
                   _buildDropdown(
@@ -393,9 +431,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       return null;
                     },
                   ),
-        
+
                   SizedBox(height: sh * 0.04),
-        
+
                   // Submit Button
                   SizedBox(
                     width: double.infinity,
@@ -418,9 +456,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       ),
                     ),
                   ),
-        
+
                   SizedBox(height: sh * 0.02),
-        
+
                   // Cancel Button
                   SizedBox(
                     width: double.infinity,
@@ -443,7 +481,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
                       ),
                     ),
                   ),
-        
+
                   SizedBox(height: sh * 0.03),
                 ],
               ),

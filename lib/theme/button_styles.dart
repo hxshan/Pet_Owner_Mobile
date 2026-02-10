@@ -16,4 +16,19 @@ class AppButtonStyles {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
     );
   }
+
+  static ButtonStyle disableButton(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
+    return ElevatedButton.styleFrom(
+      backgroundColor: const Color.fromARGB(255, 126, 126, 126),
+      foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+      padding: EdgeInsets.symmetric(
+        horizontal: sw * 0.06, 
+        vertical: sh * 0.008, 
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+    );
+  }
 }

@@ -1,12 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/pet_management/pet_card_model.dart';
+import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 import 'package:pet_owner_mobile/widgets/pet_card_widget.dart';
 import 'package:pet_owner_mobile/widgets/pet_updates_card_widget.dart';
 
-class MyPetsScreen extends StatelessWidget {
+class MyPetsScreen extends StatefulWidget {
   const MyPetsScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MyPetsScreen> createState() => _MyPetsScreenState();
+}
+
+class _MyPetsScreenState extends State<MyPetsScreen> {
+  late Future<List<Pet>> _petsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPets();
+  }
+
+  void _loadPets() {
+    _petsFuture = PetService().getMyPets().then(
+      (list) => list.map(Pet.fromJson).toList(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,27 +97,42 @@ class MyPetsScreen extends StatelessWidget {
                 SizedBox(height: sh * 0.025),
 
                 // Pet Cards
-                PetCard(
-                  sw: sw,
-                  sh: sh,
-                  petName: 'Suddu Putha',
-                  animal: 'Dog',
-                  breed: 'German Shepard',
-                  lifeStatus: 'Alive',
-                  overallHealth: 'Good',
-                ),
+                FutureBuilder<List<Pet>>(
+                  future: _petsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-                SizedBox(height: sh * 0.02),
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error loading pets'));
+                    }
 
-                PetCard(
-                  sw: sw,
-                  sh: sh,
-                  petName: 'Suddu Putha',
-                  animal: 'Dog',
-                  breed: 'German Shepard',
-                  lifeStatus: 'Alive',
-                  overallHealth: 'Good',
-                  isHighlighted: true,
+                    final pets = snapshot.data ?? [];
+
+                    if (pets.isEmpty) {
+                      return Center(child: Text('No pets found'));
+                    }
+
+                    final petsToShow = pets.length > 2
+                        ? pets.sublist(0, 2)
+                        : pets;
+
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: petsToShow.length,
+                      separatorBuilder: (_, __) => SizedBox(height: sh * 0.02),
+                      itemBuilder: (context, index) {
+                        final pet = petsToShow[index];
+                        return PetCard(
+                          sw: sw,
+                          sh: sh,
+                          pet: pet,
+                          onDeleted: _loadPets,
+                        );
+                      },
+                    );
+                  },
                 ),
 
                 SizedBox(height: sh * 0.02),

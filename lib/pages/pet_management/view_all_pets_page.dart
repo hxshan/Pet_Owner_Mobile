@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_owner_mobile/models/pet_management/pet_card_model.dart';
+import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/widgets/pet_card_widget.dart';
 
 class ViewAllPetsScreen extends StatefulWidget {
@@ -9,6 +11,20 @@ class ViewAllPetsScreen extends StatefulWidget {
 }
 
 class _MyWidgetState extends State<ViewAllPetsScreen> {
+  late Future<List<dynamic>> _petsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPets();
+  }
+
+  void _loadPets() {
+    _petsFuture = PetService().getMyPets().then(
+      (list) => list.map(Pet.fromJson).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
@@ -21,7 +37,11 @@ class _MyWidgetState extends State<ViewAllPetsScreen> {
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Icon(Icons.arrow_back_ios, color: Colors.black, size: sw * 0.06),
+          child: Icon(
+            Icons.arrow_back_ios,
+            color: Colors.black,
+            size: sw * 0.06,
+          ),
         ),
         title: Text(
           'My Pets',
@@ -36,24 +56,38 @@ class _MyWidgetState extends State<ViewAllPetsScreen> {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: sw * 0.05, vertical: 0.03),
-          child: ListView.builder(
-            padding: EdgeInsets.zero,
-            itemCount: 10,
-            itemBuilder: (context, index) {
-              return Column(
-                children: [
-                  PetCard(
+          child: FutureBuilder<List<dynamic>>(
+            future: _petsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error loading pets: ${snapshot.error}'),
+                );
+              }
+
+              final pets = snapshot.data ?? [];
+
+              if (pets.isEmpty) {
+                return const Center(child: Text('No pets found'));
+              }
+
+              return ListView.separated(
+                padding: EdgeInsets.zero,
+                itemCount: pets.length,
+                separatorBuilder: (_, __) => SizedBox(height: sh * 0.015),
+                itemBuilder: (context, index) {
+                  final pet = pets[index];
+                  return PetCard(
                     sw: sw,
                     sh: sh,
-                    petName: 'Pet $index',
-                    animal: 'Dog',
-                    breed: 'German Shepherd',
-                    lifeStatus: 'Alive',
-                    overallHealth: 'Good',
-                  ),
-
-                  SizedBox(height: sh * 0.015),
-                ],
+                    pet: pet,
+                    onDeleted: _loadPets,
+                  );
+                },
               );
             },
           ),

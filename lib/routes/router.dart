@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
+import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
+import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
 import 'package:pet_owner_mobile/pages/notification_page.dart';
+import 'package:pet_owner_mobile/pages/nutrition/meal_plan_details_page%20.dart';
+import 'package:pet_owner_mobile/pages/nutrition/nutrition_plan_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/chat_screen.dart';
 import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
@@ -99,9 +105,17 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => AddPetScreen(),
         ),
         GoRoute(
-          path: '/petprofile',
+          path: '/petprofile/:petId',
           name: 'PetProfileScreen',
-          builder: (context, state) => PetProfileScreen(),
+          builder: (context, state) {
+            final petId = state.pathParameters['petId']!;
+            return PetProfileScreen(petId: petId);
+          },
+        ),
+        GoRoute(
+          path: '/aichat',
+          name: 'ChatScreen',
+          builder: (context, state) => ChatScreen(),
         ),
         GoRoute(
           path: '/viewallpets',
@@ -124,6 +138,23 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => MedicalReportsScreen(),
         ),
 
+        // Adoption Routes
+        GoRoute(
+          path: '/adoption',
+          name: 'PetListingDashboard',
+          builder: (context, state) => const PetListingDashboard(),
+          routes: [
+            GoRoute(
+              path: 'pet-detail',
+              name: 'PetDetailsPage',
+              builder: (context, state) {
+                final pet = state.extra as AdoptionPet;
+                return PetDetailsPage(pet: pet);
+              },
+            ),
+          ],
+        ),
+
         // Ecoommerce Routes
         GoRoute(
           path: '/ecommerce',
@@ -142,6 +173,26 @@ final GoRouter appRouter = GoRouter(
               path: 'cart',
               name: 'CartScreen',
               builder: (context, state) => const CartScreen(),
+            ),
+          ],
+        ),
+
+        // Nutrition Routes
+        GoRoute(
+          path: '/nutrition',
+          name: 'NutritionPlanScreen',
+          builder: (context, state) => const NutritionPlanScreen(),
+          routes: [
+            GoRoute(
+              path: 'details',
+              name: 'NutritionPlanDetailsScreen',
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>;
+                return MealPlanDetailsScreen(
+                  petName: extra['petName'] ?? '',
+                  petBreed: extra['petBreed'] ?? '',
+                );
+              },
             ),
           ],
         ),

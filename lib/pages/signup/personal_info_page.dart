@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/auth/signup_draft.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 
@@ -82,7 +83,18 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
         ),
       );
 
-      context.pushNamed('AccountInfoPage');
+      final personalInfo = SignupDraft(
+        firstName: firstNameController.text,
+        lastName: lastNameController.text,
+        nicNumber: nicController.text,
+        phone: phoneController.text,
+        address: addressController.text,
+      );
+
+      context.pushNamed(
+        'AccountInfoPage',
+        extra: personalInfo,
+      );
     }
   }
 
@@ -231,7 +243,7 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
                     sh,
                     phoneController,
                     phoneError,
-                    isNumber: true
+                    isNumber: true,
                   ),
                   SizedBox(height: sh * 0.02),
 
