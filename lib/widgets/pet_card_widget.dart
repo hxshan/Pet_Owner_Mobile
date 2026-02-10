@@ -5,6 +5,7 @@ import 'package:pet_owner_mobile/theme/app_colors.dart';
 class PetCard extends StatelessWidget {
   final double sw;
   final double sh;
+  final String petId;
   final String petName;
   final String animal;
   final String breed;
@@ -15,6 +16,7 @@ class PetCard extends StatelessWidget {
   const PetCard({
     required this.sw,
     required this.sh,
+    required this.petId,
     required this.petName,
     required this.animal,
     required this.breed,
@@ -162,7 +164,10 @@ class PetCard extends StatelessWidget {
                 width: sw * 0.23,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.pushNamed('PetProfileScreen');
+                    context.pushNamed(
+                      'PetProfileScreen',
+                      pathParameters: {'petId': petId},
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size.zero,

@@ -64,4 +64,14 @@ class PetService {
       return [];
     }
   }
+
+  // Fetch pet details by ID
+  Future<Map<String, dynamic>> getPetById(String petId) async {
+    final response = await _dio.get(
+      '/pet/$petId',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    return response.data['data'];
+  }
 }

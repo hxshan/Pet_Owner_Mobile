@@ -119,6 +119,7 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                         return PetCard(
                           sw: sw,
                           sh: sh,
+                          petId: pet['_id'],
                           petName: pet['name'] ?? 'Unnamed',
                           animal: pet['species'] ?? 'Unknown',
                           breed: pet['breed'] ?? '-',

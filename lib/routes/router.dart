@@ -105,9 +105,12 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => AddPetScreen(),
         ),
         GoRoute(
-          path: '/petprofile',
+          path: '/petprofile/:petId',
           name: 'PetProfileScreen',
-          builder: (context, state) => PetProfileScreen(),
+          builder: (context, state) {
+            final petId = state.pathParameters['petId']!;
+            return PetProfileScreen(petId: petId);
+          },
         ),
         GoRoute(
           path: '/aichat',
