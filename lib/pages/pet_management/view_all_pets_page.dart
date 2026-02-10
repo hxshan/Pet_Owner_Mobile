@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pet_owner_mobile/models/pet_management/pet_card_model.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/widgets/pet_card_widget.dart';
 
@@ -15,7 +16,13 @@ class _MyWidgetState extends State<ViewAllPetsScreen> {
   @override
   void initState() {
     super.initState();
-    _petsFuture = PetService().getMyPets();
+    _loadPets();
+  }
+
+  void _loadPets() {
+    _petsFuture = PetService().getMyPets().then(
+      (list) => list.map(Pet.fromJson).toList(),
+    );
   }
 
   @override
@@ -77,12 +84,8 @@ class _MyWidgetState extends State<ViewAllPetsScreen> {
                   return PetCard(
                     sw: sw,
                     sh: sh,
-                    petId: pet['_id'],
-                    petName: pet['name'] ?? 'Unnamed',
-                    animal: pet['species'] ?? 'Unknown',
-                    breed: pet['breed'] ?? '-',
-                    lifeStatus: pet['lifeStatus'] ?? 'Alive',
-                    overallHealth: pet['health'] ?? 'Good',
+                    pet: pet,
+                    onDeleted: _loadPets,
                   );
                 },
               );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pet_owner_mobile/models/adoption/pet_model.dart';
+import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
@@ -148,7 +148,7 @@ final GoRouter appRouter = GoRouter(
               path: 'pet-detail',
               name: 'PetDetailsPage',
               builder: (context, state) {
-                final pet = state.extra as Pet;
+                final pet = state.extra as AdoptionPet;
                 return PetDetailsPage(pet: pet);
               },
             ),

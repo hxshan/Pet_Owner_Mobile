@@ -2,11 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pet_owner_mobile/models/adoption/pet_model.dart';
+import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 class PetCard extends StatefulWidget {
-  final Pet pet;
+  final AdoptionPet pet;
   final VoidCallback? onTap;
   final Function(bool)? onFavoriteToggle;
 

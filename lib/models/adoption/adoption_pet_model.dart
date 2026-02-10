@@ -1,6 +1,6 @@
 // Create this file: lib/models/pet.dart
 
-class Pet {
+class AdoptionPet {
   final String name;
   final String image;
   final int age;
@@ -9,7 +9,7 @@ class Pet {
   final String breed;
   final bool isFavorite;
 
-  Pet({
+  AdoptionPet({
     required this.name,
     required this.image,
     required this.age,
@@ -20,7 +20,7 @@ class Pet {
   });
 
   // Add copyWith method for easy updates
-  Pet copyWith({
+  AdoptionPet copyWith({
     String? name,
     String? image,
     int? age,
@@ -29,7 +29,7 @@ class Pet {
     String? breed,
     bool? isFavorite,
   }) {
-    return Pet(
+    return AdoptionPet(
       name: name ?? this.name,
       image: image ?? this.image,
       age: age ?? this.age,
@@ -53,8 +53,8 @@ class Pet {
     };
   }
 
-  factory Pet.fromJson(Map<String, dynamic> json) {
-    return Pet(
+  factory AdoptionPet.fromJson(Map<String, dynamic> json) {
+    return AdoptionPet(
       name: json['name'] as String,
       image: json['image'] as String,
       age: json['age'] as int,

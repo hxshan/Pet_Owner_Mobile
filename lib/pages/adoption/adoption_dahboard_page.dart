@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pet_owner_mobile/models/adoption/pet_model.dart';
+import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/adoption/adoption_pet_card.dart';
 import 'package:pet_owner_mobile/widgets/adoption/pet_matching_model.dart';
@@ -20,8 +20,8 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
   final List<String> categories = ['All', 'Dogs', 'Cats', 'Birds', 'Others'];
 
   // Sample pet data
-  final List<Pet> pets = [
-    Pet(
+  final List<AdoptionPet> pets = [
+    AdoptionPet(
       name: 'Princess',
       image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee',
       age: 3,
@@ -30,7 +30,7 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
       breed: 'Persian Cat',
       isFavorite: true,
     ),
-    Pet(
+    AdoptionPet(
       name: 'Max',
       image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb',
       age: 5,
@@ -38,7 +38,7 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
       location: 'Colombo, Pet Shelter',
       breed: 'Golden Retriever',
     ),
-    Pet(
+    AdoptionPet(
       name: 'Luna',
       image: 'https://images.unsplash.com/photo-1574158622682-e40e69881006',
       age: 2,
@@ -46,7 +46,7 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
       location: 'Kandy, Adoption center',
       breed: 'Tabby Cat',
     ),
-    Pet(
+    AdoptionPet(
       name: 'Charlie',
       image: 'https://images.unsplash.com/photo-1561037404-61cd46aa615b',
       age: 4,
@@ -54,7 +54,7 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
       location: 'Galle, Pet Rescue',
       breed: 'Beagle',
     ),
-    Pet(
+    AdoptionPet(
       name: 'Bella',
       image: 'https://images.unsplash.com/photo-1573865526739-10c1d3a1f0cc',
       age: 1,
@@ -64,7 +64,7 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
     ),
   ];
 
-  List<Pet> get filteredPets {
+  List<AdoptionPet> get filteredPets {
     return pets.where((pet) {
       final matchesSearch =
           pet.name.toLowerCase().contains(searchQuery.toLowerCase()) ||

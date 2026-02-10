@@ -47,7 +47,7 @@ class PetService {
   }
 
   // Fetch pets of the logged-in user
-  Future<List<dynamic>> getMyPets() async {
+  Future<List<Map<String, dynamic>>> getMyPets() async {
     try {
       final response = await _dio.get(
         '/pet/my',
@@ -55,7 +55,9 @@ class PetService {
       );
 
       if (response.data['success'] == true) {
-        return response.data['data'];
+        final List data = response.data['data'];
+
+        return List<Map<String, dynamic>>.from(data);
       } else {
         return [];
       }
@@ -73,5 +75,14 @@ class PetService {
     );
 
     return response.data['data'];
+  }
+
+  Future<void> deletePet(String petId) async {
+    await _dio.delete(
+      '/pet/$petId',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    // return response.data;
   }
 }

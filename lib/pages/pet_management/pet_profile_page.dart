@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Appointment_card.dart';
@@ -28,6 +29,20 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
     final birth = DateTime.parse(dob);
     final now = DateTime.now();
     return '${now.year - birth.year} Years';
+  }
+
+  Future<void> deletePet() async {
+    try {
+      await PetService().deletePet(widget.petId);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Pet deleted successfully')));
+      Navigator.pop(context);
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred while deleting pet')),
+      );
+    }
   }
 
   @override
@@ -83,15 +98,37 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                                   color: Colors.black87,
                                 ),
                               ),
-                              GestureDetector(
-                                onTap: () {
-                                  // Navigate to edit pet screen
-                                },
-                                child: Icon(
-                                  Icons.edit,
-                                  size: sw * 0.055,
-                                  color: Colors.black87,
-                                ),
+                              Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      // Navigate to edit pet screen
+                                    },
+                                    child: Icon(
+                                      Icons.edit,
+                                      size: sw * 0.06,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+
+                                  SizedBox(width: sw * 0.1),
+
+                                  GestureDetector(
+                                    onTap: () {
+                                      deletePet();
+                                    },
+                                    child: Icon(
+                                      Icons.delete,
+                                      size: sw * 0.07,
+                                      color: const Color.fromARGB(
+                                        221,
+                                        206,
+                                        27,
+                                        27,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

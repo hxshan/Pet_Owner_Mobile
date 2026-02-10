@@ -1,11 +1,11 @@
 // lib/pages/adoption/pet_details_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:pet_owner_mobile/models/adoption/pet_model.dart';
+import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 class PetDetailsPage extends StatefulWidget {
-  final Pet pet;
+  final AdoptionPet pet;
 
   const PetDetailsPage({Key? key, required this.pet}) : super(key: key);
 
