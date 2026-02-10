@@ -5,6 +5,7 @@ import 'package:pet_owner_mobile/core/dio_client.dart';
 class PetService {
   final Dio _dio = DioClient().dio;
 
+  // Create a new pet
   Future<Map<String, dynamic>> createPet({
     required String name,
     required String breed,
@@ -17,7 +18,6 @@ class PetService {
     required String lifeStatus,
     File? image,
   }) async {
-
     final response = await _dio.post(
       '/pet',
       data: {
@@ -44,5 +44,24 @@ class PetService {
     );
 
     return response.data;
+  }
+
+  // Fetch pets of the logged-in user
+  Future<List<dynamic>> getMyPets() async {
+    try {
+      final response = await _dio.get(
+        '/pet/my',
+        options: Options(extra: {'requiresAuth': true}),
+      );
+
+      if (response.data['success'] == true) {
+        return response.data['data'];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching pets: $e');
+      return [];
+    }
   }
 }
