@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -77,9 +78,6 @@ class _RegistrationPageState extends State<LoginPage> {
 
       final response = await AuthService().login(request);
 
-      await SecureStorage.saveToken(response.token);
-      await SecureStorage.saveData('first_name', response.user.firstname);
-
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -91,9 +89,13 @@ class _RegistrationPageState extends State<LoginPage> {
 
       context.goNamed('DashboardScreen');
     } catch (e) {
+      final message = e is DioException
+          ? e.error.toString()
+          : 'Something went wrong';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString().replaceFirst('Exception', '')),
+          content: Text(message),
           backgroundColor: Colors.red,
         ),
       );

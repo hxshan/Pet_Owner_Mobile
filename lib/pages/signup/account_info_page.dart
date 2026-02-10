@@ -1,8 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/auth/signup_draft.dart';
-import 'package:pet_owner_mobile/models/auth/signup_request.dart';
 import 'package:pet_owner_mobile/services/auth.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
@@ -109,36 +109,35 @@ class _RegistrationPageState extends State<AccountInfoPage> {
       });
 
       try {
-        final request = SignupRequest(
+        final response = await _authService.signupPetOwner(
           firstname: personalInfo.firstName,
           lastname: personalInfo.lastName,
-          nicNumber: personalInfo.nicNumber,
-          phone: personalInfo.phone,
-          address: personalInfo.address,
           email: personalInfo.email!,
           password: personalInfo.password!,
+          phone: personalInfo.phone,
+          nicNumber: personalInfo.nicNumber,
+          address: personalInfo.address,
         );
-
-        final response = await _authService.signupPetOwner(request);
 
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
+            content: Text(response['message'] ?? 'Registration successful!'),
             backgroundColor: Colors.green,
           ),
         );
 
-        context.pushNamed('AnimalInfoPage');
+        context.pushNamed('LoginPage');
       } catch (e) {
         if (!mounted) return;
 
+        final message = e is DioException
+            ? e.error.toString()
+            : 'Something went wrong';
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       } finally {
         setState(() {
@@ -340,13 +339,16 @@ class _RegistrationPageState extends State<AccountInfoPage> {
                   SizedBox(
                     width: sw,
                     child: ElevatedButton(
-                      onPressed: !isLoading && isTermsAccepted ? validateAndSubmit : null,
-                      style: isLoading ? AppButtonStyles.disableButton(context) : AppButtonStyles.blackButton(context),
+                      onPressed: !isLoading && isTermsAccepted
+                          ? validateAndSubmit
+                          : null,
+                      style: isLoading
+                          ? AppButtonStyles.disableButton(context)
+                          : AppButtonStyles.blackButton(context),
                       child: isLoading
                           ? CircularProgressIndicator(
                               color: Colors.white,
                               strokeWidth: 2,
-                              
                             )
                           : Text(
                               'Get Started',
