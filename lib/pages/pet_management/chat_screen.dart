@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class ChatMessage {
   final String text;
@@ -74,10 +75,7 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.mainColor,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: CustomBackButton(),
         title: Row(
           children: [
             CircleAvatar(

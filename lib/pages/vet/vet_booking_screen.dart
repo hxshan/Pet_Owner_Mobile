@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class VetBookingScreen extends StatefulWidget {
   final VetModel vet;
@@ -119,7 +120,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header ───────────────────────────────────────────────
+                // Header
                 Container(
                   width: double.infinity,
                   color: AppColors.darkPink,
@@ -133,22 +134,12 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Back button
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: sw * 0.09,
-                          height: sw * 0.09,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(sw * 0.025),
-                          ),
-                          child: Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: Colors.white,
-                            size: sw * 0.042,
-                          ),
-                        ),
+                      CustomBackButton(
+                        showPadding: false,
+                        backgroundColor: Colors.white,
+                        iconColor: AppColors.darkPink,
                       ),
+
                       SizedBox(height: sh * 0.02),
 
                       Text(

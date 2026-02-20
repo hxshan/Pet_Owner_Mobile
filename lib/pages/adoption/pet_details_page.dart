@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class PetDetailsPage extends StatefulWidget {
   final AdoptionPet pet;
@@ -36,25 +37,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
             expandedHeight: sh * 0.4,
             pinned: true,
             backgroundColor: Colors.white,
-            leading: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  width: sw * 0.09,
-                  height: sw * 0.09,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(sw * 0.025),
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.darkPink,
-                    size: sw * 0.042,
-                  ),
-                ),
-              ),
-            ),
+            leading: CustomBackButton(backgroundColor: Colors.white, iconColor: AppColors.darkPink,),
             actions: [
               Container(
                 margin: EdgeInsets.all(sw * 0.02),

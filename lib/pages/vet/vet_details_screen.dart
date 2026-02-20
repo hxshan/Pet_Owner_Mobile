@@ -19,18 +19,18 @@ class VetDetailScreen extends StatelessWidget {
       backgroundColor: AppColors.lightGray,
       body: Stack(
         children: [
-          // ── Scrollable content ───────────────────────────────────────────
+          // Scrollable content 
           SingleChildScrollView(
             padding: EdgeInsets.only(bottom: sh * 0.12 + bottomPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Hero Header ────────────────────────────────────────────
+                // Hero Header 
                 _HeroHeader(vet: vet, sw: sw, sh: sh, topPadding: topPadding),
 
                 SizedBox(height: sh * 0.018),
 
-                // ── Contact chips ──────────────────────────────────────────
+                // Contact chips 
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: sw * 0.04),
                   child: _ContactRow(vet: vet, sw: sw, sh: sh),
@@ -38,7 +38,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.022),
 
-                // ── About ──────────────────────────────────────────────────
+                // About 
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -60,7 +60,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // ── Gallery ────────────────────────────────────────────────
+                // Gallery 
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -126,7 +126,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // ── Services ───────────────────────────────────────────────
+                // Services 
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -142,7 +142,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // ── Opening Hours ──────────────────────────────────────────
+                // Opening Hours 
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -164,7 +164,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // ── Reviews ────────────────────────────────────────────────
+                // Reviews 
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -179,7 +179,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // ── Location ───────────────────────────────────────────────
+                // Location 
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -298,7 +298,7 @@ class VetDetailScreen extends StatelessWidget {
             ),
           ),
 
-          // ── Sticky Book Now button ─────────────────────────────────────
+          // ── Sticky Book Now button
           Positioned(
             bottom: 0,
             left: 0,

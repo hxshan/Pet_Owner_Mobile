@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'dart:io';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class AddPetScreen extends StatefulWidget {
   const AddPetScreen({Key? key}) : super(key: key);
@@ -183,14 +184,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black,
-            size: sw * 0.06,
-          ),
-        ),
+        leading: CustomBackButton(),
         title: Text(
           'Add New Pet',
           style: TextStyle(

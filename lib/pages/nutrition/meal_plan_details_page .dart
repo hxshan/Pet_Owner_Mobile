@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class MealPlanDetailsScreen extends StatefulWidget {
   final String petName;
@@ -118,22 +119,7 @@ class _MealPlanDetailsScreenState extends State<MealPlanDetailsScreen> {
       padding: EdgeInsets.all(sw * 0.05),
       child: Row(
         children: [
-          GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            width: sw * 0.09,
-            height: sw * 0.09,
-            decoration: BoxDecoration(
-              color: AppColors.darkPink,
-              borderRadius: BorderRadius.circular(sw * 0.025),
-            ),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: sw * 0.042,
-            ),
-          ),
-        ),
+          CustomBackButton(showPadding: false,),
           Expanded(
             child: Center(
               child: Text(

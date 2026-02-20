@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class MyVetAppointmentsScreen extends StatefulWidget {
   const MyVetAppointmentsScreen({super.key});
@@ -45,7 +46,7 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
       backgroundColor: AppColors.lightGray,
       body: Column(
         children: [
-          // ── Header ──────────────────────────────────────────────────────
+          // Header
           Container(
             width: double.infinity,
             color: AppColors.darkPink,
@@ -61,22 +62,8 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                   ),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: sw * 0.09,
-                          height: sw * 0.09,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(sw * 0.025),
-                          ),
-                          child: Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: Colors.white,
-                            size: sw * 0.042,
-                          ),
-                        ),
-                      ),
+                      CustomBackButton(showPadding: false, backgroundColor: Colors.white, iconColor: AppColors.darkPink,),
+                      
                       SizedBox(width: sw * 0.035),
                       Text(
                         'My Appointments',

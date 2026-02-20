@@ -5,6 +5,7 @@ import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/adoption/adoption_pet_card.dart';
 import 'package:pet_owner_mobile/widgets/adoption/pet_matching_model.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class PetListingDashboard extends StatefulWidget {
   const PetListingDashboard({Key? key}) : super(key: key);
@@ -86,25 +87,7 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-              width: sw * 0.09,
-              height: sw * 0.09,
-              decoration: BoxDecoration(
-                color: AppColors.darkPink,
-                borderRadius: BorderRadius.circular(sw * 0.025),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-                size: sw * 0.042,
-              ),
-            ),
-          ),
-        ),
+        leading: CustomBackButton(),
         title: Text(
           'PetConnect',
           style: TextStyle(
