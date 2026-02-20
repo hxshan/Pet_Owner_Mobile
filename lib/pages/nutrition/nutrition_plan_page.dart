@@ -106,7 +106,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                                   bgColor: plan['bgColor'],
                                   onTap: () {
                                     // Navigate to meal plan details
-                                    context.goNamed(
+                                    context.pushNamed(
                                       'NutritionPlanDetailsScreen',
                                       extra: {
                                         'petName': plan['petName'],
