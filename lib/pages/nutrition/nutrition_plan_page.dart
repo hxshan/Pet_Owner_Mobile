@@ -41,13 +41,24 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black87,
-            size: sw * 0.05,
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              width: sw * 0.09,
+              height: sw * 0.09,
+              decoration: BoxDecoration(
+                color: AppColors.darkPink,
+                borderRadius: BorderRadius.circular(sw * 0.025),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: sw * 0.042,
+              ),
+            ),
           ),
-          onPressed: () => context.pop(),
         ),
         title: Text(
           'Nutrition Plans',

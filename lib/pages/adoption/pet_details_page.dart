@@ -36,21 +36,23 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
             expandedHeight: sh * 0.4,
             pinned: true,
             backgroundColor: Colors.white,
-            leading: Container(
-              margin: EdgeInsets.all(sw * 0.02),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
+            leading: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  width: sw * 0.09,
+                  height: sw * 0.09,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(sw * 0.025),
                   ),
-                ],
-              ),
-              child: IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.black, size: sw * 0.06),
-                onPressed: () => Navigator.pop(context),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.darkPink,
+                    size: sw * 0.042,
+                  ),
+                ),
               ),
             ),
             actions: [
@@ -81,7 +83,11 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       color: AppColors.lightGray,
-                      child: Icon(Icons.pets, size: sw * 0.2, color: AppColors.mainColor),
+                      child: Icon(
+                        Icons.pets,
+                        size: sw * 0.2,
+                        color: AppColors.mainColor,
+                      ),
                     );
                   },
                 ),
@@ -171,8 +177,8 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                         SizedBox(width: sw * 0.03),
                         Expanded(
                           child: _buildStatCard(
-                            icon: widget.pet.gender.toLowerCase() == 'male' 
-                                ? Icons.male 
+                            icon: widget.pet.gender.toLowerCase() == 'male'
+                                ? Icons.male
                                 : Icons.female,
                             label: 'Gender',
                             value: widget.pet.gender,
@@ -262,7 +268,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                     // Medical Details Section
                     _buildSectionTitle('Medical Details', sw),
                     SizedBox(height: sh * 0.015),
-                    
+
                     // Medical Records Card
                     Container(
                       padding: EdgeInsets.all(sw * 0.04),
@@ -283,7 +289,9 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                                 padding: EdgeInsets.all(sw * 0.03),
                                 decoration: BoxDecoration(
                                   color: AppColors.mainColor.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(sw * 0.02),
+                                  borderRadius: BorderRadius.circular(
+                                    sw * 0.02,
+                                  ),
                                 ),
                                 child: Icon(
                                   Icons.medical_services_outlined,
@@ -324,11 +332,23 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                           SizedBox(height: sh * 0.015),
                           Divider(color: Colors.grey.shade300),
                           SizedBox(height: sh * 0.01),
-                          _buildMedicalInfoRow('Medical Name', widget.pet.name, sw),
+                          _buildMedicalInfoRow(
+                            'Medical Name',
+                            widget.pet.name,
+                            sw,
+                          ),
                           SizedBox(height: sh * 0.01),
-                          _buildMedicalInfoRow('Last Checkup', '15 Dec 2024', sw),
+                          _buildMedicalInfoRow(
+                            'Last Checkup',
+                            '15 Dec 2024',
+                            sw,
+                          ),
                           SizedBox(height: sh * 0.01),
-                          _buildMedicalInfoRow('Vaccination Status', 'Complete', sw),
+                          _buildMedicalInfoRow(
+                            'Vaccination Status',
+                            'Complete',
+                            sw,
+                          ),
                         ],
                       ),
                     ),
@@ -349,7 +369,10 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                                   ),
                                 );
                               },
-                              icon: Icon(Icons.bookmark_outline, size: sw * 0.05),
+                              icon: Icon(
+                                Icons.bookmark_outline,
+                                size: sw * 0.05,
+                              ),
                               label: Text(
                                 'Save',
                                 style: TextStyle(
@@ -359,9 +382,14 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                               ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.darkPink,
-                                side: BorderSide(color: AppColors.darkPink, width: 2),
+                                side: BorderSide(
+                                  color: AppColors.darkPink,
+                                  width: 2,
+                                ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(sw * 0.03),
+                                  borderRadius: BorderRadius.circular(
+                                    sw * 0.03,
+                                  ),
                                 ),
                               ),
                             ),
@@ -393,7 +421,9 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.darkPink,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(sw * 0.03),
+                                  borderRadius: BorderRadius.circular(
+                                    sw * 0.03,
+                                  ),
                                 ),
                                 elevation: 0,
                               ),
@@ -441,10 +471,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
           ),
           Text(
             label,
-            style: TextStyle(
-              fontSize: sw * 0.03,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: sw * 0.03, color: Colors.black54),
           ),
         ],
       ),
@@ -470,10 +497,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: sw * 0.04,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: sw * 0.04, color: Colors.black54),
           ),
           Text(
             value,
@@ -494,10 +518,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: sw * 0.035,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontSize: sw * 0.035, color: Colors.black54),
         ),
         Text(
           value,

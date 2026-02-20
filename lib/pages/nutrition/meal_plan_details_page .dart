@@ -119,20 +119,21 @@ class _MealPlanDetailsScreenState extends State<MealPlanDetailsScreen> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              padding: EdgeInsets.all(sw * 0.02),
-              decoration: BoxDecoration(
-                color: AppColors.lightGray,
-                borderRadius: BorderRadius.circular(sw * 0.025),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new,
-                size: sw * 0.05,
-                color: Colors.black87,
-              ),
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            width: sw * 0.09,
+            height: sw * 0.09,
+            decoration: BoxDecoration(
+              color: AppColors.darkPink,
+              borderRadius: BorderRadius.circular(sw * 0.025),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: sw * 0.042,
             ),
           ),
+        ),
           Expanded(
             child: Center(
               child: Text(

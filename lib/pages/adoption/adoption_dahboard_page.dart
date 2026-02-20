@@ -78,15 +78,32 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final double sw = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black, size: 24.sp),
-          onPressed: () => Navigator.pop(context),
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              width: sw * 0.09,
+              height: sw * 0.09,
+              decoration: BoxDecoration(
+                color: AppColors.darkPink,
+                borderRadius: BorderRadius.circular(sw * 0.025),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: sw * 0.042,
+              ),
+            ),
+          ),
         ),
         title: Text(
           'PetConnect',
