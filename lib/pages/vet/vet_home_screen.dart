@@ -40,7 +40,6 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
       body: SingleChildScrollView(
         child: Stack(
           children: [
-            // ── Pink header background block ─────────────────────────────
             Container(
               width: double.infinity,
               height: topPadding + sh * 0.18,
@@ -50,7 +49,6 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header Text ──────────────────────────────────────────
                 Padding(
                   padding: EdgeInsets.only(
                     top: topPadding + sh * 0.025,
@@ -85,7 +83,7 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
                   ),
                 ),
 
-                // ── Search Card ──────────────────────────────────────────
+                // Search Card
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: sw * 0.04),
                   child: Container(
@@ -236,7 +234,7 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
 
                 SizedBox(height: sh * 0.028),
 
-                // ── Quick Actions Label ──────────────────────────────────
+                // Quick Actions Label
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: sw * 0.04),
                   child: Text(
@@ -260,7 +258,9 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
                     iconColor: AppColors.darkPink,
                     title: 'Vaccination Records',
                     subtitle: 'View & manage pet vaccinations',
-                    onTap: () {},
+                    onTap: () {
+                      context.pushNamed('VaccinationsScreen');
+                    },
                     sw: sw,
                     sh: sh,
                   ),
@@ -277,7 +277,9 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
                     iconColor: AppColors.darkPink,
                     title: 'My Appointments',
                     subtitle: 'View upcoming & past visits',
-                    onTap: () {},
+                    onTap: () {
+                      context.pushNamed('MyVetAppointmentScreen');
+                    },
                     sw: sw,
                     sh: sh,
                   ),

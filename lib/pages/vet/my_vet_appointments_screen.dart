@@ -3,14 +3,11 @@ import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 class MyVetAppointmentsScreen extends StatefulWidget {
-  /// Newly booked appointment injected from the booking flow.
-  /// Pass null when navigating here from the home Quick Actions button.
-  final AppointmentModel? newAppointment;
-
-  const MyVetAppointmentsScreen({super.key, this.newAppointment});
+  const MyVetAppointmentsScreen({super.key});
 
   @override
-  State<MyVetAppointmentsScreen> createState() => _MyVetAppointmentsScreenState();
+  State<MyVetAppointmentsScreen> createState() =>
+      _MyVetAppointmentsScreenState();
 }
 
 class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
@@ -29,16 +26,7 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
     _upcoming = [..._mockUpcoming];
     _past = [..._mockPast];
 
-    // Prepend new appointment if coming from booking
-    if (widget.newAppointment != null) {
-      _upcoming.insert(0, widget.newAppointment!);
-      _showSuccessBanner = true;
-
-      // Auto-hide banner after 4 seconds
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) setState(() => _showSuccessBanner = false);
-      });
-    }
+    
   }
 
   @override
@@ -82,8 +70,11 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(sw * 0.025),
                           ),
-                          child: Icon(Icons.arrow_back_ios_new_rounded,
-                              color: Colors.white, size: sw * 0.042),
+                          child: Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Colors.white,
+                            size: sw * 0.042,
+                          ),
                         ),
                       ),
                       SizedBox(width: sw * 0.035),
@@ -125,12 +116,12 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                           if (_upcoming.isNotEmpty)
                             Container(
                               padding: EdgeInsets.symmetric(
-                                  horizontal: sw * 0.018,
-                                  vertical: sh * 0.002),
+                                horizontal: sw * 0.018,
+                                vertical: sh * 0.002,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius:
-                                    BorderRadius.circular(sw * 0.02),
+                                borderRadius: BorderRadius.circular(sw * 0.02),
                               ),
                               child: Text(
                                 '${_upcoming.length}',
@@ -163,8 +154,11 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                     padding: EdgeInsets.symmetric(horizontal: sw * 0.04),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle_rounded,
-                            color: Colors.white, size: sw * 0.046),
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: Colors.white,
+                          size: sw * 0.046,
+                        ),
                         SizedBox(width: sw * 0.03),
                         Expanded(
                           child: Text(
@@ -179,8 +173,11 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                         GestureDetector(
                           onTap: () =>
                               setState(() => _showSuccessBanner = false),
-                          child: Icon(Icons.close_rounded,
-                              color: Colors.white70, size: sw * 0.042),
+                          child: Icon(
+                            Icons.close_rounded,
+                            color: Colors.white70,
+                            size: sw * 0.042,
+                          ),
                         ),
                       ],
                     ),
@@ -215,8 +212,7 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                           isUpcoming: true,
                           sw: sw,
                           sh: sh,
-                          onCancel: () => setState(
-                              () => _upcoming.removeAt(i)),
+                          onCancel: () => setState(() => _upcoming.removeAt(i)),
                         ),
                       ),
 
@@ -409,8 +405,11 @@ class _AppointmentCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.location_on_outlined,
-                    color: AppColors.darkPink, size: sw * 0.036),
+                Icon(
+                  Icons.location_on_outlined,
+                  color: AppColors.darkPink,
+                  size: sw * 0.036,
+                ),
                 SizedBox(width: sw * 0.018),
                 Expanded(
                   child: Text(
@@ -431,7 +430,11 @@ class _AppointmentCard extends StatelessWidget {
           if (isUpcoming)
             Padding(
               padding: EdgeInsets.fromLTRB(
-                  sw * 0.042, 0, sw * 0.042, sw * 0.042),
+                sw * 0.042,
+                0,
+                sw * 0.042,
+                sw * 0.042,
+              ),
               child: Row(
                 children: [
                   // Cancel button
@@ -443,7 +446,9 @@ class _AppointmentCard extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.darkPink,
                           side: const BorderSide(
-                              color: AppColors.darkPink, width: 1.5),
+                            color: AppColors.darkPink,
+                            width: 1.5,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(sw * 0.025),
                           ),
@@ -493,7 +498,11 @@ class _AppointmentCard extends StatelessWidget {
             // Past — just a "Book Again" button
             Padding(
               padding: EdgeInsets.fromLTRB(
-                  sw * 0.042, 0, sw * 0.042, sw * 0.042),
+                sw * 0.042,
+                0,
+                sw * 0.042,
+                sw * 0.042,
+              ),
               child: SizedBox(
                 width: double.infinity,
                 height: sh * 0.052,
@@ -504,7 +513,9 @@ class _AppointmentCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.darkPink,
                     side: const BorderSide(
-                        color: AppColors.darkPink, width: 1.5),
+                      color: AppColors.darkPink,
+                      width: 1.5,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(sw * 0.025),
                     ),
@@ -531,35 +542,43 @@ class _AppointmentCard extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(sw * 0.04)),
+          borderRadius: BorderRadius.circular(sw * 0.04),
+        ),
         title: Text(
           'Cancel Appointment?',
-          style: TextStyle(
-              fontSize: sw * 0.042, fontWeight: FontWeight.w700),
+          style: TextStyle(fontSize: sw * 0.042, fontWeight: FontWeight.w700),
         ),
         content: Text(
           'Are you sure you want to cancel your appointment with ${appointment.vetName}?',
           style: TextStyle(
-              fontSize: sw * 0.036, color: const Color(0xFF666666)),
+            fontSize: sw * 0.036,
+            color: const Color(0xFF666666),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Keep',
-                style: TextStyle(
-                    color: const Color(0xFF888888),
-                    fontSize: sw * 0.036)),
+            child: Text(
+              'Keep',
+              style: TextStyle(
+                color: const Color(0xFF888888),
+                fontSize: sw * 0.036,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               onCancel?.call();
             },
-            child: Text('Yes, Cancel',
-                style: TextStyle(
-                    color: AppColors.darkPink,
-                    fontWeight: FontWeight.w700,
-                    fontSize: sw * 0.036)),
+            child: Text(
+              'Yes, Cancel',
+              style: TextStyle(
+                color: AppColors.darkPink,
+                fontWeight: FontWeight.w700,
+                fontSize: sw * 0.036,
+              ),
+            ),
           ),
         ],
       ),
@@ -573,11 +592,12 @@ class _InfoPill extends StatelessWidget {
   final String label;
   final double sw, sh;
 
-  const _InfoPill(
-      {required this.icon,
-      required this.label,
-      required this.sw,
-      required this.sh});
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+    required this.sw,
+    required this.sh,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -638,8 +658,7 @@ class _EmptyState extends StatelessWidget {
                 color: AppColors.mainColor.withOpacity(0.25),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon,
-                  color: AppColors.darkPink, size: sw * 0.12),
+              child: Icon(icon, color: AppColors.darkPink, size: sw * 0.12),
             ),
             SizedBox(height: sh * 0.024),
             Text(
@@ -673,9 +692,19 @@ String _weekdayShort(int w) =>
     ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][w - 1];
 
 String _monthShort(int m) => [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ][m - 1];
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+][m - 1];
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 final List<AppointmentModel> _mockUpcoming = [

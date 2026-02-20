@@ -240,11 +240,7 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: 'my-appointments',
               name: 'MyVetAppointmentScreen',
-              builder: (context, state) {
-                final appointment = state.extra as AppointmentModel;
-
-                return MyVetAppointmentsScreen(newAppointment: appointment);
-              },
+              builder: (context, state) => MyVetAppointmentsScreen(),
             ),
           ],
         ),
