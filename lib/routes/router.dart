@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
+import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
+import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
@@ -25,6 +27,11 @@ import 'package:pet_owner_mobile/pages/get_started_page.dart';
 import 'package:pet_owner_mobile/pages/login_page.dart';
 import 'package:pet_owner_mobile/pages/signup/personal_info_page.dart';
 import 'package:pet_owner_mobile/pages/splash_page.dart';
+import 'package:pet_owner_mobile/pages/vet/my_vet_appointments_screen.dart';
+import 'package:pet_owner_mobile/pages/vet/vet_booking_screen.dart';
+import 'package:pet_owner_mobile/pages/vet/vet_details_screen.dart';
+import 'package:pet_owner_mobile/pages/vet/vet_home_screen.dart';
+import 'package:pet_owner_mobile/pages/vet/vet_search_result_screen.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
 
@@ -192,6 +199,51 @@ final GoRouter appRouter = GoRouter(
                   petName: extra['petName'] ?? '',
                   petBreed: extra['petBreed'] ?? '',
                 );
+              },
+            ),
+          ],
+        ),
+
+        // Vet Routes
+        GoRoute(
+          path: '/vet',
+          name: 'VetHomeScreen',
+          builder: (context, state) => const VetHomeScreen(),
+          routes: [
+            GoRoute(
+              path: 'search',
+              name: 'VetSearchResultScreen',
+              builder: (context, state) {
+                final location = (state.extra as String?) ?? '';
+
+                return VetSearchResultsScreen(location: location);
+              },
+            ),
+            GoRoute(
+              path: 'vet-details',
+              name: 'VetDetailsScreen',
+              builder: (context, state) {
+                final vet = state.extra as VetModel;
+
+                return VetDetailScreen(vet: vet);
+              },
+            ),
+            GoRoute(
+              path: 'book',
+              name: 'VetBookingScreen',
+              builder: (context, state) {
+                final vet = state.extra as VetModel;
+
+                return VetBookingScreen(vet: vet);
+              },
+            ),
+            GoRoute(
+              path: 'my-appointments',
+              name: 'MyVetAppointmentScreen',
+              builder: (context, state) {
+                final appointment = state.extra as AppointmentModel;
+
+                return MyVetAppointmentsScreen(newAppointment: appointment);
               },
             ),
           ],
