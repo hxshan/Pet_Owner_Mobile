@@ -5,9 +5,13 @@ import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/addressed_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/order_history_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/vouchers_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/wishlist_screen.dart';
 import 'package:pet_owner_mobile/pages/notification_page.dart';
 import 'package:pet_owner_mobile/pages/nutrition/meal_plan_details_page%20.dart';
 import 'package:pet_owner_mobile/pages/nutrition/nutrition_plan_page.dart';
@@ -180,6 +184,26 @@ final GoRouter appRouter = GoRouter(
               path: 'cart',
               name: 'CartScreen',
               builder: (context, state) => const CartScreen(),
+            ),
+            GoRoute(
+              path: 'orders',
+              name: 'OrderHistoryScreen',
+              builder: (context, state) => const OrderHistoryScreen(),
+            ),
+            GoRoute(
+              path: 'addresses',
+              name: 'AddressesScreen',
+              builder: (context, state) => const AddressesScreen(),
+            ),
+            GoRoute(
+              path: 'wishlist',
+              name: 'WishlistScreen',
+              builder: (context, state) => const WishlistScreen(),
+            ),
+            GoRoute(
+              path: 'vouchers',
+              name: 'VouchersScreen',
+              builder: (context, state) => const VouchersScreen(),
             ),
           ],
         ),

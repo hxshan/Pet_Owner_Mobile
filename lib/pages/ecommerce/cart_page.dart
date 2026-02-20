@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/ecommerce/cart_product_item.dart';
 
 class CartScreen extends StatefulWidget {
@@ -78,17 +79,7 @@ class _CartScreenState extends State<CartScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: EdgeInsets.all(sw * 0.02),
-            decoration: BoxDecoration(
-              color: AppColors.lightGray,
-              borderRadius: BorderRadius.circular(sw * 0.03),
-            ),
-            child: Icon(Icons.arrow_back, size: sw * 0.06),
-          ),
-        ),
+        leading: CustomBackButton(),
         title: Text(
           'Shopping Cart',
           style: TextStyle(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -84,22 +85,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: sw * 0.09,
-                        height: sw * 0.09,
-                        decoration: BoxDecoration(
-                          color: AppColors.darkPink,
-                          borderRadius: BorderRadius.circular(sw * 0.025),
-                        ),
-                        child: Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white,
-                          size: sw * 0.042,
-                        ),
-                      ),
-                    ),
+                    CustomBackButton(showPadding: false,),
                     Text(
                       'Product Details',
                       style: TextStyle(
