@@ -19,18 +19,18 @@ class VetDetailScreen extends StatelessWidget {
       backgroundColor: AppColors.lightGray,
       body: Stack(
         children: [
-          // Scrollable content 
+          // Scrollable content
           SingleChildScrollView(
             padding: EdgeInsets.only(bottom: sh * 0.12 + bottomPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero Header 
+                // Hero Header
                 _HeroHeader(vet: vet, sw: sw, sh: sh, topPadding: topPadding),
 
                 SizedBox(height: sh * 0.018),
 
-                // Contact chips 
+                // Contact chips
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: sw * 0.04),
                   child: _ContactRow(vet: vet, sw: sw, sh: sh),
@@ -38,7 +38,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.022),
 
-                // About 
+                // About
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -60,7 +60,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // Gallery 
+                // Gallery
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -126,7 +126,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // Services 
+                // Services
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -142,7 +142,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // Opening Hours 
+                // Opening Hours
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -164,7 +164,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // Reviews 
+                // Reviews
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -179,7 +179,7 @@ class VetDetailScreen extends StatelessWidget {
 
                 SizedBox(height: sh * 0.014),
 
-                // Location 
+                // Location
                 _SectionCard(
                   sw: sw,
                   sh: sh,
@@ -298,7 +298,7 @@ class VetDetailScreen extends StatelessWidget {
             ),
           ),
 
-          // ── Sticky Book Now button
+          // Sticky Book Now button
           Positioned(
             bottom: 0,
             left: 0,
@@ -368,7 +368,7 @@ class VetDetailScreen extends StatelessWidget {
   }
 }
 
-// ── Gallery full-screen viewer ─────────────────────────────────────────────────
+// Gallery full-screen viewer
 class _GalleryViewer extends StatefulWidget {
   final int initialIndex;
   final double sw, sh;
@@ -490,7 +490,7 @@ class _GalleryViewerState extends State<_GalleryViewer> {
   }
 }
 
-// ── Hero Header ───────────────────────────────────────────────────────────────
+// Hero Header
 class _HeroHeader extends StatelessWidget {
   final VetModel vet;
   final double sw, sh, topPadding;
@@ -633,7 +633,7 @@ class _HeroHeader extends StatelessWidget {
   }
 }
 
-// ── Contact row ───────────────────────────────────────────────────────────────
+// Contact row
 class _ContactRow extends StatelessWidget {
   final VetModel vet;
   final double sw, sh;
@@ -728,7 +728,7 @@ class _ContactChip extends StatelessWidget {
   }
 }
 
-// ── Section card wrapper ──────────────────────────────────────────────────────
+// Section card wrapper
 class _SectionCard extends StatelessWidget {
   final double sw, sh;
   final String title;
@@ -787,7 +787,7 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-// ── Service chip ──────────────────────────────────────────────────────────────
+// Service chip
 class _ServiceChip extends StatelessWidget {
   final String label;
   final double sw, sh;
@@ -821,7 +821,7 @@ class _ServiceChip extends StatelessWidget {
   }
 }
 
-// ── Hours row ─────────────────────────────────────────────────────────────────
+// Hours row
 class _HoursRow extends StatelessWidget {
   final String day, hours;
   final bool isToday;
@@ -889,7 +889,7 @@ class _HoursRow extends StatelessWidget {
   }
 }
 
-// ── Rating badge ──────────────────────────────────────────────────────────────
+// Rating badge
 class _RatingBadge extends StatelessWidget {
   final double rating, sw;
 
@@ -919,7 +919,7 @@ class _RatingBadge extends StatelessWidget {
   }
 }
 
-// ── Review tile ───────────────────────────────────────────────────────────────
+// Review tile
 class _ReviewTile extends StatelessWidget {
   final _Review review;
   final double sw, sh;
@@ -1004,7 +1004,7 @@ class _ReviewTile extends StatelessWidget {
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 String _todayName() {
   const days = [
     'Monday',
@@ -1018,7 +1018,7 @@ String _todayName() {
   return days[DateTime.now().weekday - 1];
 }
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
+// Mock data
 class _GalleryItem {
   final IconData icon;
   final String label;
