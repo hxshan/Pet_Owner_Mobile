@@ -273,16 +273,16 @@ class _NavBarShellState extends State<NavBarShell> {
   void _onItemTapped(int index) {
     switch (index) {
       case 0:
-        context.goNamed('DashboardScreen');
+        context.pushNamed('DashboardScreen');
         break;
       case 1:
-        context.goNamed('EcommerceDashboardScreen');
+        context.pushNamed('EcommerceDashboardScreen');
         break;
       case 2:
-        context.goNamed('MyPetsScreen');
+        context.pushNamed('MyPetsScreen');
         break;
       case 3:
-        context.goNamed('ProfileScreen');
+        context.pushNamed('ProfileScreen');
         break;
     }
   }
