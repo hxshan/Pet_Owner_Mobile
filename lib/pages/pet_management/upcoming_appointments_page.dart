@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Appointment_card.dart';
 
 class UpcomingAppointmentsScreen extends StatefulWidget {
@@ -19,14 +20,7 @@ class _MyWidgetState extends State<UpcomingAppointmentsScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black,
-            size: sw * 0.06,
-          ),
-        ),
+        leading: CustomBackButton(),
         title: Text(
           'Upcoming Appointments',
           style: TextStyle(

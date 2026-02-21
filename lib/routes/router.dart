@@ -5,9 +5,13 @@ import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/addressed_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/order_history_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/vouchers_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/wishlist_screen.dart';
 import 'package:pet_owner_mobile/pages/notification_page.dart';
 import 'package:pet_owner_mobile/pages/nutrition/meal_plan_details_page%20.dart';
 import 'package:pet_owner_mobile/pages/nutrition/nutrition_plan_page.dart';
@@ -90,11 +94,7 @@ final GoRouter appRouter = GoRouter(
           name: 'shop',
           builder: (context, state) => const PlaceholderPage(title: 'Shop'),
         ),
-        GoRoute(
-          path: '/my-pets',
-          name: 'MyPetsScreen',
-          builder: (context, state) => const MyPetsScreen(),
-        ),
+
         GoRoute(
           path: '/profile',
           name: 'ProfileScreen',
@@ -106,43 +106,51 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => NotificationsScreen(),
         ),
 
+        // Pet management Routes
         GoRoute(
-          path: '/addpet',
-          name: 'AddPetScreen',
-          builder: (context, state) => AddPetScreen(),
-        ),
-        GoRoute(
-          path: '/petprofile/:petId',
-          name: 'PetProfileScreen',
-          builder: (context, state) {
-            final petId = state.pathParameters['petId']!;
-            return PetProfileScreen(petId: petId);
-          },
-        ),
-        GoRoute(
-          path: '/aichat',
-          name: 'ChatScreen',
-          builder: (context, state) => ChatScreen(),
-        ),
-        GoRoute(
-          path: '/viewallpets',
-          name: 'ViewAllPetsScreen',
-          builder: (context, state) => ViewAllPetsScreen(),
-        ),
-        GoRoute(
-          path: '/upcomingappointments',
-          name: 'UpcomingAppointmentsScreen',
-          builder: (context, state) => UpcomingAppointmentsScreen(),
-        ),
-        GoRoute(
-          path: '/vaccinations',
-          name: 'VaccinationsScreen',
-          builder: (context, state) => VaccinationsScreen(),
-        ),
-        GoRoute(
-          path: '/medicalrecords',
-          name: 'MedicalReportsScreen',
-          builder: (context, state) => MedicalReportsScreen(),
+          path: '/my-pets',
+          name: 'MyPetsScreen',
+          builder: (context, state) => const MyPetsScreen(),
+          routes: [
+            GoRoute(
+              path: '/addpet',
+              name: 'AddPetScreen',
+              builder: (context, state) => AddPetScreen(),
+            ),
+            GoRoute(
+              path: '/petprofile/:petId',
+              name: 'PetProfileScreen',
+              builder: (context, state) {
+                final petId = state.pathParameters['petId']!;
+                return PetProfileScreen(petId: petId);
+              },
+            ),
+            GoRoute(
+              path: '/aichat',
+              name: 'ChatScreen',
+              builder: (context, state) => ChatScreen(),
+            ),
+            GoRoute(
+              path: '/viewallpets',
+              name: 'ViewAllPetsScreen',
+              builder: (context, state) => ViewAllPetsScreen(),
+            ),
+            GoRoute(
+              path: '/upcomingappointments',
+              name: 'UpcomingAppointmentsScreen',
+              builder: (context, state) => UpcomingAppointmentsScreen(),
+            ),
+            GoRoute(
+              path: '/vaccinations',
+              name: 'VaccinationsScreen',
+              builder: (context, state) => VaccinationsScreen(),
+            ),
+            GoRoute(
+              path: '/medicalrecords',
+              name: 'MedicalReportsScreen',
+              builder: (context, state) => MedicalReportsScreen(),
+            ),
+          ],
         ),
 
         // Adoption Routes
@@ -180,6 +188,26 @@ final GoRouter appRouter = GoRouter(
               path: 'cart',
               name: 'CartScreen',
               builder: (context, state) => const CartScreen(),
+            ),
+            GoRoute(
+              path: 'orders',
+              name: 'OrderHistoryScreen',
+              builder: (context, state) => const OrderHistoryScreen(),
+            ),
+            GoRoute(
+              path: 'addresses',
+              name: 'AddressesScreen',
+              builder: (context, state) => const AddressesScreen(),
+            ),
+            GoRoute(
+              path: 'wishlist',
+              name: 'WishlistScreen',
+              builder: (context, state) => const WishlistScreen(),
+            ),
+            GoRoute(
+              path: 'vouchers',
+              name: 'VouchersScreen',
+              builder: (context, state) => const VouchersScreen(),
             ),
           ],
         ),
@@ -273,16 +301,16 @@ class _NavBarShellState extends State<NavBarShell> {
   void _onItemTapped(int index) {
     switch (index) {
       case 0:
-        context.goNamed('DashboardScreen');
+        context.pushNamed('DashboardScreen');
         break;
       case 1:
-        context.goNamed('EcommerceDashboardScreen');
+        context.pushNamed('EcommerceDashboardScreen');
         break;
       case 2:
-        context.goNamed('MyPetsScreen');
+        context.pushNamed('MyPetsScreen');
         break;
       case 3:
-        context.goNamed('ProfileScreen');
+        context.pushNamed('ProfileScreen');
         break;
     }
   }

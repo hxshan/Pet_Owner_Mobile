@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Appointment_card.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Vaccination_card.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/medical_report_card.dart';
@@ -90,14 +91,7 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              GestureDetector(
-                                onTap: () => Navigator.pop(context),
-                                child: Icon(
-                                  Icons.arrow_back_ios,
-                                  size: sw * 0.05,
-                                  color: Colors.black87,
-                                ),
-                              ),
+                              CustomBackButton(showPadding: false,),
                               Row(
                                 children: [
                                   GestureDetector(

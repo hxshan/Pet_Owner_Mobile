@@ -7,10 +7,10 @@ class EcommerceDashboardScreen extends StatefulWidget {
   const EcommerceDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<EcommerceDashboardScreen> createState() => _ShopHomePageState();
+  State<EcommerceDashboardScreen> createState() => _EcommerceDashboardScreenState();
 }
 
-class _ShopHomePageState extends State<EcommerceDashboardScreen> {
+class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
   String selectedCategory = 'All';
   final List<String> categories = ['All', 'Food', 'Toys', 'Accessories', 'Health'];
 
@@ -28,12 +28,18 @@ class _ShopHomePageState extends State<EcommerceDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: sh * 0.02),
+                _buildTopBar(sw, sh),
+                SizedBox(height: sh * 0.02),
                 _buildSearchBar(sw, sh),
                 SizedBox(height: sh * 0.025),
                 _buildPromoBanner(sw, sh),
-                SizedBox(height: sh * 0.03),
+                SizedBox(height: sh * 0.025),
+                _buildAccountQuickLinks(sw, sh),
+                SizedBox(height: sh * 0.025),
                 _buildCategoryFilter(sw, sh),
                 SizedBox(height: sh * 0.025),
+                _buildSectionTitle('Featured Products', sw),
+                SizedBox(height: sh * 0.015),
                 _buildProductGrid(sw, sh),
                 SizedBox(height: sh * 0.02),
               ],
@@ -41,6 +47,69 @@ class _ShopHomePageState extends State<EcommerceDashboardScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTopBar(double sw, double sh) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pet Shop',
+              style: TextStyle(
+                fontSize: sw * 0.055,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              'Everything your pet needs',
+              style: TextStyle(
+                fontSize: sw * 0.032,
+                color: Colors.black45,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => context.pushNamed('CartScreen'),
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(Icons.shopping_bag_outlined, size: sw * 0.065, color: Colors.black87),
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      width: sw * 0.042,
+                      height: sw * 0.042,
+                      decoration: const BoxDecoration(
+                        color: AppColors.darkPink,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '2',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: sw * 0.022,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -71,7 +140,6 @@ class _ShopHomePageState extends State<EcommerceDashboardScreen> {
 
   Widget _buildPromoBanner(double sw, double sh) {
     return Container(
-      // height: sh * 0.18,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.darkPink, AppColors.mainColor],
@@ -129,6 +197,88 @@ class _ShopHomePageState extends State<EcommerceDashboardScreen> {
           ),
           Icon(Icons.shopping_bag, size: sw * 0.15, color: Colors.white.withOpacity(0.3)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAccountQuickLinks(double sw, double sh) {
+    final links = [
+      {
+        'label': 'Orders',
+        'icon': Icons.receipt_long_outlined,
+        'route': 'OrderHistoryScreen',
+        'color': AppColors.darkPink,
+      },
+      {
+        'label': 'Addresses',
+        'icon': Icons.location_on_outlined,
+        'route': 'AddressesScreen',
+        'color': Colors.teal,
+      },
+      {
+        'label': 'Wishlist',
+        'icon': Icons.favorite_outline,
+        'route': 'WishlistScreen',
+        'color': Colors.orange,
+      },
+      {
+        'label': 'Vouchers',
+        'icon': Icons.discount_outlined,
+        'route': 'VouchersScreen',
+        'color': Colors.purple,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('My Account', sw),
+        SizedBox(height: sh * 0.015),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: links.map((link) {
+            return GestureDetector(
+              onTap: () => context.pushNamed(link['route'] as String),
+              child: Column(
+                children: [
+                  Container(
+                    width: sw * 0.155,
+                    height: sw * 0.155,
+                    decoration: BoxDecoration(
+                      color: (link['color'] as Color).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(sw * 0.04),
+                    ),
+                    child: Icon(
+                      link['icon'] as IconData,
+                      color: link['color'] as Color,
+                      size: sw * 0.065,
+                    ),
+                  ),
+                  SizedBox(height: sh * 0.008),
+                  Text(
+                    link['label'] as String,
+                    style: TextStyle(
+                      fontSize: sw * 0.028,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title, double sw) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: sw * 0.045,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
       ),
     );
   }
@@ -218,4 +368,3 @@ class _ShopHomePageState extends State<EcommerceDashboardScreen> {
     );
   }
 }
-

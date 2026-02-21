@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
 
-  const ProductDetailScreen({
-    Key? key,
-    required this.productId,
-  }) : super(key: key);
+  const ProductDetailScreen({Key? key, required this.productId})
+    : super(key: key);
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailPageState();
@@ -24,7 +23,12 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
   late double rating = 4.5;
   late IconData icon = Icons.pets;
   late Color color = Colors.amber;
-  late List<Color> productImages = [Colors.amber, Colors.orange, Colors.amber, Colors.orange];
+  late List<Color> productImages = [
+    Colors.amber,
+    Colors.orange,
+    Colors.amber,
+    Colors.orange,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -74,21 +78,14 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
               right: 0,
               child: Container(
                 color: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: sw * 0.05, vertical: sh * 0.01),
+                padding: EdgeInsets.symmetric(
+                  horizontal: sw * 0.05,
+                  vertical: sh * 0.01,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: EdgeInsets.all(sw * 0.02),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightGray,
-                          borderRadius: BorderRadius.circular(sw * 0.03),
-                        ),
-                        child: Icon(Icons.arrow_back, size: sw * 0.06),
-                      ),
-                    ),
+                    CustomBackButton(showPadding: false,),
                     Text(
                       'Product Details',
                       style: TextStyle(
@@ -111,7 +108,9 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                         child: Icon(
                           isFavorite ? Icons.favorite : Icons.favorite_border,
                           size: sw * 0.06,
-                          color: isFavorite ? AppColors.darkPink : Colors.black38,
+                          color: isFavorite
+                              ? AppColors.darkPink
+                              : Colors.black38,
                         ),
                       ),
                     ),
@@ -169,7 +168,9 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
               width: selectedImageIndex == index ? sw * 0.04 : sw * 0.025,
               height: sw * 0.025,
               decoration: BoxDecoration(
-                color: selectedImageIndex == index ? AppColors.darkPink : Colors.black12,
+                color: selectedImageIndex == index
+                    ? AppColors.darkPink
+                    : Colors.black12,
                 borderRadius: BorderRadius.circular(sw * 0.025),
               ),
             ),
@@ -194,10 +195,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
         SizedBox(height: sh * 0.005),
         Text(
           'Premium Quality Pet Product',
-          style: TextStyle(
-            fontSize: sw * 0.032,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontSize: sw * 0.032, color: Colors.black54),
         ),
       ],
     );
@@ -210,14 +208,21 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
         Row(
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: sw * 0.03, vertical: sh * 0.006),
+              padding: EdgeInsets.symmetric(
+                horizontal: sw * 0.03,
+                vertical: sh * 0.006,
+              ),
               decoration: BoxDecoration(
                 color: Colors.amber.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(sw * 0.02),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.star_rounded, size: sw * 0.04, color: Colors.amber),
+                  Icon(
+                    Icons.star_rounded,
+                    size: sw * 0.04,
+                    color: Colors.amber,
+                  ),
                   SizedBox(width: sw * 0.01),
                   Text(
                     '${rating}',
@@ -233,22 +238,26 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
             SizedBox(width: sw * 0.03),
             Text(
               '(256 reviews)',
-              style: TextStyle(
-                fontSize: sw * 0.03,
-                color: Colors.black54,
-              ),
+              style: TextStyle(fontSize: sw * 0.03, color: Colors.black54),
             ),
           ],
         ),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: sw * 0.03, vertical: sh * 0.006),
+          padding: EdgeInsets.symmetric(
+            horizontal: sw * 0.03,
+            vertical: sh * 0.006,
+          ),
           decoration: BoxDecoration(
             color: Colors.green.withOpacity(0.15),
             borderRadius: BorderRadius.circular(sw * 0.02),
           ),
           child: Row(
             children: [
-              Icon(Icons.local_shipping_outlined, size: sw * 0.04, color: Colors.green),
+              Icon(
+                Icons.local_shipping_outlined,
+                size: sw * 0.04,
+                color: Colors.green,
+              ),
               SizedBox(width: sw * 0.01),
               Text(
                 'Free Shipping',
@@ -280,10 +289,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
             children: [
               Text(
                 'Price',
-                style: TextStyle(
-                  fontSize: sw * 0.03,
-                  color: Colors.black54,
-                ),
+                style: TextStyle(fontSize: sw * 0.03, color: Colors.black54),
               ),
               SizedBox(height: sh * 0.005),
               Row(
@@ -310,7 +316,10 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
             ],
           ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: sw * 0.03, vertical: sh * 0.008),
+            padding: EdgeInsets.symmetric(
+              horizontal: sw * 0.03,
+              vertical: sh * 0.008,
+            ),
             decoration: BoxDecoration(
               color: Colors.red.withOpacity(0.15),
               borderRadius: BorderRadius.circular(sw * 0.02),
@@ -438,16 +447,40 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
           ],
         ),
         SizedBox(height: sh * 0.015),
-        _buildReviewCard(sw, sh, 'John Doe', 'Amazing product! My dog loves it.', 5.0),
+        _buildReviewCard(
+          sw,
+          sh,
+          'John Doe',
+          'Amazing product! My dog loves it.',
+          5.0,
+        ),
         SizedBox(height: sh * 0.012),
-        _buildReviewCard(sw, sh, 'Sarah Smith', 'Great quality and fast delivery.', 4.5),
+        _buildReviewCard(
+          sw,
+          sh,
+          'Sarah Smith',
+          'Great quality and fast delivery.',
+          4.5,
+        ),
         SizedBox(height: sh * 0.012),
-        _buildReviewCard(sw, sh, 'Mike Johnson', 'Excellent value for money!', 4.8),
+        _buildReviewCard(
+          sw,
+          sh,
+          'Mike Johnson',
+          'Excellent value for money!',
+          4.8,
+        ),
       ],
     );
   }
 
-  Widget _buildReviewCard(double sw, double sh, String name, String review, double rating) {
+  Widget _buildReviewCard(
+    double sw,
+    double sh,
+    String name,
+    String review,
+    double rating,
+  ) {
     return Container(
       padding: EdgeInsets.all(sw * 0.03),
       decoration: BoxDecoration(
@@ -474,7 +507,9 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                   (index) => Icon(
                     Icons.star_rounded,
                     size: sw * 0.03,
-                    color: index < rating.toInt() ? Colors.amber : Colors.black12,
+                    color: index < rating.toInt()
+                        ? Colors.amber
+                        : Colors.black12,
                   ),
                 ),
               ),
@@ -512,7 +547,10 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
         children: [
           // Quantity Selector
           Container(
-            padding: EdgeInsets.symmetric(horizontal: sw * 0.04, vertical: sh * 0.008),
+            padding: EdgeInsets.symmetric(
+              horizontal: sw * 0.04,
+              vertical: sh * 0.008,
+            ),
             decoration: BoxDecoration(
               color: AppColors.lightGray,
               borderRadius: BorderRadius.circular(sw * 0.025),

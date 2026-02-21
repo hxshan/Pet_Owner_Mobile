@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/nutrition/meal_plan_card.dart';
 
 class NutritionPlanScreen extends StatefulWidget {
@@ -41,14 +42,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black87,
-            size: sw * 0.05,
-          ),
-          onPressed: () => context.pop(),
-        ),
+        leading: CustomBackButton(),
         title: Text(
           'Nutrition Plans',
           style: TextStyle(
@@ -95,7 +89,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                                   bgColor: plan['bgColor'],
                                   onTap: () {
                                     // Navigate to meal plan details
-                                    context.goNamed(
+                                    context.pushNamed(
                                       'NutritionPlanDetailsScreen',
                                       extra: {
                                         'petName': plan['petName'],

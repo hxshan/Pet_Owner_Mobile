@@ -55,7 +55,7 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
       backgroundColor: AppColors.lightGray,
       body: Column(
         children: [
-          // ── Header ────────────────────────────────────────────────────
+          // Header
           Container(
             width: double.infinity,
             color: AppColors.darkPink,
