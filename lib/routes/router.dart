@@ -5,6 +5,8 @@ import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/CheckoutScreen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/OrderSuccessScreen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/addressed_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
@@ -208,6 +210,19 @@ final GoRouter appRouter = GoRouter(
               path: 'vouchers',
               name: 'VouchersScreen',
               builder: (context, state) => const VouchersScreen(),
+            ),
+            GoRoute(
+              name: 'CheckoutScreen',
+              path: '/checkout',
+              builder: (context, state) => const CheckoutScreen(),
+            ),
+            GoRoute(
+              name: 'OrderSuccessScreen',
+              path: '/order-success',
+              builder: (context, state) {
+                final orderId = state.extra as String;
+                return OrderSuccessScreen(orderId: orderId);
+              },
             ),
           ],
         ),
