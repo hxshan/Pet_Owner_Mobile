@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
+import 'package:pet_owner_mobile/services/ecommerce_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
@@ -16,6 +18,15 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
   int quantity = 1;
   bool isFavorite = false;
   int selectedImageIndex = 0;
+
+  late Future<Product> _productFuture;
+  final _service = EcommerceService();
+
+  @override
+  void initState() {
+    super.initState();
+    _productFuture = _service.getProductById(widget.productId);
+  }
 
   // Placeholder data - will be replaced with API data
   late String productName = 'Premium Dog Food';
@@ -37,95 +48,111 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Image Gallery Section
-                  _buildImageGallery(sw, sh),
-                  SizedBox(height: sh * 0.02),
+        child: FutureBuilder<Product>(
+          future: _productFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-                  // Product Info Section
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildProductHeader(sw, sh),
-                        SizedBox(height: sh * 0.015),
-                        _buildRatingSection(sw, sh),
-                        SizedBox(height: sh * 0.02),
-                        _buildPriceSection(sw, sh),
-                        SizedBox(height: sh * 0.025),
-                        _buildDescriptionSection(sw, sh),
-                        SizedBox(height: sh * 0.025),
-                        _buildSpecificationsSection(sw, sh),
-                        SizedBox(height: sh * 0.025),
-                        _buildReviewsSection(sw, sh),
-                        SizedBox(height: sh * 0.02),
-                      ],
-                    ),
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error loading product: ${snapshot.error}'),
+              );
+            }
+
+            final product = snapshot.data!;
+
+            return Stack(
+              children: [
+                SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildImageGallery(sw, sh, product),
+                      SizedBox(height: sh * 0.02),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildProductHeader(sw, sh, product),
+                            SizedBox(height: sh * 0.015),
+                            _buildRatingSection(sw, sh, product),
+                            SizedBox(height: sh * 0.02),
+                            _buildPriceSection(sw, sh, product),
+                            SizedBox(height: sh * 0.025),
+                            _buildDescriptionSection(sw, sh, product),
+                            // specs + reviews can stay static for now or map from backend later
+                            SizedBox(height: sh * 0.025),
+                            // _buildSpecificationsSection(sw, sh),
+                            // SizedBox(height: sh * 0.025),
+                            _buildReviewsSection(sw, sh),
+                            SizedBox(height: sh * 0.02),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            // Header with Back Button
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                color: Colors.white,
-                padding: EdgeInsets.symmetric(
-                  horizontal: sw * 0.05,
-                  vertical: sh * 0.01,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CustomBackButton(showPadding: false,),
-                    Text(
-                      'Product Details',
-                      style: TextStyle(
-                        fontSize: sw * 0.045,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isFavorite = !isFavorite;
-                        });
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(sw * 0.02),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightGray,
-                          borderRadius: BorderRadius.circular(sw * 0.03),
-                        ),
-                        child: Icon(
-                          isFavorite ? Icons.favorite : Icons.favorite_border,
-                          size: sw * 0.06,
-                          color: isFavorite
-                              ? AppColors.darkPink
-                              : Colors.black38,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+                _buildHeader(sw, sh),
+              ],
+            );
+          },
         ),
       ),
       bottomNavigationBar: _buildBottomActionBar(sw, sh),
     );
   }
 
-  Widget _buildImageGallery(double sw, double sh) {
+  Widget _buildHeader(double sw, double sh) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        color: Colors.white,
+        padding: EdgeInsets.symmetric(
+          horizontal: sw * 0.05,
+          vertical: sh * 0.01,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            CustomBackButton(showPadding: false),
+            Text(
+              'Product Details',
+              style: TextStyle(
+                fontSize: sw * 0.045,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            GestureDetector(
+              onTap: () => setState(() => isFavorite = !isFavorite),
+              child: Container(
+                padding: EdgeInsets.all(sw * 0.02),
+                decoration: BoxDecoration(
+                  color: AppColors.lightGray,
+                  borderRadius: BorderRadius.circular(sw * 0.03),
+                ),
+                child: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  size: sw * 0.06,
+                  color: isFavorite ? AppColors.darkPink : Colors.black38,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageGallery(double sw, double sh, Product product) {
+    final images = product.images.isNotEmpty
+        ? product.images
+        : ['']; // fallback
+
     return Column(
       children: [
         SizedBox(height: sh * 0.065),
@@ -133,36 +160,53 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
           height: sh * 0.35,
           color: Colors.white,
           child: PageView.builder(
-            onPageChanged: (index) {
-              setState(() {
-                selectedImageIndex = index;
-              });
-            },
-            itemCount: productImages.length,
+            onPageChanged: (index) =>
+                setState(() => selectedImageIndex = index),
+            itemCount: images.length,
             itemBuilder: (context, index) {
+              final url = images[index];
+
               return Container(
                 margin: EdgeInsets.symmetric(horizontal: sw * 0.05),
                 decoration: BoxDecoration(
-                  color: productImages[index].withOpacity(0.2),
+                  color: AppColors.lightGray,
                   borderRadius: BorderRadius.circular(sw * 0.04),
                 ),
-                child: Center(
-                  child: Icon(
-                    icon,
-                    size: sw * 0.3,
-                    color: productImages[index],
-                  ),
-                ),
+                clipBehavior: Clip.antiAlias,
+                child: url.isEmpty
+                    ? Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: sw * 0.2,
+                          color: Colors.black26,
+                        ),
+                      )
+                    : Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            size: sw * 0.2,
+                            color: Colors.black26,
+                          ),
+                        ),
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                      ),
               );
             },
           ),
         ),
         SizedBox(height: sh * 0.015),
-        // Image Indicators
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            productImages.length,
+            images.length,
             (index) => Container(
               margin: EdgeInsets.symmetric(horizontal: sw * 0.015),
               width: selectedImageIndex == index ? sw * 0.04 : sw * 0.025,
@@ -180,12 +224,12 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildProductHeader(double sw, double sh) {
+  Widget _buildProductHeader(double sw, double sh, Product product) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          productName,
+          product.name,
           style: TextStyle(
             fontSize: sw * 0.055,
             fontWeight: FontWeight.bold,
@@ -194,14 +238,24 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
         ),
         SizedBox(height: sh * 0.005),
         Text(
-          'Premium Quality Pet Product',
+          product.category ?? 'Premium Quality Pet Product',
           style: TextStyle(fontSize: sw * 0.032, color: Colors.black54),
         ),
+        if (product.storeName != null) ...[
+          SizedBox(height: sh * 0.006),
+          Text(
+            'Sold by ${product.storeName}${product.storeLocation != null ? " • ${product.storeLocation}" : ""}',
+            style: TextStyle(fontSize: sw * 0.03, color: Colors.black45),
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildRatingSection(double sw, double sh) {
+  Widget _buildRatingSection(double sw, double sh, Product product) {
+    final rating = product.rating ?? 0.0;
+    final reviewCount = product.reviewCount ?? 0;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -225,7 +279,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                   ),
                   SizedBox(width: sw * 0.01),
                   Text(
-                    '${rating}',
+                    rating == 0 ? 'N/A' : rating.toStringAsFixed(1),
                     style: TextStyle(
                       fontSize: sw * 0.03,
                       fontWeight: FontWeight.w600,
@@ -237,7 +291,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
             ),
             SizedBox(width: sw * 0.03),
             Text(
-              '(256 reviews)',
+              reviewCount == 0 ? '(No reviews)' : '($reviewCount reviews)',
               style: TextStyle(fontSize: sw * 0.03, color: Colors.black54),
             ),
           ],
@@ -274,7 +328,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildPriceSection(double sw, double sh) {
+  Widget _buildPriceSection(double sw, double sh, Product product) {
     return Container(
       padding: EdgeInsets.all(sw * 0.04),
       decoration: BoxDecoration(
@@ -292,53 +346,22 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                 style: TextStyle(fontSize: sw * 0.03, color: Colors.black54),
               ),
               SizedBox(height: sh * 0.005),
-              Row(
-                children: [
-                  Text(
-                    productPrice,
-                    style: TextStyle(
-                      fontSize: sw * 0.055,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.darkPink,
-                    ),
-                  ),
-                  SizedBox(width: sw * 0.02),
-                  Text(
-                    '\$89.99',
-                    style: TextStyle(
-                      fontSize: sw * 0.032,
-                      color: Colors.black38,
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                ],
+              Text(
+                'LKR ${product.price.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: sw * 0.055,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkPink,
+                ),
               ),
             ],
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: sw * 0.03,
-              vertical: sh * 0.008,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(sw * 0.02),
-            ),
-            child: Text(
-              '-45%',
-              style: TextStyle(
-                fontSize: sw * 0.034,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDescriptionSection(double sw, double sh) {
+  Widget _buildDescriptionSection(double sw, double sh, Product product) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,7 +375,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
         ),
         SizedBox(height: sh * 0.01),
         Text(
-          'Premium pet food crafted with high-quality ingredients to provide optimal nutrition for your beloved pet. Contains essential vitamins and minerals for a healthy coat, strong immunity, and overall wellness. Perfect for daily feeding with a delicious taste your pet will love.',
+          product.description ?? 'No description available.',
           style: TextStyle(
             fontSize: sw * 0.032,
             color: Colors.black54,

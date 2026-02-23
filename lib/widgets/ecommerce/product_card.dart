@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 class ProductCard extends StatefulWidget {
   final String name;
   final String price;
   final double rating;
-  final IconData icon;
+  final String imageUrl;   // 🔥 changed from IconData
   final Color color;
   final double sw;
   final double sh;
@@ -16,7 +15,7 @@ class ProductCard extends StatefulWidget {
     required this.name,
     required this.price,
     required this.rating,
-    required this.icon,
+    required this.imageUrl,
     required this.color,
     required this.sw,
     required this.sh,
@@ -46,12 +45,12 @@ class _ProductCardState extends State<ProductCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product Image Container
+          // 🔥 Product Image Container
           Container(
             height: widget.sh * 0.15,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: widget.color.withOpacity(0.2),
+              color: widget.color.withOpacity(0.1),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(widget.sw * 0.04),
                 topRight: Radius.circular(widget.sw * 0.04),
@@ -59,13 +58,30 @@ class _ProductCardState extends State<ProductCard> {
             ),
             child: Stack(
               children: [
-                Center(
-                  child: Icon(
-                    widget.icon,
-                    size: widget.sw * 0.12,
-                    color: widget.color,
+                // Product Image
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(widget.sw * 0.04),
+                    topRight: Radius.circular(widget.sw * 0.04),
+                  ),
+                  child: Image.network(
+                    widget.imageUrl,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: widget.sw * 0.1,
+                          color: Colors.grey,
+                        ),
+                      );
+                    },
                   ),
                 ),
+
+                // Favorite Button
                 Positioned(
                   top: widget.sw * 0.02,
                   right: widget.sw * 0.02,
@@ -88,7 +104,9 @@ class _ProductCardState extends State<ProductCard> {
                         ],
                       ),
                       child: Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
                         size: widget.sw * 0.05,
                         color: isFavorite
                             ? AppColors.darkPink
@@ -100,6 +118,7 @@ class _ProductCardState extends State<ProductCard> {
               ],
             ),
           ),
+
           // Product Details
           Expanded(
             child: Padding(
@@ -118,6 +137,7 @@ class _ProductCardState extends State<ProductCard> {
                     ),
                   ),
                   SizedBox(height: widget.sh * 0.005),
+
                   // Rating
                   Row(
                     children: [
@@ -137,10 +157,13 @@ class _ProductCardState extends State<ProductCard> {
                       ),
                     ],
                   ),
+
                   const Spacer(),
-                  // Price and Add Button
+
+                  // Price + Add Button
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         widget.price,
