@@ -177,7 +177,7 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const EcommerceDashboardScreen(),
           routes: [
             GoRoute(
-              path: 'product-detail',
+              path: 'product-detail/:productId',
               name: 'ProductDetailScreen',
               builder: (context, state) {
                 final productId = state.pathParameters['productId'] ?? '';

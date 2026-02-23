@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
+import 'package:pet_owner_mobile/services/ecommerce_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/ecommerce/product_card.dart';
 
@@ -7,12 +9,55 @@ class EcommerceDashboardScreen extends StatefulWidget {
   const EcommerceDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<EcommerceDashboardScreen> createState() => _EcommerceDashboardScreenState();
+  State<EcommerceDashboardScreen> createState() =>
+      _EcommerceDashboardScreenState();
 }
 
 class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
   String selectedCategory = 'All';
-  final List<String> categories = ['All', 'Food', 'Toys', 'Accessories', 'Health'];
+  final List<String> categories = [
+    'All',
+    'Food',
+    'Toys',
+    'Accessories',
+    'Health',
+  ];
+
+  final _service = EcommerceService();
+  late Future<List<Product>> _productsFuture;
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _productsFuture = _fetchProducts();
+  }
+
+  Future<List<Product>> _fetchProducts() async {
+    final data = await _service.listProducts(
+      search: _searchCtrl.text,
+      category: selectedCategory,
+      page: 1,
+      limit: 20,
+    );
+
+    final list = (data['products'] as List? ?? []);
+    return list
+        .map((e) => Product.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  void _refreshProducts() {
+    setState(() {
+      _productsFuture = _fetchProducts();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,10 +112,7 @@ class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
             ),
             Text(
               'Everything your pet needs',
-              style: TextStyle(
-                fontSize: sw * 0.032,
-                color: Colors.black45,
-              ),
+              style: TextStyle(fontSize: sw * 0.032, color: Colors.black45),
             ),
           ],
         ),
@@ -81,7 +123,11 @@ class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
               icon: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Icon(Icons.shopping_bag_outlined, size: sw * 0.065, color: Colors.black87),
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: sw * 0.065,
+                    color: Colors.black87,
+                  ),
                   Positioned(
                     right: -4,
                     top: -4,
@@ -126,10 +172,16 @@ class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
           SizedBox(width: sw * 0.02),
           Expanded(
             child: TextField(
+              controller: _searchCtrl,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _refreshProducts(),
               decoration: InputDecoration(
                 hintText: 'Search products...',
                 border: InputBorder.none,
-                hintStyle: TextStyle(color: Colors.black38, fontSize: sw * 0.035),
+                hintStyle: TextStyle(
+                  color: Colors.black38,
+                  fontSize: sw * 0.035,
+                ),
               ),
             ),
           ),
@@ -189,13 +241,20 @@ class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
                   ),
                   child: Text(
                     'Shop Now',
-                    style: TextStyle(fontSize: sw * 0.03, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: sw * 0.03,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.shopping_bag, size: sw * 0.15, color: Colors.white.withOpacity(0.3)),
+          Icon(
+            Icons.shopping_bag,
+            size: sw * 0.15,
+            color: Colors.white.withOpacity(0.3),
+          ),
         ],
       ),
     );
@@ -298,6 +357,7 @@ class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
               onTap: () {
                 setState(() {
                   selectedCategory = category;
+                  _productsFuture = _fetchProducts();
                 });
               },
               child: Container(
@@ -329,40 +389,64 @@ class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
   }
 
   Widget _buildProductGrid(double sw, double sh) {
-    final products = [
-      {'name': 'Premium Dog Food', 'price': '\$45.99', 'rating': 4.5, 'image': Icons.pets, 'color': Colors.amber},
-      {'name': 'Cat Toy Set', 'price': '\$12.99', 'rating': 4.8, 'image': Icons.sports_soccer, 'color': Colors.purple},
-      {'name': 'Dog Leash', 'price': '\$18.50', 'rating': 4.3, 'image': Icons.link, 'color': Colors.brown},
-      {'name': 'Pet Bed', 'price': '\$65.00', 'rating': 4.6, 'image': Icons.bed, 'color': Colors.teal},
-      {'name': 'Grooming Kit', 'price': '\$34.99', 'rating': 4.7, 'image': Icons.content_cut, 'color': Colors.pink},
-      {'name': 'Water Bowl', 'price': '\$22.00', 'rating': 4.4, 'image': Icons.local_drink, 'color': Colors.blue},
-    ];
+    return FutureBuilder<List<Product>>(
+      future: _productsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: sw * 0.04,
-        mainAxisSpacing: sh * 0.02,
-        childAspectRatio: 0.75,
-      ),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        return GestureDetector(
-          onTap: () {
-            context.pushNamed('ProductDetailScreen');
-          },
-          child: ProductCard(
-            name: product['name'] as String,
-            price: product['price'] as String,
-            rating: product['rating'] as double,
-            icon: product['image'] as IconData,
-            color: product['color'] as Color,
-            sw: sw,
-            sh: sh,
+        if (snapshot.hasError) {
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('Error loading products: ${snapshot.error}'),
+          );
+        }
+
+        final products = snapshot.data ?? [];
+        if (products.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text('No products found.'),
+          );
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: sw * 0.04,
+            mainAxisSpacing: sh * 0.02,
+            childAspectRatio: 0.75,
           ),
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            final p = products[index];
+
+            return GestureDetector(
+              onTap: () {
+                context.pushNamed(
+                  'ProductDetailScreen',
+                  pathParameters: {'productId': p.id},
+                );
+              },
+              child: ProductCard(
+                name: p.name,
+                price: 'LKR ${p.price.toStringAsFixed(2)}',
+                rating: p.rating ?? 4.5,
+                imageUrl: p.images[0],
+                color: AppColors.darkPink.withOpacity(0.15),
+                sw: sw,
+                sh: sh,
+              ),
+            );
+          },
         );
       },
     );
