@@ -106,4 +106,36 @@ class EcommerceService {
       options: Options(extra: {'requiresAuth': true}),
     );
   }
+
+  // Orders
+  // ADDRESSES
+  Future<List<Map<String, dynamic>>> listMyAddresses() async {
+    final res = await _dio.get(
+      '/ecommerce/addresses',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+    final list = (res.data['addresses'] as List?) ?? [];
+    return List<Map<String, dynamic>>.from(list);
+  }
+
+  // ORDERS
+  Future<Map<String, dynamic>> createOrder({
+    required String addressId,
+    String paymentMethod = 'COD',
+    String note = '',
+  }) async {
+    final res = await _dio.post(
+      '/ecommerce/orders',
+      data: {
+        'addressId': addressId,
+        'paymentMethod': paymentMethod,
+        'note': note,
+      },
+      options: Options(
+        contentType: 'application/json',
+        extra: {'requiresAuth': true},
+      ),
+    );
+    return Map<String, dynamic>.from(res.data['order']);
+  }
 }

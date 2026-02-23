@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/ecommerce/cart_item_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/cart_model.dart';
 import 'package:pet_owner_mobile/services/ecommerce_service.dart';
@@ -345,7 +346,9 @@ class _CartScreenState extends State<CartScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                context.pushNamed('CheckoutScreen');
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.darkPink,
                 padding: EdgeInsets.symmetric(vertical: sh * 0.018),

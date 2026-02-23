@@ -19,6 +19,21 @@ class CartProductItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color color = (product['color'] as Color?) ?? AppColors.darkPink;
+    final IconData fallbackIcon =
+        (product['image'] as IconData?) ?? Icons.shopping_bag_outlined;
+
+    final String name = (product['name'] ?? '').toString();
+    final double price = (product['price'] is num)
+        ? (product['price'] as num).toDouble()
+        : 0.0;
+
+    final int qty = (product['quantity'] is num)
+        ? (product['quantity'] as num).toInt()
+        : 1;
+
+    final String? imageUrl = product['imageUrl']?.toString();
+
     return Container(
       margin: EdgeInsets.only(bottom: sh * 0.02),
       padding: EdgeInsets.all(sw * 0.03),
@@ -29,28 +44,49 @@ class CartProductItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Product Image
+          // Product Image (Network if available, otherwise Icon)
           Container(
             width: sw * 0.22,
             height: sw * 0.22,
             decoration: BoxDecoration(
-              color: (product['color'] as Color).withOpacity(0.2),
+              color: color.withOpacity(0.2),
               borderRadius: BorderRadius.circular(sw * 0.02),
             ),
-            child: Icon(
-              product['image'] as IconData,
-              size: sw * 0.1,
-              color: product['color'] as Color,
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: (imageUrl != null && imageUrl.isNotEmpty)
+                ? Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        size: sw * 0.08,
+                        color: Colors.black26,
+                      ),
+                    ),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
+                  )
+                : Center(
+                    child: Icon(
+                      fallbackIcon,
+                      size: sw * 0.1,
+                      color: color,
+                    ),
+                  ),
           ),
+
           SizedBox(width: sw * 0.03),
+
           // Product Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product['name'] as String,
+                  name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -61,7 +97,7 @@ class CartProductItem extends StatelessWidget {
                 ),
                 SizedBox(height: sh * 0.008),
                 Text(
-                  '\$${(product['price'] as double).toStringAsFixed(2)}',
+                  'LKR ${price.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: sw * 0.032,
                     fontWeight: FontWeight.bold,
@@ -69,6 +105,7 @@ class CartProductItem extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: sh * 0.01),
+
                 // Quantity Selector
                 Container(
                   padding: EdgeInsets.symmetric(
@@ -84,9 +121,7 @@ class CartProductItem extends StatelessWidget {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          if ((product['quantity'] as int) > 1) {
-                            onQuantityChanged((product['quantity'] as int) - 1);
-                          }
+                          if (qty > 1) onQuantityChanged(qty - 1);
                         },
                         child: Icon(
                           Icons.remove,
@@ -96,7 +131,7 @@ class CartProductItem extends StatelessWidget {
                       ),
                       SizedBox(width: sw * 0.02),
                       Text(
-                        '${product['quantity']}',
+                        '$qty',
                         style: TextStyle(
                           fontSize: sw * 0.03,
                           fontWeight: FontWeight.w600,
@@ -105,8 +140,7 @@ class CartProductItem extends StatelessWidget {
                       ),
                       SizedBox(width: sw * 0.02),
                       GestureDetector(
-                        onTap: () =>
-                            onQuantityChanged((product['quantity'] as int) + 1),
+                        onTap: () => onQuantityChanged(qty + 1),
                         child: Icon(
                           Icons.add,
                           size: sw * 0.04,
@@ -119,7 +153,9 @@ class CartProductItem extends StatelessWidget {
               ],
             ),
           ),
+
           SizedBox(width: sw * 0.02),
+
           // Delete Button
           GestureDetector(
             onTap: onRemove,
