@@ -39,7 +39,7 @@ class Product {
     return Product(
       id: (json['_id'] ?? json['id'] ?? '').toString(),
       name: (json['name'] ?? '').toString(),
-      price: (json['price'] is num) ? (json['price'] as num).toDouble() : 0.0,
+      price: (json['priceCents'] is num) ? (json['priceCents'] as num).toDouble() : 0.0,
       category: json['category']?.toString(),
       description: json['description']?.toString(),
       images: images,

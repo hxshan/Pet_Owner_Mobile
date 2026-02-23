@@ -15,12 +15,13 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailPageState extends State<ProductDetailScreen> {
+  late Future<Product> _productFuture;
+  final _service = EcommerceService();
+
   int quantity = 1;
   bool isFavorite = false;
   int selectedImageIndex = 0;
-
-  late Future<Product> _productFuture;
-  final _service = EcommerceService();
+  bool _addingToCart = false;
 
   @override
   void initState() {
@@ -28,7 +29,6 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     _productFuture = _service.getProductById(widget.productId);
   }
 
-  // Placeholder data - will be replaced with API data
   late String productName = 'Premium Dog Food';
   late String productPrice = '\$45.99';
   late double rating = 4.5;
@@ -40,6 +40,25 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     Colors.amber,
     Colors.orange,
   ];
+
+  Future<void> _handleAddToCart() async {
+    setState(() => _addingToCart = true);
+    try {
+      await _service.addToCart(productId: widget.productId, qty: quantity);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Added to cart')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+    } finally {
+      if (mounted) setState(() => _addingToCart = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -642,7 +661,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: _addingToCart ? null : _handleAddToCart,
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.darkPink, width: 2),
                     padding: EdgeInsets.symmetric(vertical: sh * 0.018),
@@ -650,14 +669,22 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       borderRadius: BorderRadius.circular(sw * 0.03),
                     ),
                   ),
-                  child: Text(
-                    'Add to Cart',
-                    style: TextStyle(
-                      fontSize: sw * 0.04,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.darkPink,
-                    ),
-                  ),
+                  child: _addingToCart
+                      ? SizedBox(
+                          height: sw * 0.045,
+                          width: sw * 0.045,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Add to Cart',
+                          style: TextStyle(
+                            fontSize: sw * 0.04,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.darkPink,
+                          ),
+                        ),
                 ),
               ),
               SizedBox(width: sw * 0.03),

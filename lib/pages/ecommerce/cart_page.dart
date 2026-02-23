@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pet_owner_mobile/models/ecommerce/cart_item_model.dart';
+import 'package:pet_owner_mobile/models/ecommerce/cart_model.dart';
+import 'package:pet_owner_mobile/services/ecommerce_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/ecommerce/cart_product_item.dart';
@@ -11,62 +14,86 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  // Placeholder cart items - will be replaced with actual data
-  List<Map<String, dynamic>> cartItems = [
-    {
-      'id': '1',
-      'name': 'Premium Dog Food',
-      'price': 45.99,
-      'quantity': 2,
-      'image': Icons.pets,
-      'color': Colors.amber,
-    },
-    {
-      'id': '2',
-      'name': 'Cat Toy Set',
-      'price': 12.99,
-      'quantity': 1,
-      'image': Icons.sports_soccer,
-      'color': Colors.purple,
-    },
-    {
-      'id': '3',
-      'name': 'Dog Leash',
-      'price': 18.50,
-      'quantity': 3,
-      'image': Icons.link,
-      'color': Colors.brown,
-    },
-  ];
+  final _service = EcommerceService();
+  late Future<Cart> _cartFuture;
 
-  double get subtotal {
-    return cartItems.fold(
-      0,
-      (sum, item) =>
-          sum + (item['price'] as double) * (item['quantity'] as int),
-    );
-  }
+  // local state for optimistic updates
+  Cart? _localCart;
+  bool _initialLoading = true;
 
-  double get tax {
-    return subtotal * 0.1; // 10% tax
-  }
-
-  double get total {
-    return subtotal + tax;
-  }
-
-  void _removeItem(int index) {
-    setState(() {
-      cartItems.removeAt(index);
+  @override
+  void initState() {
+    super.initState();
+    _cartFuture = _service.getMyCart().then((cart) {
+      if (mounted) {
+        setState(() {
+          _localCart = cart;
+          _initialLoading = false;
+        });
+      }
+      return cart;
     });
   }
 
-  void _updateQuantity(int index, int newQuantity) {
-    if (newQuantity > 0) {
-      setState(() {
-        cartItems[index]['quantity'] = newQuantity;
+  // Kept intact
+  void _refresh() {
+    setState(() {
+      _cartFuture = _service.getMyCart().then((cart) {
+        if (mounted) setState(() => _localCart = cart);
+        return cart;
       });
+    });
+  }
+
+  double _subtotal(Cart cart) {
+    return cart.items.fold(
+      0,
+      (sum, item) => sum + (item.product.price * item.qty),
+    );
+  }
+
+  double _delivery(double subtotal) => 450;
+  double _total(double subtotal) => subtotal + _delivery(subtotal);
+
+  // optimistic remove
+  Future<void> _removeItem(Cart cart, int index) async {
+    final itemId = cart.items[index].id;
+
+    // 1. Update UI immediately
+    if (_localCart != null) {
+      final updatedItems = List.of(_localCart!.items)..removeAt(index);
+      setState(
+        () => _localCart = Cart(id: _localCart!.id, items: updatedItems),
+      );
     }
+
+    // 2. Sync with backend (original call unchanged)
+    await _service.removeCartItem(itemId: itemId);
+    _refresh();
+  }
+
+  // ── optimistic quantity update ───────────────────────────────────────────────
+  Future<void> _updateQuantity(Cart cart, int index, int newQuantity) async {
+    if (newQuantity < 1) return;
+    final itemId = cart.items[index].id;
+
+    // 1. Update UI immediately without any loading flicker
+    if (_localCart != null) {
+      final updatedItems = List.of(_localCart!.items);
+      final oldItem = updatedItems[index];
+      updatedItems[index] = CartItem(
+        id: oldItem.id,
+        product: oldItem.product,
+        qty: newQuantity,
+      );
+      setState(
+        () => _localCart = Cart(id: _localCart!.id, items: updatedItems),
+      );
+    }
+
+    // 2. Sync with backend (original call unchanged)
+    await _service.updateCartItemQty(itemId: itemId, qty: newQuantity);
+    _refresh();
   }
 
   @override
@@ -90,54 +117,86 @@ class _CartScreenState extends State<CartScreen> {
         ),
         centerTitle: true,
       ),
-      body: cartItems.isEmpty
-          ? _buildEmptyCart(sw, sh)
-          : SafeArea(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: sh * 0.02),
-                            Text(
-                              '${cartItems.length} items in cart',
-                              style: TextStyle(
-                                fontSize: sw * 0.035,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            SizedBox(height: sh * 0.02),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: cartItems.length,
-                              itemBuilder: (context, index) {
-                                return CartProductItem(
-                                  product: cartItems[index],
-                                  sw: sw,
-                                  sh: sh,
-                                  onRemove: () => _removeItem(index),
-                                  onQuantityChanged: (quantity) =>
-                                      _updateQuantity(index, quantity),
-                                );
-                              },
-                            ),
-                            SizedBox(height: sh * 0.03),
-                            _buildPromoCode(sw, sh),
-                            SizedBox(height: sh * 0.03),
-                          ],
-                        ),
+      body: _initialLoading
+          // Show spinner only on the very first load
+          ? const Center(child: CircularProgressIndicator())
+          : _buildBody(sw, sh),
+    );
+  }
+
+  // ── main body built from _localCart (no FutureBuilder flicker) ──────────────
+  Widget _buildBody(double sw, double sh) {
+    final cart = _localCart;
+
+    if (cart == null || cart.items.isEmpty) {
+      return _buildEmptyCart(sw, sh);
+    }
+
+    final items = cart.items;
+    final sub = _subtotal(cart);
+    final delivery = _delivery(sub);
+    final tot = _total(sub);
+
+    return SafeArea(
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: sh * 0.02),
+                    Text(
+                      '${items.length} items in cart',
+                      style: TextStyle(
+                        fontSize: sw * 0.035,
+                        color: Colors.black54,
                       ),
                     ),
-                  ),
-                  _buildOrderSummary(sw, sh),
-                ],
+                    SizedBox(height: sh * 0.02),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        final p = item.product;
+
+                        final mapped = <String, dynamic>{
+                          'id': item.id,
+                          'name': p.name,
+                          'price': p.price,
+                          'quantity': item.qty,
+                          'imageUrl': (p.images.isNotEmpty
+                              ? p.images.first
+                              : null),
+                          'image': Icons.shopping_bag_outlined,
+                          'color': AppColors.darkPink,
+                        };
+
+                        return CartProductItem(
+                          product: mapped,
+                          sw: sw,
+                          sh: sh,
+                          onRemove: () => _removeItem(cart, index),
+                          onQuantityChanged: (q) =>
+                              _updateQuantity(cart, index, q),
+                        );
+                      },
+                    ),
+                    SizedBox(height: sh * 0.03),
+                    _buildPromoCode(sw, sh),
+                    SizedBox(height: sh * 0.03),
+                  ],
+                ),
               ),
             ),
+          ),
+          _buildOrderSummaryFromValues(sw, sh, sub, delivery, tot),
+        ],
+      ),
     );
   }
 
@@ -244,7 +303,13 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildOrderSummary(double sw, double sh) {
+  Widget _buildOrderSummaryFromValues(
+    double sw,
+    double sh,
+    double subtotal,
+    double delivery,
+    double total,
+  ) {
     return Container(
       padding: EdgeInsets.all(sw * 0.05),
       decoration: BoxDecoration(
@@ -264,16 +329,16 @@ class _CartScreenState extends State<CartScreen> {
             sw,
             sh,
             'Subtotal',
-            '\$${subtotal.toStringAsFixed(2)}',
+            'LKR ${subtotal.toStringAsFixed(2)}',
           ),
           SizedBox(height: sh * 0.01),
-          _buildSummaryRow(sw, sh, 'Tax (10%)', '\$${tax.toStringAsFixed(2)}'),
+          _buildSummaryRow(sw, sh, 'Delivery', 'LKR 450'),
           SizedBox(height: sh * 0.01),
           _buildSummaryRow(
             sw,
             sh,
             'Total',
-            '\$${total.toStringAsFixed(2)}',
+            'LKR ${total.toStringAsFixed(2)}',
             isTotal: true,
           ),
           SizedBox(height: sh * 0.02),
