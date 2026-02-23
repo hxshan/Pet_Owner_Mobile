@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
+import 'package:pet_owner_mobile/services/appointment_service.dart';
+import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
@@ -18,48 +20,184 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   String? _selectedTime;
   bool _isLoading = false;
+  bool _loadingSlots = true;
+  List<Map<String, dynamic>> _slots = [];
+
+  List<Map<String, dynamic>> _myPets = [];
+  String? _selectedPetId;
+
+  final AppointmentService _appointmentService = AppointmentService();
+  final PetService _petService = PetService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPets();
+    _fetchSlotsForSelectedDate();
+  }
+
+  Future<void> _fetchPets() async {
+    try {
+      final pets = await _petService.getMyPets();
+      setState(() {
+        _myPets = pets.cast<Map<String, dynamic>>();
+        if (_myPets.isNotEmpty) _selectedPetId = _myPets.first['_id'] ?? _myPets.first['id'];
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  Future<void> _fetchSlotsForSelectedDate() async {
+    setState(() {
+      _loadingSlots = true;
+      _slots = [];
+      _selectedTime = null;
+    });
+
+    try {
+      final dateStr = _selectedDate.toIso8601String().substring(0, 10);
+      final slots = await _appointmentService.getAvailableSlots(widget.vet.id, dateStr);
+      setState(() {
+        _slots = slots.map((s) => Map<String, dynamic>.from(s)).toList();
+      });
+    } catch (e) {
+      // ignore errors
+    } finally {
+      setState(() {
+        _loadingSlots = false;
+      });
+    }
+  }
+
+  List<Widget> _buildSlotGroups(double sw, double sh) {
+    // Group slots into Morning / Afternoon / Evening
+    final Map<String, List<String>> groups = {
+      'Morning': [],
+      'Afternoon': [],
+      'Evening': [],
+    };
+
+    for (final s in _slots) {
+      try {
+        final dt = DateTime.parse(s['start'].toString()).toLocal();
+        final label = _formatTimeLabel(dt);
+        if (dt.hour < 12) {
+          groups['Morning']!.add(label);
+        } else if (dt.hour < 17) {
+          groups['Afternoon']!.add(label);
+        } else {
+          groups['Evening']!.add(label);
+        }
+      } catch (_) {}
+    }
+
+    final widgets = <Widget>[];
+    groups.forEach((label, list) {
+      if (list.isEmpty) return;
+      widgets.add(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time_outlined,
+                  size: sw * 0.034,
+                  color: const Color(0xFF999999),
+                ),
+                SizedBox(width: sw * 0.015),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: sw * 0.032,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF888888),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: sh * 0.01),
+            Wrap(
+              spacing: sw * 0.025,
+              runSpacing: sh * 0.01,
+              children: list.map((slot) {
+                final isSelected = slot == _selectedTime;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedTime = slot),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: sw * 0.038,
+                      vertical: sh * 0.011,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.darkPink : Colors.white,
+                      borderRadius: BorderRadius.circular(sw * 0.025),
+                      border: Border.all(
+                        color: isSelected ? AppColors.darkPink : const Color(0xFFE0E0E0),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.darkPink.withOpacity(0.22),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: Text(
+                      slot,
+                      style: TextStyle(
+                        fontSize: sw * 0.034,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? Colors.white : const Color(0xFF444444),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            SizedBox(height: sh * 0.018),
+          ],
+        ),
+      );
+    });
+
+    return widgets;
+  }
+
+  String _formatTimeLabel(DateTime dt) {
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final ampm = dt.hour < 12 ? 'AM' : 'PM';
+    return '$hour:$minute $ampm';
+  }
+
+  TimeOfDay? _parseTimeLabel(String label) {
+    try {
+      final parts = label.split(' ');
+      if (parts.length != 2) return null;
+      final timeParts = parts[0].split(':');
+      if (timeParts.length != 2) return null;
+      int hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+      final ampm = parts[1].toUpperCase();
+      if (ampm == 'PM' && hour != 12) hour += 12;
+      if (ampm == 'AM' && hour == 12) hour = 0;
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (_) {
+      return null;
+    }
+  }
 
   List<DateTime> get _dateList =>
       List.generate(14, (i) => DateTime.now().add(Duration(days: i + 1)));
 
-  // Morning, afternoon, evening slots
-  static const List<_SlotGroup> _slotGroups = [
-    _SlotGroup(
-      label: 'Morning',
-      slots: [
-        '9:00 AM',
-        '9:30 AM',
-        '10:00 AM',
-        '10:30 AM',
-        '11:00 AM',
-        '11:30 AM',
-      ],
-    ),
-    _SlotGroup(
-      label: 'Afternoon',
-      slots: [
-        '12:00 PM',
-        '12:30 PM',
-        '1:00 PM',
-        '1:30 PM',
-        '2:00 PM',
-        '2:30 PM',
-      ],
-    ),
-    _SlotGroup(
-      label: 'Evening',
-      slots: ['3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM'],
-    ),
-  ];
-
-  // Pretend some slots are taken
-  static const Set<String> _unavailableSlots = {
-    '9:30 AM',
-    '10:30 AM',
-    '1:00 PM',
-    '3:30 PM',
-    '5:00 PM',
-  };
+  // Slots will be fetched from the backend via AppointmentService
 
   void _onBook() async {
     if (_selectedTime == null) {
@@ -83,25 +221,73 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
 
     setState(() => _isLoading = true);
 
-    // TODO: call your booking API here
-    await Future.delayed(const Duration(milliseconds: 900));
+    if (_selectedPetId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please select a pet to book with.')),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    try {
+      // Prefer using the slot object returned by the API
+      String startIso = '';
+      if (_slots.isNotEmpty) {
+        // find a slot whose time string matches the selected label
+        Map<String, dynamic>? found;
+        try {
+          found = _slots.firstWhere((s) {
+            try {
+              final dt = DateTime.parse(s['start'].toString()).toLocal();
+              final label = _formatTimeLabel(dt);
+              return label == _selectedTime;
+            } catch (_) {
+              return false;
+            }
+          });
+        } catch (_) {
+          found = null;
+        }
 
-    // Navigate to My Appointments, clearing the booking stack
+        if (found != null && found.containsKey('start')) {
+          startIso = found['start'];
+        }
+      }
 
-    context.goNamed(
-      'MyVetAppointmentScreen',
-      extra: AppointmentModel(
-        vetName: widget.vet.name,
-        specialization: widget.vet.specialization,
-        date: _selectedDate,
-        time: _selectedTime!,
-        address: widget.vet.address,
-        isUpcoming: true,
-      ),
-    );
+      if (startIso.isEmpty) {
+        // Fallback: try to parse selected time as a time and build an ISO from selected date
+        final parsed = _parseTimeLabel(_selectedTime!);
+        if (parsed == null) throw Exception('Unable to resolve selected slot');
+        final dt = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, parsed.hour, parsed.minute);
+        startIso = dt.toUtc().toIso8601String();
+      }
+
+      await _appointmentService.bookAppointment(
+        vetId: widget.vet.id,
+        petId: _selectedPetId!,
+        startTimeIso: startIso,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      context.goNamed(
+        'MyVetAppointmentScreen',
+        extra: AppointmentModel(
+          vetName: widget.vet.name,
+          specialization: widget.vet.specialization,
+          date: _selectedDate,
+          time: _selectedTime!,
+          address: widget.vet.address,
+          isUpcoming: true,
+        ),
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Booking failed: ${e.toString()}')),
+      );
+    }
   }
 
   @override
@@ -237,10 +423,13 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                                 date.day == _selectedDate.day &&
                                 date.month == _selectedDate.month;
                             return GestureDetector(
-                              onTap: () => setState(() {
-                                _selectedDate = date;
-                                _selectedTime = null;
-                              }),
+                              onTap: () {
+                                setState(() {
+                                  _selectedDate = date;
+                                  _selectedTime = null;
+                                });
+                                _fetchSlotsForSelectedDate();
+                              },
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 curve: Curves.easeOut,
@@ -355,107 +544,25 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                       ),
                       SizedBox(height: sh * 0.018),
 
-                      // Slot groups
-                      ..._slotGroups.map(
-                        (group) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Group label
-                            Row(
-                              children: [
-                                Icon(
-                                  _groupIcon(group.label),
-                                  size: sw * 0.034,
-                                  color: const Color(0xFF999999),
-                                ),
-                                SizedBox(width: sw * 0.015),
-                                Text(
-                                  group.label,
-                                  style: TextStyle(
-                                    fontSize: sw * 0.032,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF888888),
-                                  ),
-                                ),
-                              ],
+                      // Slot groups (fetched from API)
+                      if (_loadingSlots)
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: sh * 0.02),
+                            child: CircularProgressIndicator(
+                              color: AppColors.darkPink,
                             ),
-                            SizedBox(height: sh * 0.01),
-
-                            // Slots grid
-                            Wrap(
-                              spacing: sw * 0.025,
-                              runSpacing: sh * 0.01,
-                              children: group.slots.map((slot) {
-                                final unavailable = _unavailableSlots.contains(
-                                  slot,
-                                );
-                                final isSelected = slot == _selectedTime;
-                                return GestureDetector(
-                                  onTap: unavailable
-                                      ? null
-                                      : () => setState(
-                                          () => _selectedTime = slot,
-                                        ),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 180),
-                                    curve: Curves.easeOut,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: sw * 0.038,
-                                      vertical: sh * 0.011,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? AppColors.darkPink
-                                          : unavailable
-                                          ? const Color(0xFFF5F5F5)
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(
-                                        sw * 0.025,
-                                      ),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? AppColors.darkPink
-                                            : unavailable
-                                            ? const Color(0xFFE0E0E0)
-                                            : const Color(0xFFE0E0E0),
-                                        width: isSelected ? 1.5 : 1,
-                                      ),
-                                      boxShadow: isSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: AppColors.darkPink
-                                                    .withOpacity(0.22),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 3),
-                                              ),
-                                            ]
-                                          : [],
-                                    ),
-                                    child: Text(
-                                      slot,
-                                      style: TextStyle(
-                                        fontSize: sw * 0.034,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : unavailable
-                                            ? const Color(0xFFCCCCCC)
-                                            : const Color(0xFF444444),
-                                        decoration: unavailable
-                                            ? TextDecoration.lineThrough
-                                            : TextDecoration.none,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                            SizedBox(height: sh * 0.018),
-                          ],
-                        ),
-                      ),
+                          ),
+                        )
+                      else if (_slots.isEmpty)
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: sh * 0.02),
+                          child: Text(
+                            'No available slots for the selected date.',
+                            style: TextStyle(color: const Color(0xFF777777)),
+                          ),
+                        )
+                      else ..._buildSlotGroups(sw, sh),
                     ],
                   ),
                 ),
@@ -527,6 +634,39 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                     ),
 
                   // Confirm button
+                  // Pet selector
+                  if (_myPets.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: sh * 0.01),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedPetId,
+                              items: _myPets.map((p) {
+                                final id = (p['_id'] ?? p['id'] ?? '').toString();
+                                final name = (p['name'] ?? p['petName'] ?? 'My Pet').toString();
+                                return DropdownMenuItem<String>(value: id, child: Text(name));
+                              }).toList(),
+                              onChanged: (v) => setState(() => _selectedPetId = v),
+                              decoration: InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(horizontal: sw * 0.04, vertical: sh * 0.014),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: EdgeInsets.only(bottom: sh * 0.01),
+                      child: Text(
+                        'You have no pets. Please add a pet before booking.',
+                        style: TextStyle(color: const Color(0xFF777777)),
+                      ),
+                    ),
+
                   SizedBox(
                     width: double.infinity,
                     height: sh * 0.062,
@@ -664,25 +804,7 @@ class _Legend extends StatelessWidget {
   }
 }
 
-// ── Slot group model ──────────────────────────────────────────────────────────
-class _SlotGroup {
-  final String label;
-  final List<String> slots;
-  const _SlotGroup({required this.label, required this.slots});
-}
 
-IconData _groupIcon(String label) {
-  switch (label) {
-    case 'Morning':
-      return Icons.wb_sunny_outlined;
-    case 'Afternoon':
-      return Icons.wb_cloudy_outlined;
-    case 'Evening':
-      return Icons.nights_stay_outlined;
-    default:
-      return Icons.access_time_outlined;
-  }
-}
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 String _weekdayShort(int w) =>

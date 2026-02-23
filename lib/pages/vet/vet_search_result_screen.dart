@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
+import 'package:pet_owner_mobile/services/vet_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/vet/vet_search_card.dart';
 
@@ -30,11 +31,10 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
       _error = null;
     });
     try {
-      // TODO: Replace with your real API call:
-      // final results = await VetService.searchByLocation(widget.location);
-      await Future.delayed(const Duration(milliseconds: 1200));
+      final service = VetService();
+      final results = await service.searchVets(q: widget.location, page: 1, limit: 20);
       setState(() {
-        _results = _mockVets;
+        _results = results;
         _isLoading = false;
       });
     } catch (e) {
@@ -171,11 +171,41 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
                         final vet = _results[index];
                         return VetSearchCard(
                           vet: vet,
-                          onCardTap: () =>
-                              context.pushNamed('VetDetailsScreen', extra: vet),
+                          onCardTap: () async {
+                            final service = VetService();
+                            try {
+                              final full = await service.getVetById(vet.id);
+                              if (full != null) {
+                                context.pushNamed('VetDetailsScreen', extra: full);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Failed to load vet details')),
+                                );
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: ${e.toString()}')),
+                              );
+                            }
+                          },
 
-                          onBookTap: () =>
-                              context.pushNamed('VetDetailsScreen', extra: vet),
+                          onBookTap: () async {
+                            final service = VetService();
+                            try {
+                              final full = await service.getVetById(vet.id);
+                              if (full != null) {
+                                context.pushNamed('VetBookingScreen', extra: full);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Failed to load vet details')),
+                                );
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: ${e.toString()}')),
+                              );
+                            }
+                          },
                         );
                       },
                     ),
@@ -377,58 +407,4 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ── Mock data (replace with API) ──────────────────────────────────────────────
-final List<VetModel> _mockVets = [
-  const VetModel(
-    id: '1',
-    name: 'Dr. Sarah Mitchell',
-    imageUrl: '',
-    specialization: 'General Veterinarian',
-    rating: 4.8,
-    reviewCount: 124,
-    address: '12 Maple Ave',
-    distance: '0.8 km',
-    openStatus: 'Until 6 PM',
-    phone: '+1 555 010 0101',
-    isOpen: true,
-  ),
-  const VetModel(
-    id: '2',
-    name: 'Paws & Claws Animal Clinic',
-    imageUrl: '',
-    specialization: 'Small Animal Specialist',
-    rating: 4.5,
-    reviewCount: 89,
-    address: '45 Birch St',
-    distance: '1.4 km',
-    openStatus: 'Until 8 PM',
-    phone: '+1 555 020 0202',
-    isOpen: true,
-  ),
-  const VetModel(
-    id: '3',
-    name: 'Dr. James Okafor',
-    imageUrl: '',
-    specialization: 'Exotic Animals & Surgery',
-    rating: 4.9,
-    reviewCount: 210,
-    address: '7 Oak Blvd',
-    distance: '2.1 km',
-    openStatus: 'Opens 9 AM',
-    phone: '+1 555 030 0303',
-    isOpen: false,
-  ),
-  const VetModel(
-    id: '4',
-    name: 'CityPet Veterinary Centre',
-    imageUrl: '',
-    specialization: 'Emergency & General Care',
-    rating: 4.3,
-    reviewCount: 56,
-    address: '99 Elm Road',
-    distance: '3.0 km',
-    openStatus: '24 Hours',
-    phone: '+1 555 040 0404',
-    isOpen: true,
-  ),
-];
+// Note: mock data removed — real API is used via VetService.searchVets
