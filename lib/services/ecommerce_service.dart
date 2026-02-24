@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pet_owner_mobile/core/dio_client.dart';
+import 'package:pet_owner_mobile/models/ecommerce/address_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/cart_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
+import 'package:pet_owner_mobile/models/ecommerce/wishlist_model.dart';
 
 class EcommerceService {
   final Dio _dio = DioClient().dio;
@@ -35,7 +37,6 @@ class EcommerceService {
     final status = response.statusCode ?? 0;
     final data = response.data;
 
-    // If your DioClient allows non-2xx, handle it here
     if (status < 200 || status >= 300) {
       final msg = (data is Map && data['message'] != null)
           ? data['message'].toString()
@@ -66,7 +67,6 @@ class EcommerceService {
       ),
     );
 
-    // optional: check message/success
     if ((response.statusCode ?? 0) >= 400) {
       throw Exception('Failed to add to cart');
     }
@@ -107,7 +107,6 @@ class EcommerceService {
     );
   }
 
-  // Orders
   // ADDRESSES
   Future<List<Map<String, dynamic>>> listMyAddresses() async {
     final res = await _dio.get(
@@ -116,6 +115,125 @@ class EcommerceService {
     );
     final list = (res.data['addresses'] as List?) ?? [];
     return List<Map<String, dynamic>>.from(list);
+  }
+
+  Future<List<Address>> listMyAddressModels() async {
+    final res = await _dio.get(
+      '/ecommerce/addresses',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    final data = res.data;
+    final list = (data is Map ? (data['addresses'] as List?) : null) ?? [];
+    return list
+        .whereType<Map>()
+        .map((a) => Address.fromJson(Map<String, dynamic>.from(a)))
+        .toList();
+  }
+
+  Future<Address> createAddress(Address address) async {
+    final res = await _dio.post(
+      '/ecommerce/addresses',
+      data: address.toCreateJson(),
+      options: Options(
+        contentType: 'application/json',
+        extra: {'requiresAuth': true},
+      ),
+    );
+
+    final data = res.data;
+    if (data is! Map || data['address'] is! Map) {
+      throw Exception('Unexpected createAddress response');
+    }
+
+    return Address.fromJson(Map<String, dynamic>.from(data['address']));
+  }
+
+  Future<Address> updateAddress({
+    required String id,
+    required Address address,
+  }) async {
+    final res = await _dio.patch(
+      '/ecommerce/addresses/$id',
+      data: address.toUpdateJson(),
+      options: Options(
+        contentType: 'application/json',
+        extra: {'requiresAuth': true},
+      ),
+    );
+
+    final data = res.data;
+    if (data is! Map || data['address'] is! Map) {
+      throw Exception('Unexpected updateAddress response');
+    }
+
+    return Address.fromJson(Map<String, dynamic>.from(data['address']));
+  }
+
+  Future<void> deleteAddress({required String id}) async {
+    final res = await _dio.delete(
+      '/ecommerce/addresses/$id',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    if ((res.statusCode ?? 0) >= 400) {
+      throw Exception('Failed to delete address');
+    }
+  }
+
+  Future<Address> setDefaultAddress({required String id}) async {
+    final res = await _dio.post(
+      '/ecommerce/addresses/$id/default',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    final data = res.data;
+    if (data is! Map || data['address'] is! Map) {
+      throw Exception('Unexpected setDefaultAddress response');
+    }
+
+    return Address.fromJson(Map<String, dynamic>.from(data['address']));
+  }
+
+  // Wishlist
+  Future<Wishlist> getMyWishlist() async {
+    final res = await _dio.get(
+      '/ecommerce/wishlist',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    final data = res.data;
+    if (data is! Map || data['wishlist'] is! Map) {
+      throw Exception('Unexpected wishlist response');
+    }
+
+    return Wishlist.fromJson(Map<String, dynamic>.from(data['wishlist']));
+  }
+
+  Future<void> addToWishlist({required String productId}) async {
+    final res = await _dio.post(
+      '/ecommerce/wishlist',
+      data: {'productId': productId},
+      options: Options(
+        contentType: 'application/json',
+        extra: {'requiresAuth': true},
+      ),
+    );
+
+    if ((res.statusCode ?? 0) >= 400) {
+      throw Exception('Failed to add to wishlist');
+    }
+  }
+
+  Future<void> removeFromWishlist({required String productId}) async {
+    final res = await _dio.delete(
+      '/ecommerce/wishlist/$productId',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    if ((res.statusCode ?? 0) >= 400) {
+      throw Exception('Failed to remove from wishlist');
+    }
   }
 
   // ORDERS
