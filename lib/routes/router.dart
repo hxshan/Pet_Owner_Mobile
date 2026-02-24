@@ -183,6 +183,7 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
 
+
         // Ecoommerce Routes
         ShellRoute(
           navigatorKey: _ecommerceNavigatorKey,
@@ -299,11 +300,24 @@ final GoRouter appRouter = GoRouter(
               path: 'details',
               name: 'NutritionPlanDetailsScreen',
               builder: (context, state) {
-                final extra = state.extra as Map<String, dynamic>;
-                return MealPlanDetailsScreen(
-                  petName: extra['petName'] ?? '',
-                  petBreed: extra['petBreed'] ?? '',
-                );
+                final extra = state.extra;
+
+                if (extra == null || extra is! Map<String, dynamic>) {
+                  return const Scaffold(
+                    body: Center(child: Text('No plan data provided')),
+                  );
+                }
+
+                final rawPlan = extra['plan'];
+                if (rawPlan == null || rawPlan is! Map) {
+                  return const Scaffold(
+                    body: Center(child: Text('Invalid plan data')),
+                  );
+                }
+
+                final plan = rawPlan.cast<String, dynamic>();
+
+                return MealPlanDetailsScreen(plan: plan);
               },
             ),
           ],
