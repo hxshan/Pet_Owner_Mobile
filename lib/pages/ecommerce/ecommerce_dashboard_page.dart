@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
 import 'package:pet_owner_mobile/services/ecommerce_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/ecommerce/ecommerce_search_bar.dart';
 import 'package:pet_owner_mobile/widgets/ecommerce/product_card.dart';
 
 class EcommerceDashboardScreen extends StatefulWidget {
@@ -160,33 +161,18 @@ class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
   }
 
   Widget _buildSearchBar(double sw, double sh) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(sw * 0.03),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: sw * 0.04),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: Colors.black54, size: sw * 0.06),
-          SizedBox(width: sw * 0.02),
-          Expanded(
-            child: TextField(
-              controller: _searchCtrl,
-              textInputAction: TextInputAction.search,
-              onSubmitted: (_) => _refreshProducts(),
-              decoration: InputDecoration(
-                hintText: 'Search products...',
-                border: InputBorder.none,
-                hintStyle: TextStyle(
-                  color: Colors.black38,
-                  fontSize: sw * 0.035,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return EcommerceSearchBar(
+      controller: _searchCtrl,
+      readOnly: true, // AliExpress style: tap opens search view
+      onTap: () {
+        context.pushNamed(
+          'EcommerceSearchViewScreen',
+          queryParameters: {
+            'q': _searchCtrl.text,
+            'category': selectedCategory,
+          },
+        );
+      },
     );
   }
 
@@ -437,6 +423,7 @@ class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
                 );
               },
               child: ProductCard(
+                productId: p.id,
                 name: p.name,
                 price: 'LKR ${p.price.toStringAsFixed(2)}',
                 rating: p.rating ?? 4.5,

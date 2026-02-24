@@ -10,6 +10,9 @@ import 'package:pet_owner_mobile/pages/ecommerce/OrderSuccessScreen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/addressed_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_search_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_search_view_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_shell.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/order_history_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/vouchers_screen.dart';
@@ -173,56 +176,85 @@ final GoRouter appRouter = GoRouter(
         ),
 
         // Ecoommerce Routes
-        GoRoute(
-          path: '/ecommerce',
-          name: 'EcommerceDashboardScreen',
-          builder: (context, state) => const EcommerceDashboardScreen(),
+        ShellRoute(
+          builder: (context, state, child) => EcommerceShell(child: child),
           routes: [
             GoRoute(
-              path: 'product-detail/:productId',
-              name: 'ProductDetailScreen',
-              builder: (context, state) {
-                final productId = state.pathParameters['productId'] ?? '';
-                return ProductDetailScreen(productId: productId);
-              },
-            ),
-            GoRoute(
-              path: 'cart',
-              name: 'CartScreen',
-              builder: (context, state) => const CartScreen(),
-            ),
-            GoRoute(
-              path: 'orders',
-              name: 'OrderHistoryScreen',
-              builder: (context, state) => const OrderHistoryScreen(),
-            ),
-            GoRoute(
-              path: 'addresses',
-              name: 'AddressesScreen',
-              builder: (context, state) => const AddressesScreen(),
-            ),
-            GoRoute(
-              path: 'wishlist',
-              name: 'WishlistScreen',
-              builder: (context, state) => const WishlistScreen(),
-            ),
-            GoRoute(
-              path: 'vouchers',
-              name: 'VouchersScreen',
-              builder: (context, state) => const VouchersScreen(),
-            ),
-            GoRoute(
-              name: 'CheckoutScreen',
-              path: '/checkout',
-              builder: (context, state) => const CheckoutScreen(),
-            ),
-            GoRoute(
-              name: 'OrderSuccessScreen',
-              path: '/order-success',
-              builder: (context, state) {
-                final orderId = state.extra as String;
-                return OrderSuccessScreen(orderId: orderId);
-              },
+              path: '/ecommerce',
+              name: 'EcommerceDashboardScreen',
+              builder: (context, state) => const EcommerceDashboardScreen(),
+              routes: [
+                GoRoute(
+                  path: 'product-detail/:productId',
+                  name: 'ProductDetailScreen',
+                  builder: (context, state) {
+                    final productId = state.pathParameters['productId'] ?? '';
+                    return ProductDetailScreen(productId: productId);
+                  },
+                ),
+                GoRoute(
+                  name: 'EcommerceSearchViewScreen',
+                  path: 'search-view',
+                  builder: (context, state) {
+                    final q = state.uri.queryParameters['q'] ?? '';
+                    final cat = state.uri.queryParameters['category'] ?? 'All';
+                    return EcommerceSearchViewScreen(
+                      initialQuery: q,
+                      initialCategory: cat,
+                    );
+                  },
+                ),
+                GoRoute(
+                  name: 'EcommerceSearchResultsScreen',
+                  path: 'search',
+                  builder: (context, state) {
+                    final q = state.uri.queryParameters['q'] ?? '';
+                    final cat = state.uri.queryParameters['category'] ?? 'All';
+                    return EcommerceSearchScreen(
+                      initialQuery: q,
+                      initialCategory: cat,
+                    );
+                  },
+                ),
+                GoRoute(
+                  path: 'cart',
+                  name: 'CartScreen',
+                  builder: (context, state) => const CartScreen(),
+                ),
+                GoRoute(
+                  path: 'orders',
+                  name: 'OrderHistoryScreen',
+                  builder: (context, state) => const OrderHistoryScreen(),
+                ),
+                GoRoute(
+                  path: 'addresses',
+                  name: 'AddressesScreen',
+                  builder: (context, state) => const AddressesScreen(),
+                ),
+                GoRoute(
+                  path: 'wishlist',
+                  name: 'WishlistScreen',
+                  builder: (context, state) => const WishlistScreen(),
+                ),
+                GoRoute(
+                  path: 'vouchers',
+                  name: 'VouchersScreen',
+                  builder: (context, state) => const VouchersScreen(),
+                ),
+                GoRoute(
+                  name: 'CheckoutScreen',
+                  path: 'checkout',
+                  builder: (context, state) => const CheckoutScreen(),
+                ),
+                GoRoute(
+                  name: 'OrderSuccessScreen',
+                  path: 'order-success',
+                  builder: (context, state) {
+                    final orderId = state.extra as String;
+                    return OrderSuccessScreen(orderId: orderId);
+                  },
+                ),
+              ],
             ),
           ],
         ),
