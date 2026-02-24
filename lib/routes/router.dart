@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
-import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
@@ -44,9 +43,14 @@ import 'package:pet_owner_mobile/pages/vet/vet_search_result_screen.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+final _ecommerceNavigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
   debugLogDiagnostics: true,
+  navigatorKey: _rootNavigatorKey,
   routes: [
     // Pages without NavBar
     GoRoute(
@@ -87,6 +91,7 @@ final GoRouter appRouter = GoRouter(
 
     // Pages with NavBar
     ShellRoute(
+      navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => NavBarShell(child: child),
       routes: [
         GoRoute(
@@ -177,6 +182,7 @@ final GoRouter appRouter = GoRouter(
 
         // Ecoommerce Routes
         ShellRoute(
+          navigatorKey: _ecommerceNavigatorKey,
           builder: (context, state, child) => EcommerceShell(child: child),
           routes: [
             GoRoute(
@@ -348,16 +354,16 @@ class _NavBarShellState extends State<NavBarShell> {
   void _onItemTapped(int index) {
     switch (index) {
       case 0:
-        context.pushNamed('DashboardScreen');
+        context.goNamed('DashboardScreen');
         break;
       case 1:
-        context.pushNamed('EcommerceDashboardScreen');
+        context.goNamed('EcommerceDashboardScreen');
         break;
       case 2:
-        context.pushNamed('MyPetsScreen');
+        context.goNamed('MyPetsScreen');
         break;
       case 3:
-        context.pushNamed('ProfileScreen');
+        context.goNamed('ProfileScreen');
         break;
     }
   }
