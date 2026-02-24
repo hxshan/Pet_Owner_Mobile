@@ -14,7 +14,8 @@ import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_search_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_search_view_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_shell.dart';
-import 'package:pet_owner_mobile/pages/ecommerce/order_history_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/order_details_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/orders_history_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/vouchers_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/wishlist_screen.dart';
@@ -232,7 +233,7 @@ final GoRouter appRouter = GoRouter(
                 GoRoute(
                   path: 'orders',
                   name: 'OrderHistoryScreen',
-                  builder: (context, state) => const OrderHistoryScreen(),
+                  builder: (context, state) => const OrdersHistoryScreen(),
                 ),
                 GoRoute(
                   path: 'addresses',
@@ -273,6 +274,14 @@ final GoRouter appRouter = GoRouter(
                   builder: (context, state) {
                     final orderId = state.extra as String;
                     return OrderSuccessScreen(orderId: orderId);
+                  },
+                ),
+                GoRoute(
+                  name: 'OrderDetailsScreen',
+                  path: '/orders/:id',
+                  builder: (context, state) {
+                    final id = state.pathParameters['id']!;
+                    return OrderDetailsScreen(orderId: id);
                   },
                 ),
               ],

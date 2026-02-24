@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:pet_owner_mobile/core/dio_client.dart';
 import 'package:pet_owner_mobile/models/ecommerce/address_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/cart_model.dart';
+import 'package:pet_owner_mobile/models/ecommerce/order_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/wishlist_model.dart';
 
@@ -255,5 +256,36 @@ class EcommerceService {
       ),
     );
     return Map<String, dynamic>.from(res.data['order']);
+  }
+
+  Future<Map<String, dynamic>> listMyOrders({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final res = await _dio.get(
+      '/ecommerce/orders',
+      queryParameters: {'page': page, 'limit': limit},
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    final data = res.data;
+    if (data is! Map) {
+      throw Exception('Unexpected orders response');
+    }
+    return Map<String, dynamic>.from(data);
+  }
+
+  Future<Order> getMyOrderById(String id) async {
+    final res = await _dio.get(
+      '/ecommerce/orders/$id',
+      options: Options(extra: {'requiresAuth': true}),
+    );
+
+    final data = res.data;
+    if (data is! Map || data['order'] is! Map) {
+      throw Exception('Unexpected order details response');
+    }
+
+    return Order.fromJson(Map<String, dynamic>.from(data['order']));
   }
 }
