@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pet_owner_mobile/models/pet_management/pet_card_model.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/pet_card_widget.dart';
 
 class ViewAllPetsScreen extends StatefulWidget {
@@ -35,14 +36,7 @@ class _MyWidgetState extends State<ViewAllPetsScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black,
-            size: sw * 0.06,
-          ),
-        ),
+        leading: CustomBackButton(),
         title: Text(
           'My Pets',
           style: TextStyle(
