@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
+import 'package:pet_owner_mobile/models/ecommerce/address_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/CheckoutScreen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/OrderSuccessScreen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/add_edit_address_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/addressed_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
@@ -236,6 +238,19 @@ final GoRouter appRouter = GoRouter(
                   path: 'addresses',
                   name: 'AddressesScreen',
                   builder: (context, state) => const AddressesScreen(),
+                ),
+                GoRoute(
+                  name: 'AddAddressScreen',
+                  path: '/addresses/add',
+                  builder: (context, state) => const AddEditAddressScreen(),
+                ),
+                GoRoute(
+                  name: 'EditAddressScreen',
+                  path: '/addresses/edit',
+                  builder: (context, state) {
+                    final addr = state.extra as Address;
+                    return AddEditAddressScreen(initial: addr);
+                  },
                 ),
                 GoRoute(
                   path: 'wishlist',
