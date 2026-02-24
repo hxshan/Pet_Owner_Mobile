@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/ecommerce/address_model.dart';
+import 'package:pet_owner_mobile/services/ecommerce_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
@@ -11,26 +13,51 @@ class AddressesScreen extends StatefulWidget {
 }
 
 class _AddressesScreenState extends State<AddressesScreen> {
-  int selectedIndex = 0;
+  final _service = EcommerceService();
 
-  final List<Map<String, dynamic>> addresses = [
-    {
-      'label': 'Home',
-      'icon': Icons.home_outlined,
-      'name': 'John Doe',
-      'address': '42 Maple Street, Apt 3B',
-      'city': 'New York, NY 10001',
-      'phone': '+1 (555) 123-4567',
-    },
-    {
-      'label': 'Work',
-      'icon': Icons.business_outlined,
-      'name': 'John Doe',
-      'address': '350 Fifth Avenue, Floor 12',
-      'city': 'New York, NY 10118',
-      'phone': '+1 (555) 987-6543',
-    },
-  ];
+  List<Address> _addresses = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final list = await _service.listMyAddressModels();
+      if (!mounted) return;
+      setState(() {
+        _addresses = list;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _setDefault(Address addr) async {
+    try {
+      await _service.setDefaultAddress(id: addr.id);
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to set default: $e')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,34 +81,86 @@ class _AddressesScreenState extends State<AddressesScreen> {
       ),
       body: Padding(
         padding: EdgeInsets.all(sw * 0.05),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.separated(
-                itemCount: addresses.length,
-                separatorBuilder: (_, __) => SizedBox(height: sh * 0.015),
-                itemBuilder: (context, index) {
-                  return _buildAddressCard(addresses[index], index, sw, sh);
-                },
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: sw * 0.035,
+                      ),
+                    ),
+                    SizedBox(height: sh * 0.02),
+                    ElevatedButton(
+                      onPressed: _load,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              )
+            : Column(
+                children: [
+                  Expanded(
+                    child: _addresses.isEmpty
+                        ? _buildEmpty(sw, sh)
+                        : ListView.separated(
+                            itemCount: _addresses.length,
+                            separatorBuilder: (_, __) =>
+                                SizedBox(height: sh * 0.015),
+                            itemBuilder: (context, index) {
+                              final addr = _addresses[index];
+                              return _buildAddressCard(addr, sw, sh);
+                            },
+                          ),
+                  ),
+                  SizedBox(height: sh * 0.02),
+                  _buildAddNewButton(sw, sh),
+                ],
               ),
-            ),
-            SizedBox(height: sh * 0.02),
-            _buildAddNewButton(sw, sh),
-          ],
-        ),
       ),
     );
   }
 
-  Widget _buildAddressCard(
-    Map<String, dynamic> addr,
-    int index,
-    double sw,
-    double sh,
-  ) {
-    final isSelected = selectedIndex == index;
+  Widget _buildEmpty(double sw, double sh) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.location_on_outlined,
+            size: sw * 0.18,
+            color: Colors.black26,
+          ),
+          SizedBox(height: sh * 0.02),
+          Text(
+            'No addresses yet',
+            style: TextStyle(fontSize: sw * 0.045, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: sh * 0.008),
+          Text(
+            'Add an address to checkout faster.',
+            style: TextStyle(fontSize: sw * 0.034, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressCard(Address addr, double sw, double sh) {
+    final isSelected = addr.isDefault == true;
+
+    final icon = (addr.label ?? 'HOME').toUpperCase() == 'WORK'
+        ? Icons.business_outlined
+        : Icons.home_outlined;
+
     return GestureDetector(
-      onTap: () => setState(() => selectedIndex = index),
+      onTap: () => _setDefault(addr),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
@@ -101,13 +180,13 @@ class _AddressesScreenState extends State<AddressesScreen> {
             Row(
               children: [
                 Icon(
-                  addr['icon'] as IconData,
+                  icon,
                   color: isSelected ? AppColors.darkPink : Colors.black54,
                   size: sw * 0.05,
                 ),
                 SizedBox(width: sw * 0.02),
                 Text(
-                  addr['label'] as String,
+                  (addr.label ?? 'HOME').toUpperCase(),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: sw * 0.038,
@@ -127,7 +206,13 @@ class _AddressesScreenState extends State<AddressesScreen> {
                     size: sw * 0.045,
                     color: Colors.black38,
                   ),
-                  onPressed: () {},
+                  onPressed: () async {
+                    final changed = await context.pushNamed(
+                      'EditAddressScreen',
+                      extra: addr,
+                    );
+                    if (changed == true) _load();
+                  },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -135,7 +220,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
             ),
             Divider(height: sh * 0.025, color: Colors.black12),
             Text(
-              addr['name'] as String,
+              addr.name ?? '-',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: sw * 0.035,
@@ -144,16 +229,21 @@ class _AddressesScreenState extends State<AddressesScreen> {
             ),
             SizedBox(height: sh * 0.005),
             Text(
-              addr['address'] as String,
+              addr.addressLine1 ?? '-',
               style: TextStyle(color: Colors.black54, fontSize: sw * 0.033),
             ),
+            if ((addr.addressLine2 ?? '').trim().isNotEmpty)
+              Text(
+                addr.addressLine2!,
+                style: TextStyle(color: Colors.black54, fontSize: sw * 0.033),
+              ),
             Text(
-              addr['city'] as String,
+              '${addr.city ?? ''}${(addr.postalCode ?? '').isNotEmpty ? ', ${addr.postalCode}' : ''}',
               style: TextStyle(color: Colors.black54, fontSize: sw * 0.033),
             ),
             SizedBox(height: sh * 0.005),
             Text(
-              addr['phone'] as String,
+              addr.phone ?? '-',
               style: TextStyle(color: Colors.black38, fontSize: sw * 0.03),
             ),
           ],
@@ -164,8 +254,9 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
   Widget _buildAddNewButton(double sw, double sh) {
     return GestureDetector(
-      onTap: () {
-        // navigate to add address form
+      onTap: () async {
+        final changed = await context.pushNamed('AddAddressScreen');
+        if (changed == true) _load();
       },
       child: Container(
         width: double.infinity,

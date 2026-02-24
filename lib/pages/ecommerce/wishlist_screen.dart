@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
+import 'package:pet_owner_mobile/services/ecommerce_service.dart';
+import 'package:pet_owner_mobile/store/wishlist_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
@@ -11,65 +13,96 @@ class WishlistScreen extends StatefulWidget {
 }
 
 class _WishlistScreenState extends State<WishlistScreen> {
-  final List<Map<String, dynamic>> items = [
-    {
-      'name': 'Pet Bed',
-      'price': '\$65.00',
-      'icon': Icons.bed,
-      'color': Colors.teal,
-    },
-    {
-      'name': 'Grooming Kit',
-      'price': '\$34.99',
-      'icon': Icons.content_cut,
-      'color': Colors.pink,
-    },
-    {
-      'name': 'Water Bowl',
-      'price': '\$22.00',
-      'icon': Icons.local_drink,
-      'color': Colors.blue,
-    },
-  ];
+  final _service = EcommerceService(); // only for addToCart here
+
+  bool _addingToCart = false;
+
+  void _toast(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _addToCart(Product product) async {
+    if (_addingToCart) return;
+    setState(() => _addingToCart = true);
+
+    try {
+      await _service.addToCart(productId: product.id, qty: 1);
+      _toast('Added to cart');
+    } catch (e) {
+      _toast('Failed to add to cart');
+    } finally {
+      if (mounted) setState(() => _addingToCart = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: const CustomBackButton(),
-        title: Text(
-          'Wishlist',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: sw * 0.045,
-          ),
-        ),
-      ),
-      body: items.isEmpty
-          ? _buildEmptyState(sw, sh)
-          : ListView.separated(
-              padding: EdgeInsets.all(sw * 0.05),
-              itemCount: items.length,
-              separatorBuilder: (_, __) => SizedBox(height: sh * 0.015),
-              itemBuilder: (context, index) =>
-                  _buildWishlistItem(items[index], index, sw, sh),
+    final store = WishlistScope.of(context);
+
+    // load once (safe to call repeatedly)
+    store.loadOnce();
+
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        // If your store currently only caches ids, you need products too.
+        // So: we’ll extend the store (below) OR fallback to server fetch.
+        //
+        // ✅ Recommended: update store to also keep List<Product>.
+        final products = store.products; // <-- after store update
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: const CustomBackButton(),
+            title: Text(
+              'Wishlist',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: sw * 0.045,
+              ),
             ),
+          ),
+          body: store.isLoading && !store.isLoaded
+              ? const Center(child: CircularProgressIndicator())
+              : products.isEmpty
+                  ? _buildEmptyState(sw, sh)
+                  : RefreshIndicator(
+                      onRefresh: store.refresh, // <-- after store update
+                      child: ListView.separated(
+                        padding: EdgeInsets.all(sw * 0.05),
+                        itemCount: products.length,
+                        separatorBuilder: (_, __) => SizedBox(height: sh * 0.015),
+                        itemBuilder: (context, index) => _buildWishlistItem(
+                          products[index],
+                          index,
+                          sw,
+                          sh,
+                          store,
+                        ),
+                      ),
+                    ),
+        );
+      },
     );
   }
 
   Widget _buildWishlistItem(
-    Map<String, dynamic> item,
+    Product product,
     int index,
     double sw,
     double sh,
+    dynamic store, // WishlistStore
   ) {
+    final imageUrl = product.images.isNotEmpty ? product.images.first : null;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.lightGray,
@@ -82,14 +115,25 @@ class _WishlistScreenState extends State<WishlistScreen> {
             width: sw * 0.15,
             height: sw * 0.15,
             decoration: BoxDecoration(
-              color: (item['color'] as Color).withOpacity(0.15),
+              color: AppColors.darkPink.withOpacity(0.12),
               borderRadius: BorderRadius.circular(sw * 0.03),
             ),
-            child: Icon(
-              item['icon'] as IconData,
-              color: item['color'] as Color,
-              size: sw * 0.07,
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: imageUrl != null
+                ? Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.favorite,
+                      color: AppColors.darkPink,
+                      size: sw * 0.07,
+                    ),
+                  )
+                : Icon(
+                    Icons.favorite,
+                    color: AppColors.darkPink,
+                    size: sw * 0.07,
+                  ),
           ),
           SizedBox(width: sw * 0.04),
           Expanded(
@@ -97,7 +141,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item['name'] as String,
+                  product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: sw * 0.038,
@@ -106,7 +152,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                 ),
                 SizedBox(height: sh * 0.005),
                 Text(
-                  item['price'] as String,
+                  'LKR ${product.price.toStringAsFixed(2)}',
                   style: TextStyle(
                     color: AppColors.darkPink,
                     fontWeight: FontWeight.w600,
@@ -119,7 +165,13 @@ class _WishlistScreenState extends State<WishlistScreen> {
           Column(
             children: [
               GestureDetector(
-                onTap: () => setState(() => items.removeAt(index)),
+                onTap: () async {
+                  try {
+                    await store.toggle(product.id); // removes from wishlist
+                  } catch (_) {
+                    _toast('Failed to remove from wishlist');
+                  }
+                },
                 child: Icon(
                   Icons.favorite,
                   color: AppColors.darkPink,
@@ -128,9 +180,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
               ),
               SizedBox(height: sh * 0.01),
               GestureDetector(
-                onTap: () {
-                  // add to cart
-                },
+                onTap: () => _addToCart(product),
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: sw * 0.03,
