@@ -35,8 +35,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
 
   String _activity = 'Medium';
   String _disease = 'None';
-
-   String _allergy = 'None';
+  String _allergy = 'None';
 
   bool _loading = false;
 
@@ -47,6 +46,16 @@ class _DietFormDialogState extends State<DietFormDialog> {
     super.dispose();
   }
 
+  Widget _bullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final diseaseItems = <String>['None', ...diseases.where((e) => e != 'None')];
@@ -54,6 +63,28 @@ class _DietFormDialogState extends State<DietFormDialog> {
 
     if (!diseaseItems.contains(_disease)) _disease = 'None';
     if (!allergyItems.contains(_allergy)) _allergy = 'None';
+
+    Widget bulletRow(String text) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("•  ", style: TextStyle(fontSize: 13, height: 1.35)),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return AlertDialog(
       title: const Text("Generate Meal Plan"),
@@ -111,6 +142,32 @@ class _DietFormDialogState extends State<DietFormDialog> {
                 onChanged: (v) => setState(() => _activity = v ?? 'Medium'),
               ),
 
+              // ✅ Point guide under Activity Level
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Activity Level Guide",
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    bulletRow("Indoor-only cat or senior dog → Low"),
+                    bulletRow("Regular daily walks or garden play → Medium"),
+                    bulletRow("Working dog or highly energetic breed with long exercise → High"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
               DropdownButtonFormField<String>(
                 value: _disease,
                 decoration: const InputDecoration(labelText: "Disease"),
@@ -120,14 +177,12 @@ class _DietFormDialogState extends State<DietFormDialog> {
                 onChanged: (v) => setState(() => _disease = v ?? 'None'),
               ),
 
-            
               DropdownButtonFormField<String>(
                 value: _allergy,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: "Food Restrictions",
-                  helperText:
-                      "Select foods to avoid due to allergies or health conditions",
+                  helperText: "Select foods to avoid due to allergies or health conditions",
                 ),
                 items: allergyItems
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -159,7 +214,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
                       allergy: _allergy,
                     );
 
-                    if (mounted) Navigator.pop(context); 
+                    if (mounted) Navigator.pop(context);
                   } finally {
                     if (mounted) setState(() => _loading = false);
                   }
