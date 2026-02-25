@@ -5,6 +5,7 @@ import 'package:pet_owner_mobile/models/ecommerce/address_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/cart_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/order_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
+import 'package:pet_owner_mobile/models/ecommerce/product_review_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/wishlist_model.dart';
 
 class EcommerceService {
@@ -288,5 +289,44 @@ class EcommerceService {
     }
 
     return Order.fromJson(Map<String, dynamic>.from(data['order']));
+  }
+
+  // Reviews
+  Future<ReviewsResponse> listProductReviews({
+    required String productId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final res = await _dio.get(
+      '/ecommerce/products/$productId/reviews',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+
+    final data = res.data;
+    if (data is! Map) throw Exception('Unexpected reviews response');
+
+    return ReviewsResponse.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  Future<Review> createProductReview({
+    required String productId,
+    required int rating,
+    String comment = '',
+  }) async {
+    final res = await _dio.post(
+      '/ecommerce/products/$productId/reviews',
+      data: {'rating': rating, 'comment': comment},
+      options: Options(
+        contentType: 'application/json',
+        extra: {'requiresAuth': true},
+      ),
+    );
+
+    final data = res.data;
+    if (data is! Map || data['review'] is! Map) {
+      throw Exception('Unexpected createReview response');
+    }
+
+    return Review.fromJson(Map<String, dynamic>.from(data['review'] as Map));
   }
 }
