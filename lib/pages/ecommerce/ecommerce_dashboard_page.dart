@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/consts/product_categories.dart';
 import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
 import 'package:pet_owner_mobile/services/ecommerce_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
@@ -15,14 +16,17 @@ class EcommerceDashboardScreen extends StatefulWidget {
 }
 
 class _EcommerceDashboardScreenState extends State<EcommerceDashboardScreen> {
-  String selectedCategory = 'All';
-  final List<String> categories = [
-    'All',
-    'Food',
-    'Toys',
-    'Accessories',
-    'Health',
-  ];
+  // String selectedCategory = 'All';
+  // final List<String> categories = [
+  //   'All',
+  //   'Food',
+  //   'Toys',
+  //   'Accessories',
+  //   'Health',
+  // ];
+
+  String selectedCategory = ProductCategories.all;
+  final List<String> categories = ProductCategories.filterOptions;
 
   final _service = EcommerceService();
   late Future<List<Product>> _productsFuture;

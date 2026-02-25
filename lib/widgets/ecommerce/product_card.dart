@@ -152,7 +152,7 @@ class _ProductCardState extends State<ProductCard> {
                 children: [
                   Text(
                     widget.name,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: widget.sw * 0.032,
