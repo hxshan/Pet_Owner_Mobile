@@ -12,7 +12,8 @@ class DietFormDialog extends StatefulWidget {
     required String activityLevel,
     required String disease,
     required String allergy,
-  }) onGenerate;
+  })
+  onGenerate;
 
   const DietFormDialog({
     super.key,
@@ -116,7 +117,12 @@ class _DietFormDialogState extends State<DietFormDialog> {
 
               DropdownButtonFormField<String>(
                 value: _allergy,
-                decoration: const InputDecoration(labelText: "Allergy"),
+                decoration: const InputDecoration(
+                  labelText: "Food Restrictions",
+                  hintText: "e.g. fish, dairy, pork",
+                  helperText:
+                      "Enter foods to avoid due to allergies or health conditions",
+                ),
                 items: allergies
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
