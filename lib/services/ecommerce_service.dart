@@ -21,7 +21,8 @@ class EcommerceService {
       '/ecommerce/products',
       queryParameters: {
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-        if (category != null && category != 'All') 'category': category,
+        if (category != null && category.trim().isNotEmpty)
+          'category': category.trim(),
         'page': page,
         'limit': limit,
       },
