@@ -66,7 +66,7 @@ class Order {
 }
 
 class OrderItem {
-  final String product; // can be id OR populated object -> we keep id string
+  final String product; 
   final String name;
   final String image;
   final int price;

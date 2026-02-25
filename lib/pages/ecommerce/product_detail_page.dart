@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
+import 'package:pet_owner_mobile/models/ecommerce/product_review_model.dart';
 import 'package:pet_owner_mobile/services/ecommerce_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
+import 'package:pet_owner_mobile/widgets/ecommerce/review_card.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
 
   const ProductDetailScreen({Key? key, required this.productId})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailPageState();
@@ -16,6 +18,7 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailScreen> {
   late Future<Product> _productFuture;
+  late Future<ReviewsResponse> _reviewsFuture;
   final _service = EcommerceService();
 
   int quantity = 1;
@@ -27,34 +30,24 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
   void initState() {
     super.initState();
     _productFuture = _service.getProductById(widget.productId);
+    _reviewsFuture = _service.listProductReviews(
+      productId: widget.productId,
+      page: 1,
+      limit: 5, // show up to 5 on the detail page
+    );
   }
-
-  late String productName = 'Premium Dog Food';
-  late String productPrice = '\$45.99';
-  late double rating = 4.5;
-  late IconData icon = Icons.pets;
-  late Color color = Colors.amber;
-  late List<Color> productImages = [
-    Colors.amber,
-    Colors.orange,
-    Colors.amber,
-    Colors.orange,
-  ];
 
   Future<void> _handleAddToCart() async {
     setState(() => _addingToCart = true);
     try {
       await _service.addToCart(productId: widget.productId, qty: quantity);
       if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Added to cart')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Added to cart')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed: $e')));
     } finally {
       if (mounted) setState(() => _addingToCart = false);
     }
@@ -91,7 +84,8 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       _buildImageGallery(sw, sh, product),
                       SizedBox(height: sh * 0.02),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: sw * 0.05),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -102,10 +96,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                             _buildPriceSection(sw, sh, product),
                             SizedBox(height: sh * 0.025),
                             _buildDescriptionSection(sw, sh, product),
-                            // specs + reviews can stay static for now or map from backend later
                             SizedBox(height: sh * 0.025),
-                            // _buildSpecificationsSection(sw, sh),
-                            // SizedBox(height: sh * 0.025),
                             _buildReviewsSection(sw, sh),
                             SizedBox(height: sh * 0.02),
                           ],
@@ -123,6 +114,8 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
       bottomNavigationBar: _buildBottomActionBar(sw, sh),
     );
   }
+
+  // ── Header ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader(double sw, double sh) {
     return Positioned(
@@ -167,10 +160,10 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
+  // ── Image gallery ─────────────────────────────────────────────────────────
+
   Widget _buildImageGallery(double sw, double sh, Product product) {
-    final images = product.images.isNotEmpty
-        ? product.images
-        : ['']; // fallback
+    final images = product.images.isNotEmpty ? product.images : [''];
 
     return Column(
       children: [
@@ -184,7 +177,6 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
             itemCount: images.length,
             itemBuilder: (context, index) {
               final url = images[index];
-
               return Container(
                 margin: EdgeInsets.symmetric(horizontal: sw * 0.05),
                 decoration: BoxDecoration(
@@ -194,27 +186,20 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                 clipBehavior: Clip.antiAlias,
                 child: url.isEmpty
                     ? Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          size: sw * 0.2,
-                          color: Colors.black26,
-                        ),
+                        child: Icon(Icons.image_not_supported,
+                            size: sw * 0.2, color: Colors.black26),
                       )
                     : Image.network(
                         url,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Center(
-                          child: Icon(
-                            Icons.broken_image,
-                            size: sw * 0.2,
-                            color: Colors.black26,
-                          ),
+                          child: Icon(Icons.broken_image,
+                              size: sw * 0.2, color: Colors.black26),
                         ),
                         loadingBuilder: (context, child, progress) {
                           if (progress == null) return child;
                           return const Center(
-                            child: CircularProgressIndicator(),
-                          );
+                              child: CircularProgressIndicator());
                         },
                       ),
               );
@@ -243,6 +228,8 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
+  // ── Product info sections ─────────────────────────────────────────────────
+
   Widget _buildProductHeader(double sw, double sh, Product product) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +250,8 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
         if (product.storeName != null) ...[
           SizedBox(height: sh * 0.006),
           Text(
-            'Sold by ${product.storeName}${product.storeLocation != null ? " • ${product.storeLocation}" : ""}',
+            'Sold by ${product.storeName}'
+            '${product.storeLocation != null ? " • ${product.storeLocation}" : ""}',
             style: TextStyle(fontSize: sw * 0.03, color: Colors.black45),
           ),
         ],
@@ -291,11 +279,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.star_rounded,
-                    size: sw * 0.04,
-                    color: Colors.amber,
-                  ),
+                  Icon(Icons.star_rounded, size: sw * 0.04, color: Colors.amber),
                   SizedBox(width: sw * 0.01),
                   Text(
                     rating == 0 ? 'N/A' : rating.toStringAsFixed(1),
@@ -326,11 +310,8 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.local_shipping_outlined,
-                size: sw * 0.04,
-                color: Colors.green,
-              ),
+              Icon(Icons.local_shipping_outlined,
+                  size: sw * 0.04, color: Colors.green),
               SizedBox(width: sw * 0.01),
               Text(
                 'Free Shipping',
@@ -405,60 +386,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildSpecificationsSection(double sw, double sh) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Specifications',
-          style: TextStyle(
-            fontSize: sw * 0.045,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        SizedBox(height: sh * 0.015),
-        _buildSpecRow(sw, sh, 'Weight', '500g'),
-        SizedBox(height: sh * 0.01),
-        _buildSpecRow(sw, sh, 'Ingredients', 'Natural & Organic'),
-        SizedBox(height: sh * 0.01),
-        _buildSpecRow(sw, sh, 'Suitable For', 'Dogs & Puppies'),
-        SizedBox(height: sh * 0.01),
-        _buildSpecRow(sw, sh, 'Shelf Life', '24 months'),
-      ],
-    );
-  }
-
-  Widget _buildSpecRow(double sw, double sh, String label, String value) {
-    return Container(
-      padding: EdgeInsets.all(sw * 0.03),
-      decoration: BoxDecoration(
-        color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(sw * 0.02),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: sw * 0.032,
-              color: Colors.black54,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: sw * 0.032,
-              color: Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ── Reviews section (now API-driven) ─────────────────────────────────────
 
   Widget _buildReviewsSection(double sw, double sh) {
     return Column(
@@ -476,7 +404,9 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                // TODO: navigate to full reviews screen
+              },
               child: Text(
                 'See all',
                 style: TextStyle(
@@ -488,88 +418,75 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
             ),
           ],
         ),
-        SizedBox(height: sh * 0.015),
-        _buildReviewCard(
-          sw,
-          sh,
-          'John Doe',
-          'Amazing product! My dog loves it.',
-          5.0,
-        ),
-        SizedBox(height: sh * 0.012),
-        _buildReviewCard(
-          sw,
-          sh,
-          'Sarah Smith',
-          'Great quality and fast delivery.',
-          4.5,
-        ),
-        SizedBox(height: sh * 0.012),
-        _buildReviewCard(
-          sw,
-          sh,
-          'Mike Johnson',
-          'Excellent value for money!',
-          4.8,
+        SizedBox(height: sh * 0.01),
+        FutureBuilder<ReviewsResponse>(
+          future: _reviewsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: sh * 0.02),
+                child: Text(
+                  'Could not load reviews.',
+                  style: TextStyle(
+                    fontSize: sw * 0.032,
+                    color: Colors.black45,
+                  ),
+                ),
+              );
+            }
+
+            final data = snapshot.data!;
+
+            if (data.reviews.isEmpty) {
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: sh * 0.02),
+                child: Text(
+                  'No reviews yet. Be the first to review!',
+                  style: TextStyle(
+                    fontSize: sw * 0.032,
+                    color: Colors.black45,
+                  ),
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                ...data.reviews.map(
+                  (review) => Padding(
+                    padding: EdgeInsets.only(bottom: sh * 0.012),
+                    child: ReviewCard(review: review),
+                  ),
+                ),
+                if (data.total > data.reviews.length)
+                  Padding(
+                    padding: EdgeInsets.only(top: sh * 0.005),
+                    child: Text(
+                      '+${data.total - data.reviews.length} more reviews',
+                      style: TextStyle(
+                        fontSize: sw * 0.03,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildReviewCard(
-    double sw,
-    double sh,
-    String name,
-    String review,
-    double rating,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(sw * 0.03),
-      decoration: BoxDecoration(
-        color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(sw * 0.02),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                name,
-                style: TextStyle(
-                  fontSize: sw * 0.032,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              Row(
-                children: List.generate(
-                  5,
-                  (index) => Icon(
-                    Icons.star_rounded,
-                    size: sw * 0.03,
-                    color: index < rating.toInt()
-                        ? Colors.amber
-                        : Colors.black12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: sh * 0.005),
-          Text(
-            review,
-            style: TextStyle(
-              fontSize: sw * 0.03,
-              color: Colors.black54,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ── Bottom action bar ─────────────────────────────────────────────────────
 
   Widget _buildBottomActionBar(double sw, double sh) {
     return Container(
@@ -602,11 +519,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    if (quantity > 1) {
-                      setState(() {
-                        quantity--;
-                      });
-                    }
+                    if (quantity > 1) setState(() => quantity--);
                   },
                   child: Container(
                     width: sw * 0.08,
@@ -615,11 +528,8 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(sw * 0.02),
                     ),
-                    child: Icon(
-                      Icons.remove,
-                      size: sw * 0.04,
-                      color: AppColors.darkPink,
-                    ),
+                    child: Icon(Icons.remove,
+                        size: sw * 0.04, color: AppColors.darkPink),
                   ),
                 ),
                 SizedBox(width: sw * 0.04),
@@ -633,11 +543,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                 ),
                 SizedBox(width: sw * 0.04),
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      quantity++;
-                    });
-                  },
+                  onTap: () => setState(() => quantity++),
                   child: Container(
                     width: sw * 0.08,
                     height: sw * 0.08,
@@ -645,11 +551,8 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(sw * 0.02),
                     ),
-                    child: Icon(
-                      Icons.add,
-                      size: sw * 0.04,
-                      color: AppColors.darkPink,
-                    ),
+                    child: Icon(Icons.add,
+                        size: sw * 0.04, color: AppColors.darkPink),
                   ),
                 ),
               ],
@@ -673,9 +576,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       ? SizedBox(
                           height: sw * 0.045,
                           width: sw * 0.045,
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: const CircularProgressIndicator(strokeWidth: 2),
                         )
                       : Text(
                           'Add to Cart',
