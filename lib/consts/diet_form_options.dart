@@ -1,6 +1,6 @@
 const List<String> activityLevels = ['Low', 'Medium', 'High'];
 
-const List<String> diseases = [
+const diseases = [
   'Ehrlichiosis',
   'Babesiosis',
   'Upper Respiratory_infections',
@@ -9,10 +9,10 @@ const List<String> diseases = [
   'None',
 ];
 
-const List<String> allergies = [
+const allergies = [
   'Beef',
   'Pork',
-  'Diary',
+  'Dairy',
   'Wheat',
   'Chicken',
   'Fish',

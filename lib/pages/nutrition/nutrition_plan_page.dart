@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
-import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/nutrition/meal_plan_card.dart';
 
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/services/diet_plan_service.dart';
+
+import 'package:pet_owner_mobile/widgets/nutrition/diet_form_dialog.dart'; 
 
 class NutritionPlanScreen extends StatefulWidget {
   const NutritionPlanScreen({Key? key}) : super(key: key);
@@ -120,7 +121,8 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                                     );
 
                                     final petName = (pet['name'] ?? 'Pet').toString();
-                                    final petBreed = (profile['breed'] ?? pet['breed'] ?? '').toString();
+                                    final petBreed =
+                                        (profile['breed'] ?? pet['breed'] ?? '').toString();
 
                                     final mealsCount = (nutrition['meals_per_day'] is num)
                                         ? (nutrition['meals_per_day'] as num).toInt()
@@ -139,7 +141,6 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                                         petAge: _formatAgeFromProfile(profile),
                                         planDate: planDate,
                                         mealsCount: mealsCount,
-                                        // if MealPlanCard expects a Color:
                                         bgColor: AppColors.darkPink.withOpacity(0.12),
                                         onTap: () {
                                           context.goNamed(
@@ -348,8 +349,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                 child: InkWell(
                   onTap: () {
                     Navigator.pop(context);
-                    // ✅ IMPORTANT: do NOT call getPetById again. Use already-loaded pet map.
-                    _openGenerateFormFromPet(pet);
+                    _openGenerateDialogFromPet(pet); // ✅ open dialog here
                   },
                   child: Container(
                     padding: EdgeInsets.all(sw * 0.04),
@@ -400,7 +400,8 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
     );
   }
 
-  Future<void> _openGenerateFormFromPet(Map<String, dynamic> pet) async {
+  // ✅ NEW: opens DietFormDialog (AlertDialog) when pet selected
+  Future<void> _openGenerateDialogFromPet(Map<String, dynamic> pet) async {
     try {
       final petId = (pet['_id'] ?? '').toString();
       if (petId.isEmpty) {
@@ -409,270 +410,43 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
       }
 
       if (!mounted) return;
-      await showModalBottomSheet(
+
+      await showDialog(
         context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        builder: (_) => _GenerateDietFormSheet(
-          petId: petId,
-          petName: (pet['name'] ?? 'Pet').toString(),
-          species: (pet['species'] ?? '').toString(),
-          breed: (pet['breed'] ?? '').toString(),
-          gender: (pet['gender'] ?? '').toString(),
-          onGenerated: (plan) async {
-            await _loadAll();
-            if (!mounted) return;
-            context.goNamed('NutritionPlanDetailsScreen', extra: {'plan': plan});
-          },
-        ),
+        barrierDismissible: false,
+        builder: (ctx) {
+          return DietFormDialog(
+            petId: petId,
+            species: (pet['species'] ?? '').toString(),
+            breed: (pet['breed'] ?? '').toString(),
+            gender: (pet['gender'] ?? '').toString(),
+            onGenerate: ({
+              required double ageMonths,
+              required double weightKg,
+              required String activityLevel,
+              required String disease,
+              required String allergy,
+            }) async {
+              // Call backend
+              final plan = await _dietPlanService.generateDietPlan(
+                petId: petId,
+                ageMonths: ageMonths,
+                weightKg: weightKg,
+                activityLevel: activityLevel,
+                disease: disease,
+                allergy: allergy,
+              );
+
+              // refresh and open details
+              await _loadAll();
+              if (!mounted) return;
+              context.goNamed('NutritionPlanDetailsScreen', extra: {'plan': plan});
+            },
+          );
+        },
       );
     } catch (e) {
       _showSnack('Failed to open generate form');
-    }
-  }
-}
-
-class _GenerateDietFormSheet extends StatefulWidget {
-  final String petId;
-  final String petName;
-  final String species;
-  final String breed;
-  final String gender;
-  final Future<void> Function(Map<String, dynamic> plan) onGenerated;
-
-  const _GenerateDietFormSheet({
-    required this.petId,
-    required this.petName,
-    required this.species,
-    required this.breed,
-    required this.gender,
-    required this.onGenerated,
-  });
-
-  @override
-  State<_GenerateDietFormSheet> createState() => _GenerateDietFormSheetState();
-}
-
-class _GenerateDietFormSheetState extends State<_GenerateDietFormSheet> {
-  final _dietService = DietPlanService();
-  final _formKey = GlobalKey<FormState>();
-
-  final _ageCtrl = TextEditingController();
-  final _weightCtrl = TextEditingController();
-
-  String _activityLevel = 'Medium';
-  String _disease = 'None';
-  String _allergy = 'None';
-
-  bool _submitting = false;
-
-  static const activityLevels = ['Low', 'Medium', 'High'];
-
-  static const diseases = [
-    'Ehrlichiosis',
-    'Babesiosis',
-    'Upper Respiratory_infections',
-    'Chronic Kidney',
-    'Pavovirus',
-    'None',
-  ];
-
-  static const allergies = [
-    'Beef',
-    'Pork',
-    'Diary',
-    'Wheat',
-    'Chicken',
-    'Fish',
-    'None',
-  ];
-
-  @override
-  void dispose() {
-    _ageCtrl.dispose();
-    _weightCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final sw = MediaQuery.of(context).size.width;
-    final sh = MediaQuery.of(context).size.height;
-
-    return Container(
-      padding: EdgeInsets.only(
-        left: sw * 0.05,
-        right: sw * 0.05,
-        top: sw * 0.04,
-        bottom: MediaQuery.of(context).viewInsets.bottom + sw * 0.05,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(sw * 0.06),
-          topRight: Radius.circular(sw * 0.06),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: sw * 0.12,
-                  height: sh * 0.005,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(sw * 0.01),
-                  ),
-                ),
-              ),
-              SizedBox(height: sh * 0.02),
-              Text(
-                'Generate Plan for ${widget.petName}',
-                style: TextStyle(fontSize: sw * 0.05, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: sh * 0.015),
-
-              _readOnlyField('Species', widget.species),
-              _readOnlyField('Breed', widget.breed),
-              _readOnlyField('Gender', widget.gender),
-
-              SizedBox(height: sh * 0.015),
-
-              TextFormField(
-                controller: _ageCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Age (Months)',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) {
-                  final x = double.tryParse((v ?? '').trim());
-                  if (x == null || x <= 0) return 'Enter valid age in months';
-                  return null;
-                },
-              ),
-              SizedBox(height: sh * 0.012),
-              TextFormField(
-                controller: _weightCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Weight (Kg)',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) {
-                  final x = double.tryParse((v ?? '').trim());
-                  if (x == null || x <= 0) return 'Enter valid weight';
-                  return null;
-                },
-              ),
-
-              SizedBox(height: sh * 0.012),
-              DropdownButtonFormField<String>(
-                value: _activityLevel,
-                items: activityLevels.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                onChanged: (v) => setState(() => _activityLevel = v ?? 'Medium'),
-                decoration: const InputDecoration(
-                  labelText: 'Activity Level',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              SizedBox(height: sh * 0.012),
-              DropdownButtonFormField<String>(
-                value: _disease,
-                items: diseases.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                onChanged: (v) => setState(() => _disease = v ?? 'None'),
-                decoration: const InputDecoration(
-                  labelText: 'Disease',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              SizedBox(height: sh * 0.012),
-              DropdownButtonFormField<String>(
-                value: _allergy,
-                items: allergies.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                onChanged: (v) => setState(() => _allergy = v ?? 'None'),
-                decoration: const InputDecoration(
-                  labelText: 'Allergy',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              SizedBox(height: sh * 0.02),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkPink,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: sh * 0.016),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(sw * 0.03)),
-                    elevation: 0,
-                  ),
-                  child: _submitting
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Generate'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _readOnlyField(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextFormField(
-        initialValue: value,
-        readOnly: true,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          filled: true,
-          fillColor: Colors.grey[100],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _submitting = true);
-    try {
-      final plan = await _dietService.generateDietPlan(
-        petId: widget.petId,
-        ageMonths: double.parse(_ageCtrl.text.trim()),
-        weightKg: double.parse(_weightCtrl.text.trim()),
-        activityLevel: _activityLevel,
-        disease: _disease,
-        allergy: _allergy,
-      );
-
-      if (!mounted) return;
-      Navigator.pop(context); // close sheet
-      await widget.onGenerated(plan);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Diet generation failed')),
-      );
-    } finally {
-      if (mounted) setState(() => _submitting = false);
     }
   }
 }
