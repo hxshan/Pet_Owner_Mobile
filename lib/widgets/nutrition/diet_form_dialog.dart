@@ -36,8 +36,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
   String _activity = 'Medium';
   String _disease = 'None';
 
-  // ✅ default selected is None (like disease)
-  String _allergy = 'None';
+   String _allergy = 'None';
 
   bool _loading = false;
 
@@ -50,11 +49,9 @@ class _DietFormDialogState extends State<DietFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Ensure None is visible in dropdown list + avoid duplicates
     final diseaseItems = <String>['None', ...diseases.where((e) => e != 'None')];
     final allergyItems = <String>['None', ...allergies.where((e) => e != 'None')];
 
-    // ✅ safety: if any list doesn’t contain current value, reset to None
     if (!diseaseItems.contains(_disease)) _disease = 'None';
     if (!allergyItems.contains(_allergy)) _allergy = 'None';
 
@@ -123,7 +120,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
                 onChanged: (v) => setState(() => _disease = v ?? 'None'),
               ),
 
-              // ✅ Food Restrictions shows "None" by default + "None" in dropdown list
+            
               DropdownButtonFormField<String>(
                 value: _allergy,
                 isExpanded: true,
@@ -162,7 +159,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
                       allergy: _allergy,
                     );
 
-                    if (mounted) Navigator.pop(context); // ✅ close dialog after success
+                    if (mounted) Navigator.pop(context); 
                   } finally {
                     if (mounted) setState(() => _loading = false);
                   }
