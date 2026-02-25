@@ -6,14 +6,14 @@ class DietFormDialog extends StatefulWidget {
   final String species;
   final String breed;
   final String gender;
+
   final Future<void> Function({
     required double ageMonths,
     required double weightKg,
     required String activityLevel,
     required String disease,
     required String allergy,
-  })
-  onGenerate;
+  }) onGenerate;
 
   const DietFormDialog({
     super.key,
@@ -35,7 +35,10 @@ class _DietFormDialogState extends State<DietFormDialog> {
 
   String _activity = 'Medium';
   String _disease = 'None';
+
+  // ✅ default selected is None (like disease)
   String _allergy = 'None';
+
   bool _loading = false;
 
   @override
@@ -47,6 +50,14 @@ class _DietFormDialogState extends State<DietFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Ensure None is visible in dropdown list + avoid duplicates
+    final diseaseItems = <String>['None', ...diseases.where((e) => e != 'None')];
+    final allergyItems = <String>['None', ...allergies.where((e) => e != 'None')];
+
+    // ✅ safety: if any list doesn’t contain current value, reset to None
+    if (!diseaseItems.contains(_disease)) _disease = 'None';
+    if (!allergyItems.contains(_allergy)) _allergy = 'None';
+
     return AlertDialog(
       title: const Text("Generate Meal Plan"),
       content: SingleChildScrollView(
@@ -55,7 +66,6 @@ class _DietFormDialogState extends State<DietFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // locked values from pet profile
               TextFormField(
                 initialValue: widget.species,
                 enabled: false,
@@ -71,7 +81,6 @@ class _DietFormDialogState extends State<DietFormDialog> {
                 enabled: false,
                 decoration: const InputDecoration(labelText: "Gender"),
               ),
-
               const SizedBox(height: 10),
 
               TextFormField(
@@ -94,7 +103,6 @@ class _DietFormDialogState extends State<DietFormDialog> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 10),
 
               DropdownButtonFormField<String>(
@@ -109,21 +117,22 @@ class _DietFormDialogState extends State<DietFormDialog> {
               DropdownButtonFormField<String>(
                 value: _disease,
                 decoration: const InputDecoration(labelText: "Disease"),
-                items: diseases
+                items: diseaseItems
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
                 onChanged: (v) => setState(() => _disease = v ?? 'None'),
               ),
 
+              // ✅ Food Restrictions shows "None" by default + "None" in dropdown list
               DropdownButtonFormField<String>(
                 value: _allergy,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: "Food Restrictions",
-                  hintText: "e.g. fish, dairy, pork",
                   helperText:
-                      "Enter foods to avoid due to allergies or health conditions",
+                      "Select foods to avoid due to allergies or health conditions",
                 ),
-                items: allergies
+                items: allergyItems
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
                 onChanged: (v) => setState(() => _allergy = v ?? 'None'),
@@ -144,7 +153,6 @@ class _DietFormDialogState extends State<DietFormDialog> {
                   if (!_formKey.currentState!.validate()) return;
 
                   setState(() => _loading = true);
-
                   try {
                     await widget.onGenerate(
                       ageMonths: double.parse(_ageCtrl.text.trim()),
@@ -153,6 +161,8 @@ class _DietFormDialogState extends State<DietFormDialog> {
                       disease: _disease,
                       allergy: _allergy,
                     );
+
+                    if (mounted) Navigator.pop(context); // ✅ close dialog after success
                   } finally {
                     if (mounted) setState(() => _loading = false);
                   }
