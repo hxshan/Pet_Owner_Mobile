@@ -136,7 +136,7 @@ class MealPlanDetailsScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: sw * 0.025, vertical: sh * 0.006),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(sw * 0.015)),
                   child: Text(
-                    'Plan valid for 7 days',
+                    'Plan valid for 14 days',
                     style: TextStyle(fontSize: sw * 0.03, fontWeight: FontWeight.w600, color: AppColors.darkPink),
                   ),
                 ),
