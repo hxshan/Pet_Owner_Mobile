@@ -348,7 +348,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                 child: InkWell(
                   onTap: () {
                     Navigator.pop(context);
-                    // ✅ IMPORTANT: do NOT call getPetById again. Use already-loaded pet map.
+                    
                     _openGenerateFormFromPet(pet);
                   },
                   child: Container(
@@ -664,7 +664,7 @@ class _GenerateDietFormSheetState extends State<_GenerateDietFormSheet> {
       );
 
       if (!mounted) return;
-      Navigator.pop(context); // close sheet
+      Navigator.pop(context); 
       await widget.onGenerated(plan);
     } catch (e) {
       if (!mounted) return;

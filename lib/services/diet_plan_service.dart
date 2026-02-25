@@ -25,7 +25,7 @@ class DietPlanService {
       options: Options(extra: {'requiresAuth': true}),
     );
 
-    // backend returns: { plan: created }
+    
     return (res.data['plan'] as Map).cast<String, dynamic>();
   }
 
