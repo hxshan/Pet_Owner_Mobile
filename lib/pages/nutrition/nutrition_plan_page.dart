@@ -349,7 +349,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                 child: InkWell(
                   onTap: () {
                     Navigator.pop(context);
-                    _openGenerateDialogFromPet(pet); // ✅ open dialog here
+                    _openGenerateDialogFromPet(pet); 
                   },
                   child: Container(
                     padding: EdgeInsets.all(sw * 0.04),
@@ -400,7 +400,6 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
     );
   }
 
-  // ✅ NEW: opens DietFormDialog (AlertDialog) when pet selected
   Future<void> _openGenerateDialogFromPet(Map<String, dynamic> pet) async {
     try {
       final petId = (pet['_id'] ?? '').toString();
