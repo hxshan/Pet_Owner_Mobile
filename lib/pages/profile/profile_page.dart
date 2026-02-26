@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/user_model.dart';
 import 'package:pet_owner_mobile/services/auth.dart';
+import 'package:pet_owner_mobile/services/profile_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -11,7 +13,38 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final ProfileService _profileService = ProfileService();
   bool _isLoggingOut = false;
+  String userName = 'User';
+  String userEmail = 'user@email.com';
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loadUser();
+  }
+
+  Future<void> loadUser() async {
+    try {
+      final User user = await _profileService.getPetOwnerProfile();
+
+      setState(() {
+        userName = "${user.firstname} ${user.lastname}";
+        userEmail = user.email ?? 'user@email.com';
+      });
+    } catch (e) {
+      if (mounted) {
+        _showSnack('Failed to load profile: $e');
+      }
+    }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: AppColors.darkPink),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       // User Name
                       Text(
-                        'John Doe',
+                        userName,
                         style: TextStyle(
                           fontSize: sw * 0.06,
                           fontWeight: FontWeight.bold,
@@ -130,7 +163,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       // Email
                       Text(
-                        'john.doe@email.com',
+                        userEmail,
                         style: TextStyle(
                           fontSize: sw * 0.035,
                           color: Colors.grey.shade600,
@@ -175,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Edit Profile',
                     'Update your personal information',
                     () {
-                      // Navigate to edit profile
+                      context.pushNamed('EditProfileScreen');
                     },
                   ),
 
@@ -186,18 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Change Password',
                     'Update your password',
                     () {
-                      // Navigate to change password
-                    },
-                  ),
-
-                  _buildMenuItem(
-                    sw,
-                    sh,
-                    Icons.location_on_outlined,
-                    'Address',
-                    'Manage your addresses',
-                    () {
-                      // Navigate to addresses
+                      context.pushNamed('ChangePasswordScreen');
                     },
                   ),
 
@@ -213,7 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Help & Support',
                     'Get help and contact us',
                     () {
-                      // Navigate to help
+                      context.pushNamed('HelpSupportScreen');
                     },
                   ),
 
@@ -224,7 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Terms & Conditions',
                     'Read our terms of service',
                     () {
-                      // Navigate to terms
+                      context.pushNamed('TermsConditionsScreen');
                     },
                   ),
 
@@ -235,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Privacy Policy',
                     'Read our privacy policy',
                     () {
-                      // Navigate to privacy
+                      context.pushNamed('PrivacyPolicyScreen');
                     },
                   ),
 
@@ -505,11 +527,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                 try {
                                   final authService = AuthService();
-                                  await authService.logout(); // Clear storage
-                                  Navigator.pop(context); // Close dialog
-                                  context.goNamed(
-                                    'LoginPage',
-                                  ); // Navigate to login
+                                  await authService.logout();
+                                  Navigator.pop(context);
+                                  context.goNamed('LoginPage');
                                 } catch (e) {
                                   setState(() => _isLoggingOut = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
