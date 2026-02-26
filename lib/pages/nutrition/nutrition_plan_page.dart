@@ -6,7 +6,7 @@ import 'package:pet_owner_mobile/widgets/nutrition/meal_plan_card.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/services/diet_plan_service.dart';
 
-import 'package:pet_owner_mobile/widgets/nutrition/diet_form_dialog.dart'; 
+import 'package:pet_owner_mobile/widgets/nutrition/diet_form_dialog.dart';
 
 class NutritionPlanScreen extends StatefulWidget {
   const NutritionPlanScreen({Key? key}) : super(key: key);
@@ -145,7 +145,13 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                                         onTap: () {
                                           context.goNamed(
                                             'NutritionPlanDetailsScreen',
-                                            extra: {'plan': plan},
+                                            extra: {
+                                              'plan': {
+                                                ...plan,
+                                                'petName': petName,
+                                                'petBreed': petBreed,
+                                              }
+                                            },
                                           );
                                         },
                                       ),
@@ -349,7 +355,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                 child: InkWell(
                   onTap: () {
                     Navigator.pop(context);
-                    _openGenerateDialogFromPet(pet); 
+                    _openGenerateDialogFromPet(pet);
                   },
                   child: Container(
                     padding: EdgeInsets.all(sw * 0.04),
@@ -426,7 +432,6 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
               required String disease,
               required String allergy,
             }) async {
-              // Call backend
               final plan = await _dietPlanService.generateDietPlan(
                 petId: petId,
                 ageMonths: ageMonths,
@@ -436,10 +441,22 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                 allergy: allergy,
               );
 
-              // refresh and open details
               await _loadAll();
               if (!mounted) return;
-              context.goNamed('NutritionPlanDetailsScreen', extra: {'plan': plan});
+
+              final petName = (pet['name'] ?? 'Pet').toString();
+              final petBreed = (pet['breed'] ?? '').toString();
+
+              context.goNamed(
+                'NutritionPlanDetailsScreen',
+                extra: {
+                  'plan': {
+                    ...plan,
+                    'petName': petName,
+                    'petBreed': petBreed,
+                  }
+                },
+              );
             },
           );
         },
