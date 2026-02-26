@@ -30,6 +30,8 @@ import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/vaccinations_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/view_all_pets_page.dart';
+import 'package:pet_owner_mobile/pages/profile/change_password_screen.dart';
+import 'package:pet_owner_mobile/pages/profile/edit_profile_screen.dart';
 import 'package:pet_owner_mobile/pages/profile/help_support_screen.dart';
 import 'package:pet_owner_mobile/pages/profile/privacy_policy_screen.dart';
 import 'package:pet_owner_mobile/pages/profile/profile_page.dart';
@@ -117,9 +119,14 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => ProfileScreen(),
           routes: [
             GoRoute(
-              path: '/helpsupport',
-              name: 'HelpSupportScreen',
-              builder: (context, state) => HelpSupportScreen(),
+              path: '/editprofile',
+              name: 'EditProfileScreen',
+              builder: (context, state) => EditProfileScreen(),
+            ),
+            GoRoute(
+              path: '/changepassword',
+              name: 'ChangePasswordScreen',
+              builder: (context, state) => ChangePasswordScreen(),
             ),
             GoRoute(
               path: '/privacypolicy',
