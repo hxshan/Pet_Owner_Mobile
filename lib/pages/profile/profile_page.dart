@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/models/user_model.dart';
 import 'package:pet_owner_mobile/services/auth.dart';
 import 'package:pet_owner_mobile/services/profile_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
@@ -12,118 +13,36 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _isLoggingOut = false;
-  bool _loadingProfile = true;
-  Map<String, dynamic>? _profile;
-  int _numberOfPets = 0;
-  int _numberOfActiveAppointments = 0;
   final ProfileService _profileService = ProfileService();
+  bool _isLoggingOut = false;
+  String userName = 'User';
+  String userEmail = 'user@email.com';
 
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
-    _loadProfile();
+    loadUser();
   }
 
-  Future<void> _loadProfile() async {
-    setState(() => _loadingProfile = true);
-    final data = await _profileService.getProfile();
-    if (data != null) {
+  Future<void> loadUser() async {
+    try {
+      final User user = await _profileService.getPetOwnerProfile();
+
       setState(() {
-        _profile = data;
-        _numberOfPets = data['numberOfPets'] ?? 0;
-        _numberOfActiveAppointments = data['numberOfActiveAppointments'] ?? 0;
-        _loadingProfile = false;
+        userName = "${user.firstname} ${user.lastname}";
+        userEmail = user.email ?? 'user@email.com';
       });
-    } else {
-      setState(() => _loadingProfile = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load profile')),
-      );
+    } catch (e) {
+      if (mounted) {
+        _showSnack('Failed to load profile: $e');
+      }
     }
   }
 
-  Future<void> _showEditProfileDialog(BuildContext context, double sw, double sh) async {
-    final firstnameController = TextEditingController(text: _profile?['user']?['firstname'] ?? '');
-    final lastnameController = TextEditingController(text: _profile?['user']?['lastname'] ?? '');
-    final emailController = TextEditingController(text: _profile?['user']?['email'] ?? '');
-    final phoneController = TextEditingController(text: _profile?['user']?['phone'] ?? '');
-    final addressController = TextEditingController(text: _profile?['user']?['address'] ?? '');
-
-    await showDialog(
-      context: context,
-      builder: (ctx) {
-        bool _saving = false;
-        return StatefulBuilder(builder: (ctx2, setState2) {
-          return AlertDialog(
-            title: Text('Edit Profile'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: firstnameController,
-                    decoration: InputDecoration(labelText: 'First name'),
-                  ),
-                  TextField(
-                    controller: lastnameController,
-                    decoration: InputDecoration(labelText: 'Last name'),
-                  ),
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(labelText: 'Email'),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  TextField(
-                    controller: phoneController,
-                    decoration: InputDecoration(labelText: 'Phone'),
-                    keyboardType: TextInputType.phone,
-                  ),
-                  TextField(
-                    controller: addressController,
-                    decoration: InputDecoration(labelText: 'Address'),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: _saving ? null : () => Navigator.of(ctx2).pop(),
-                child: Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: _saving
-                    ? null
-                    : () async {
-                        setState2(() => _saving = true);
-
-                        final payload = <String, dynamic>{};
-                        if (firstnameController.text.trim().isNotEmpty) payload['firstname'] = firstnameController.text.trim();
-                        if (lastnameController.text.trim().isNotEmpty) payload['lastname'] = lastnameController.text.trim();
-                        if (emailController.text.trim().isNotEmpty) payload['email'] = emailController.text.trim();
-                        if (phoneController.text.trim().isNotEmpty) payload['phone'] = phoneController.text.trim();
-                        if (addressController.text.trim().isNotEmpty) payload['address'] = addressController.text.trim();
-
-                        try {
-                          await _profileService.updateProfile(payload);
-                          Navigator.of(ctx2).pop();
-                          await _loadProfile();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Profile updated')),
-                          );
-                        } catch (e) {
-                          setState2(() => _saving = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Update failed: ${e.toString()}')),
-                          );
-                        }
-                      },
-                child: _saving ? SizedBox(height: 16, width: 16, child: CircularProgressIndicator()) : Text('Save'),
-              ),
-            ],
-          );
-        });
-      },
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: AppColors.darkPink),
     );
   }
 
@@ -231,37 +150,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SizedBox(height: sh * 0.015),
 
                       // User Name
-                      _loadingProfile
-                          ? SizedBox(
-                              height: sw * 0.06,
-                              width: sw * 0.28,
-                              child: LinearProgressIndicator(
-                                color: AppColors.darkPink,
-                                backgroundColor:
-                                    AppColors.mainColor.withOpacity(0.1),
-                              ),
-                            )
-                          : Text(
-                              '${_profile?['user']?['firstname'] ?? ''} ${_profile?['user']?['lastname'] ?? ''}',
-                              style: TextStyle(
-                                fontSize: sw * 0.06,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
+                      Text(
+                        userName,
+                        style: TextStyle(
+                          fontSize: sw * 0.06,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
 
                       SizedBox(height: sh * 0.005),
 
                       // Email
-                      _loadingProfile
-                          ? SizedBox()
-                          : Text(
-                              _profile?['user']?['email'] ?? '',
-                              style: TextStyle(
-                                fontSize: sw * 0.035,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
+                      Text(
+                        userEmail,
+                        style: TextStyle(
+                          fontSize: sw * 0.035,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
 
                       SizedBox(height: sh * 0.02),
 
@@ -301,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Edit Profile',
                     'Update your personal information',
                     () {
-                      _showEditProfileDialog(context, sw, sh);
+                      context.pushNamed('EditProfileScreen');
                     },
                   ),
 
@@ -312,18 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Change Password',
                     'Update your password',
                     () {
-                      // Navigate to change password
-                    },
-                  ),
-
-                  _buildMenuItem(
-                    sw,
-                    sh,
-                    Icons.location_on_outlined,
-                    'Address',
-                    'Manage your addresses',
-                    () {
-                      // Navigate to addresses
+                      context.pushNamed('ChangePasswordScreen');
                     },
                   ),
 
@@ -339,7 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Help & Support',
                     'Get help and contact us',
                     () {
-                      // Navigate to help
+                      context.pushNamed('HelpSupportScreen');
                     },
                   ),
 
@@ -350,7 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Terms & Conditions',
                     'Read our terms of service',
                     () {
-                      // Navigate to terms
+                      context.pushNamed('TermsConditionsScreen');
                     },
                   ),
 
@@ -361,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Privacy Policy',
                     'Read our privacy policy',
                     () {
-                      // Navigate to privacy
+                      context.pushNamed('PrivacyPolicyScreen');
                     },
                   ),
 
@@ -631,11 +527,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                 try {
                                   final authService = AuthService();
-                                  await authService.logout(); // Clear storage
-                                  Navigator.pop(context); // Close dialog
-                                  context.goNamed(
-                                    'LoginPage',
-                                  ); // Navigate to login
+                                  await authService.logout();
+                                  Navigator.pop(context);
+                                  context.goNamed('LoginPage');
                                 } catch (e) {
                                   setState(() => _isLoggingOut = false);
                                   ScaffoldMessenger.of(context).showSnackBar(

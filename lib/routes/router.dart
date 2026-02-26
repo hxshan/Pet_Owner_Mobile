@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
-import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
+import 'package:pet_owner_mobile/models/ecommerce/address_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/CheckoutScreen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/OrderSuccessScreen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/add_edit_address_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/addressed_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/cart_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_dashboard_page.dart';
-import 'package:pet_owner_mobile/pages/ecommerce/order_history_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_search_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_search_view_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/ecommerce_shell.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/order_details_screen.dart';
+import 'package:pet_owner_mobile/pages/ecommerce/orders_history_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/product_detail_page.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/vouchers_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/wishlist_screen.dart';
@@ -25,7 +30,12 @@ import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/vaccinations_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/view_all_pets_page.dart';
-import 'package:pet_owner_mobile/pages/profile_page.dart';
+import 'package:pet_owner_mobile/pages/profile/change_password_screen.dart';
+import 'package:pet_owner_mobile/pages/profile/edit_profile_screen.dart';
+import 'package:pet_owner_mobile/pages/profile/help_support_screen.dart';
+import 'package:pet_owner_mobile/pages/profile/privacy_policy_screen.dart';
+import 'package:pet_owner_mobile/pages/profile/profile_page.dart';
+import 'package:pet_owner_mobile/pages/profile/terms_conditions_screen.dart';
 import 'package:pet_owner_mobile/pages/signup/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/signup/animal_info_page.dart';
 import 'package:pet_owner_mobile/pages/dashboard_page.dart';
@@ -41,9 +51,14 @@ import 'package:pet_owner_mobile/pages/vet/vet_search_result_screen.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+final _ecommerceNavigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
   debugLogDiagnostics: true,
+  navigatorKey: _rootNavigatorKey,
   routes: [
     // Pages without NavBar
     GoRoute(
@@ -84,6 +99,7 @@ final GoRouter appRouter = GoRouter(
 
     // Pages with NavBar
     ShellRoute(
+      navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => NavBarShell(child: child),
       routes: [
         GoRoute(
@@ -101,6 +117,28 @@ final GoRouter appRouter = GoRouter(
           path: '/profile',
           name: 'ProfileScreen',
           builder: (context, state) => ProfileScreen(),
+          routes: [
+            GoRoute(
+              path: '/editprofile',
+              name: 'EditProfileScreen',
+              builder: (context, state) => EditProfileScreen(),
+            ),
+            GoRoute(
+              path: '/changepassword',
+              name: 'ChangePasswordScreen',
+              builder: (context, state) => ChangePasswordScreen(),
+            ),
+            GoRoute(
+              path: '/privacypolicy',
+              name: 'PrivacyPolicyScreen',
+              builder: (context, state) => PrivacyPolicyScreen(),
+            ),
+            GoRoute(
+              path: '/termsconditions',
+              name: 'TermsConditionsScreen',
+              builder: (context, state) => TermsConditionsScreen(),
+            ),
+          ],
         ),
         GoRoute(
           path: '/notifications',
@@ -173,56 +211,107 @@ final GoRouter appRouter = GoRouter(
         ),
 
         // Ecoommerce Routes
-        GoRoute(
-          path: '/ecommerce',
-          name: 'EcommerceDashboardScreen',
-          builder: (context, state) => const EcommerceDashboardScreen(),
+        ShellRoute(
+          navigatorKey: _ecommerceNavigatorKey,
+          builder: (context, state, child) => EcommerceShell(child: child),
           routes: [
             GoRoute(
-              path: 'product-detail/:productId',
-              name: 'ProductDetailScreen',
-              builder: (context, state) {
-                final productId = state.pathParameters['productId'] ?? '';
-                return ProductDetailScreen(productId: productId);
-              },
-            ),
-            GoRoute(
-              path: 'cart',
-              name: 'CartScreen',
-              builder: (context, state) => const CartScreen(),
-            ),
-            GoRoute(
-              path: 'orders',
-              name: 'OrderHistoryScreen',
-              builder: (context, state) => const OrderHistoryScreen(),
-            ),
-            GoRoute(
-              path: 'addresses',
-              name: 'AddressesScreen',
-              builder: (context, state) => const AddressesScreen(),
-            ),
-            GoRoute(
-              path: 'wishlist',
-              name: 'WishlistScreen',
-              builder: (context, state) => const WishlistScreen(),
-            ),
-            GoRoute(
-              path: 'vouchers',
-              name: 'VouchersScreen',
-              builder: (context, state) => const VouchersScreen(),
-            ),
-            GoRoute(
-              name: 'CheckoutScreen',
-              path: '/checkout',
-              builder: (context, state) => const CheckoutScreen(),
-            ),
-            GoRoute(
-              name: 'OrderSuccessScreen',
-              path: '/order-success',
-              builder: (context, state) {
-                final orderId = state.extra as String;
-                return OrderSuccessScreen(orderId: orderId);
-              },
+              path: '/ecommerce',
+              name: 'EcommerceDashboardScreen',
+              builder: (context, state) => const EcommerceDashboardScreen(),
+              routes: [
+                GoRoute(
+                  path: 'product-detail/:productId',
+                  name: 'ProductDetailScreen',
+                  builder: (context, state) {
+                    final productId = state.pathParameters['productId'] ?? '';
+                    return ProductDetailScreen(productId: productId);
+                  },
+                ),
+                GoRoute(
+                  name: 'EcommerceSearchViewScreen',
+                  path: 'search-view',
+                  builder: (context, state) {
+                    final q = state.uri.queryParameters['q'] ?? '';
+                    final cat = state.uri.queryParameters['category'] ?? 'All';
+                    return EcommerceSearchViewScreen(
+                      initialQuery: q,
+                      initialCategory: cat,
+                    );
+                  },
+                ),
+                GoRoute(
+                  name: 'EcommerceSearchResultsScreen',
+                  path: 'search',
+                  builder: (context, state) {
+                    final q = state.uri.queryParameters['q'] ?? '';
+                    final cat = state.uri.queryParameters['category'] ?? 'All';
+                    return EcommerceSearchScreen(
+                      initialQuery: q,
+                      initialCategory: cat,
+                    );
+                  },
+                ),
+                GoRoute(
+                  path: 'cart',
+                  name: 'CartScreen',
+                  builder: (context, state) => const CartScreen(),
+                ),
+                GoRoute(
+                  path: 'orders',
+                  name: 'OrderHistoryScreen',
+                  builder: (context, state) => const OrdersHistoryScreen(),
+                ),
+                GoRoute(
+                  path: 'addresses',
+                  name: 'AddressesScreen',
+                  builder: (context, state) => const AddressesScreen(),
+                ),
+                GoRoute(
+                  name: 'AddAddressScreen',
+                  path: '/addresses/add',
+                  builder: (context, state) => const AddEditAddressScreen(),
+                ),
+                GoRoute(
+                  name: 'EditAddressScreen',
+                  path: '/addresses/edit',
+                  builder: (context, state) {
+                    final addr = state.extra as Address;
+                    return AddEditAddressScreen(initial: addr);
+                  },
+                ),
+                GoRoute(
+                  path: 'wishlist',
+                  name: 'WishlistScreen',
+                  builder: (context, state) => const WishlistScreen(),
+                ),
+                GoRoute(
+                  path: 'vouchers',
+                  name: 'VouchersScreen',
+                  builder: (context, state) => const VouchersScreen(),
+                ),
+                GoRoute(
+                  name: 'CheckoutScreen',
+                  path: 'checkout',
+                  builder: (context, state) => const CheckoutScreen(),
+                ),
+                GoRoute(
+                  name: 'OrderSuccessScreen',
+                  path: 'order-success',
+                  builder: (context, state) {
+                    final orderId = state.extra as String;
+                    return OrderSuccessScreen(orderId: orderId);
+                  },
+                ),
+                GoRoute(
+                  name: 'OrderDetailsScreen',
+                  path: '/orders/:id',
+                  builder: (context, state) {
+                    final id = state.pathParameters['id']!;
+                    return OrderDetailsScreen(orderId: id);
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -237,11 +326,24 @@ final GoRouter appRouter = GoRouter(
               path: 'details',
               name: 'NutritionPlanDetailsScreen',
               builder: (context, state) {
-                final extra = state.extra as Map<String, dynamic>;
-                return MealPlanDetailsScreen(
-                  petName: extra['petName'] ?? '',
-                  petBreed: extra['petBreed'] ?? '',
-                );
+                final extra = state.extra;
+
+                if (extra == null || extra is! Map<String, dynamic>) {
+                  return const Scaffold(
+                    body: Center(child: Text('No plan data provided')),
+                  );
+                }
+
+                final rawPlan = extra['plan'];
+                if (rawPlan == null || rawPlan is! Map) {
+                  return const Scaffold(
+                    body: Center(child: Text('Invalid plan data')),
+                  );
+                }
+
+                final plan = rawPlan.cast<String, dynamic>();
+
+                return MealPlanDetailsScreen(plan: plan);
               },
             ),
           ],
@@ -316,16 +418,16 @@ class _NavBarShellState extends State<NavBarShell> {
   void _onItemTapped(int index) {
     switch (index) {
       case 0:
-        context.pushNamed('DashboardScreen');
+        context.goNamed('DashboardScreen');
         break;
       case 1:
-        context.pushNamed('EcommerceDashboardScreen');
+        context.goNamed('EcommerceDashboardScreen');
         break;
       case 2:
-        context.pushNamed('MyPetsScreen');
+        context.goNamed('MyPetsScreen');
         break;
       case 3:
-        context.pushNamed('ProfileScreen');
+        context.goNamed('ProfileScreen');
         break;
     }
   }
