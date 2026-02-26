@@ -129,6 +129,11 @@ final GoRouter appRouter = GoRouter(
               builder: (context, state) => ChangePasswordScreen(),
             ),
             GoRoute(
+              path: '/helpsupport',
+              name: 'HelpSupportScreen',
+              builder: (context, state) => HelpSupportScreen(),
+            ),
+            GoRoute(
               path: '/privacypolicy',
               name: 'PrivacyPolicyScreen',
               builder: (context, state) => PrivacyPolicyScreen(),
