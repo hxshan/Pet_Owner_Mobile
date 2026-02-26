@@ -32,7 +32,20 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
     });
     try {
       final service = VetService();
-      final results = await service.searchVets(q: widget.location, page: 1, limit: 20);
+      // Try to detect if location is provided as 'lat,lng' (from current position)
+      List<VetModel> results;
+      final parts = widget.location.split(',');
+      if (parts.length == 2) {
+        final lat = double.tryParse(parts[0].trim());
+        final lng = double.tryParse(parts[1].trim());
+        if (lat != null && lng != null) {
+          results = await service.searchVets(page: 1, limit: 20, lat: lat, lng: lng);
+        } else {
+          results = await service.searchVets(q: widget.location, page: 1, limit: 20);
+        }
+      } else {
+        results = await service.searchVets(q: widget.location, page: 1, limit: 20);
+      }
       setState(() {
         _results = results;
         _isLoading = false;
