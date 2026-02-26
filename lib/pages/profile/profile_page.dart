@@ -190,17 +190,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
 
-                  _buildMenuItem(
-                    sw,
-                    sh,
-                    Icons.location_on_outlined,
-                    'Address',
-                    'Manage your addresses',
-                    () {
-                      // Navigate to addresses
-                    },
-                  ),
-
                   SizedBox(height: sh * 0.02),
 
                   // Support Section
@@ -213,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Help & Support',
                     'Get help and contact us',
                     () {
-                      // Navigate to help
+                      context.pushNamed('HelpSupportScreen');
                     },
                   ),
 
@@ -224,7 +213,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Terms & Conditions',
                     'Read our terms of service',
                     () {
-                      // Navigate to terms
+                      context.pushNamed('TermsConditionsScreen');
                     },
                   ),
 
@@ -235,7 +224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Privacy Policy',
                     'Read our privacy policy',
                     () {
-                      // Navigate to privacy
+                      context.pushNamed('PrivacyPolicyScreen');
                     },
                   ),
 
@@ -505,11 +494,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                 try {
                                   final authService = AuthService();
-                                  await authService.logout(); // Clear storage
-                                  Navigator.pop(context); // Close dialog
+                                  await authService.logout();
+                                  Navigator.pop(context); 
                                   context.goNamed(
                                     'LoginPage',
-                                  ); // Navigate to login
+                                  ); 
                                 } catch (e) {
                                   setState(() => _isLoggingOut = false);
                                   ScaffoldMessenger.of(context).showSnackBar(

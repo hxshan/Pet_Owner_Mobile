@@ -30,7 +30,10 @@ import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/vaccinations_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/view_all_pets_page.dart';
-import 'package:pet_owner_mobile/pages/profile_page.dart';
+import 'package:pet_owner_mobile/pages/profile/help_support_screen.dart';
+import 'package:pet_owner_mobile/pages/profile/privacy_policy_screen.dart';
+import 'package:pet_owner_mobile/pages/profile/profile_page.dart';
+import 'package:pet_owner_mobile/pages/profile/terms_conditions_screen.dart';
 import 'package:pet_owner_mobile/pages/signup/account_info_page.dart';
 import 'package:pet_owner_mobile/pages/signup/animal_info_page.dart';
 import 'package:pet_owner_mobile/pages/dashboard_page.dart';
@@ -112,6 +115,23 @@ final GoRouter appRouter = GoRouter(
           path: '/profile',
           name: 'ProfileScreen',
           builder: (context, state) => ProfileScreen(),
+          routes: [
+            GoRoute(
+              path: '/helpsupport',
+              name: 'HelpSupportScreen',
+              builder: (context, state) => HelpSupportScreen(),
+            ),
+            GoRoute(
+              path: '/privacypolicy',
+              name: 'PrivacyPolicyScreen',
+              builder: (context, state) => PrivacyPolicyScreen(),
+            ),
+            GoRoute(
+              path: '/termsconditions',
+              name: 'TermsConditionsScreen',
+              builder: (context, state) => TermsConditionsScreen(),
+            ),
+          ],
         ),
         GoRoute(
           path: '/notifications',
@@ -182,7 +202,6 @@ final GoRouter appRouter = GoRouter(
             ),
           ],
         ),
-
 
         // Ecoommerce Routes
         ShellRoute(
