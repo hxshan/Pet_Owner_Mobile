@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/services/location_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -12,7 +15,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  LocationService _locationService = LocationService();
   late String firstName;
+  String _currentLocation = '';
   final PetService _petService = PetService();
   bool _loadingPets = true;
   List<Map<String, dynamic>> _myPets = [];
@@ -22,6 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
 
     _loadUserData();
+    _loadLocation();
   }
 
   Future<void> _loadUserData() async {
@@ -47,8 +53,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loadingPets = false);
-      // silently fail; the UI will show empty state
     }
+  }
+
+  Future<void> _loadLocation() async {
+    final locationText = await _locationService.getLocationForUI();
+    if (!mounted) return;
+    setState(() => _currentLocation = locationText);
   }
 
   @override
@@ -108,7 +119,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 SizedBox(width: sw * 0.01),
                 Text(
-                  'Angoda, Sri Lanka',
+                  _currentLocation.isEmpty
+                      ? 'Detecting location...'
+                      : _currentLocation,
                   style: TextStyle(fontSize: sw * 0.035, color: Colors.black54),
                 ),
               ],
@@ -186,30 +199,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: _loadingPets
               ? Center(child: CircularProgressIndicator())
               : _myPets.isEmpty
-                  ? _buildNoPetsCard(sw, sh)
-                  : ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        // show only first 2 pets
-                        for (var i = 0; i < (_myPets.length > 2 ? 2 : _myPets.length); i++)
-                          Padding(
-                            padding: EdgeInsets.only(right: sw * 0.04),
-                            child: _buildPetCard(
-                              sw,
-                              sh,
-                              _myPets[i]['name'] ?? 'Pet',
-                              _myPets[i]['breed'] ?? _myPets[i]['species'] ?? '',
-                              _formatPetAge(_myPets[i]),
-                              i == 0 ? Colors.amber[100]! : Colors.purple[100]!,
-                            ),
-                          ),
-                        // show AddPetCard only when user has less than 2 pets
-                        if (_myPets.length < 2) ...[
-                          SizedBox(width: sw * 0.02),
-                          _buildAddPetCard(sw, sh),
-                        ],
-                      ],
-                    ),
+              ? _buildNoPetsCard(sw, sh)
+              : ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    // show only first 2 pets
+                    for (
+                      var i = 0;
+                      i < (_myPets.length > 2 ? 2 : _myPets.length);
+                      i++
+                    )
+                      Padding(
+                        padding: EdgeInsets.only(right: sw * 0.04),
+                        child: _buildPetCard(
+                          sw,
+                          sh,
+                          _myPets[i]['name'] ?? 'Pet',
+                          _myPets[i]['breed'] ?? _myPets[i]['species'] ?? '',
+                          _formatPetAge(_myPets[i]),
+                          i == 0 ? Colors.amber[100]! : Colors.purple[100]!,
+                        ),
+                      ),
+                    // show AddPetCard only when user has less than 2 pets
+                    if (_myPets.length < 2) ...[
+                      SizedBox(width: sw * 0.02),
+                      _buildAddPetCard(sw, sh),
+                    ],
+                  ],
+                ),
         ),
       ],
     );
@@ -332,7 +349,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.darkPink,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(sw * 0.02)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(sw * 0.02),
+                    ),
                   ),
                   child: Text('Add a pet'),
                 ),
@@ -526,7 +545,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisCount: 4,
           crossAxisSpacing: sw * 0.03,
           mainAxisSpacing: sh * 0.02,
-          childAspectRatio: 0.85, 
+          childAspectRatio: 0.85,
           children: [
             _buildServiceItem(
               sw,
