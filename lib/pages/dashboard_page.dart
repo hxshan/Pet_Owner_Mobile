@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
+import 'package:pet_owner_mobile/services/pet_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -12,6 +13,9 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late String firstName;
+  final PetService _petService = PetService();
+  bool _loadingPets = true;
+  List<Map<String, dynamic>> _myPets = [];
 
   @override
   initState() {
@@ -28,6 +32,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       firstName = name ?? 'User';
     });
+    _loadMyPets();
+  }
+
+  Future<void> _loadMyPets() async {
+    setState(() => _loadingPets = true);
+    try {
+      final pets = await _petService.getMyPets();
+      if (!mounted) return;
+      setState(() {
+        _myPets = pets;
+        _loadingPets = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loadingPets = false);
+      // silently fail; the UI will show empty state
+    }
   }
 
   @override
@@ -162,30 +183,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         SizedBox(height: sh * 0.015),
         SizedBox(
           height: sh * 0.22,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _buildPetCard(
-                sw,
-                sh,
-                'Max',
-                'Golden Retriever',
-                '3 years old',
-                Colors.amber[100]!,
-              ),
-              SizedBox(width: sw * 0.04),
-              _buildPetCard(
-                sw,
-                sh,
-                'Luna',
-                'Persian Cat',
-                '2 years old',
-                Colors.purple[100]!,
-              ),
-              SizedBox(width: sw * 0.04),
-              _buildAddPetCard(sw, sh),
-            ],
-          ),
+          child: _loadingPets
+              ? Center(child: CircularProgressIndicator())
+              : _myPets.isEmpty
+                  ? _buildNoPetsCard(sw, sh)
+                  : ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        // show only first 2 pets
+                        for (var i = 0; i < (_myPets.length > 2 ? 2 : _myPets.length); i++)
+                          Padding(
+                            padding: EdgeInsets.only(right: sw * 0.04),
+                            child: _buildPetCard(
+                              sw,
+                              sh,
+                              _myPets[i]['name'] ?? 'Pet',
+                              _myPets[i]['breed'] ?? _myPets[i]['species'] ?? '',
+                              _formatPetAge(_myPets[i]),
+                              i == 0 ? Colors.amber[100]! : Colors.purple[100]!,
+                            ),
+                          ),
+                        // show AddPetCard only when user has less than 2 pets
+                        if (_myPets.length < 2) ...[
+                          SizedBox(width: sw * 0.02),
+                          _buildAddPetCard(sw, sh),
+                        ],
+                      ],
+                    ),
         ),
       ],
     );
@@ -249,40 +273,128 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildAddPetCard(double sw, double sh) {
+  String _formatPetAge(Map<String, dynamic> pet) {
+    try {
+      if (pet.containsKey('dob') && pet['dob'] != null) {
+        final dob = DateTime.parse(pet['dob']);
+        final now = DateTime.now();
+        int years = now.year - dob.year;
+        final monthDiff = now.month - dob.month;
+        if (monthDiff < 0 || (monthDiff == 0 && now.day < dob.day)) years--;
+        return years > 0 ? '$years years old' : 'Young';
+      }
+      if (pet.containsKey('age') && pet['age'] != null) {
+        return pet['age'].toString();
+      }
+    } catch (e) {
+      // fallthrough
+    }
+    return '';
+  }
+
+  Widget _buildNoPetsCard(double sw, double sh) {
     return Container(
-      width: sw * 0.42,
+      width: double.infinity,
+      padding: EdgeInsets.all(sw * 0.05),
       decoration: BoxDecoration(
-        color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(sw * 0.04),
-        border: Border.all(
-          color: AppColors.mainColor,
-          width: 2,
-          style: BorderStyle.solid,
+        gradient: LinearGradient(
+          colors: [AppColors.mainColor.withOpacity(0.06), Colors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(sw * 0.04),
+        border: Border.all(color: AppColors.lightGray),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
         children: [
-          Container(
-            width: sw * 0.12,
-            height: sw * 0.12,
-            decoration: BoxDecoration(
-              color: AppColors.mainColor,
-              shape: BoxShape.circle,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No pets yet',
+                  style: TextStyle(
+                    fontSize: sw * 0.046,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: sh * 0.01),
+                Text(
+                  'Add your first pet to start tracking health records and appointments.',
+                  style: TextStyle(fontSize: sw * 0.034, color: Colors.black54),
+                ),
+                SizedBox(height: sh * 0.02),
+                ElevatedButton(
+                  onPressed: () async {
+                    await context.pushNamed('AddPetScreen');
+                    await _loadMyPets();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.darkPink,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(sw * 0.02)),
+                  ),
+                  child: Text('Add a pet'),
+                ),
+              ],
             ),
-            child: Icon(Icons.add, color: Colors.white, size: sw * 0.07),
           ),
-          SizedBox(height: sh * 0.015),
-          Text(
-            'Add Pet',
-            style: TextStyle(
-              fontSize: sw * 0.04,
-              fontWeight: FontWeight.w600,
-              color: Colors.black54,
+          SizedBox(width: sw * 0.03),
+          Container(
+            width: sw * 0.28,
+            height: sw * 0.28,
+            decoration: BoxDecoration(
+              color: AppColors.lightGray,
+              borderRadius: BorderRadius.circular(sw * 0.03),
             ),
+            child: Icon(Icons.pets, size: sw * 0.15, color: Colors.grey[400]),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAddPetCard(double sw, double sh) {
+    return GestureDetector(
+      onTap: () async {
+        // Navigate to Add Pet screen and refresh pets when returning
+        await context.pushNamed('AddPetScreen');
+        await _loadMyPets();
+      },
+      child: Container(
+        width: sw * 0.42,
+        decoration: BoxDecoration(
+          color: AppColors.lightGray,
+          borderRadius: BorderRadius.circular(sw * 0.04),
+          border: Border.all(
+            color: AppColors.mainColor,
+            width: 2,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: sw * 0.12,
+              height: sw * 0.12,
+              decoration: BoxDecoration(
+                color: AppColors.mainColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.add, color: Colors.white, size: sw * 0.07),
+            ),
+            SizedBox(height: sh * 0.015),
+            Text(
+              'Add Pet',
+              style: TextStyle(
+                fontSize: sw * 0.04,
+                fontWeight: FontWeight.w600,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

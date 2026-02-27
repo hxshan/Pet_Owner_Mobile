@@ -17,6 +17,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoggingOut = false;
   String userName = 'User';
   String userEmail = 'user@email.com';
+  int _activePets = 0;
+  int _totalAppointments = 0;
 
   @override
   void initState() {
@@ -32,6 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         userName = "${user.firstname} ${user.lastname}";
         userEmail = user.email ?? 'user@email.com';
+        _activePets = user.numberOfActivePets ?? 0;
+        _totalAppointments = user.numberOfAppointments ?? 0;
       });
     } catch (e) {
       if (mounted) {
@@ -176,9 +180,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildStatItem(sw, sh, '3', 'Pets'),
+                          _buildStatItem(sw, sh, _activePets.toString(), 'Pets'),
                           _buildDivider(sh),
-                          _buildStatItem(sw, sh, '12', 'Appointments'),
+                          _buildStatItem(sw, sh, _totalAppointments.toString(), 'Appointments'),
                           _buildDivider(sh),
                           _buildStatItem(sw, sh, '28', 'Records'),
                         ],

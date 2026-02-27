@@ -9,6 +9,8 @@ class User {
 
   final String? nicNumber;
   final bool? isNicVerified;
+  final int? numberOfActivePets;
+  final int? numberOfAppointments;
 
   User({
     required this.id,
@@ -20,6 +22,8 @@ class User {
     this.address,
     this.nicNumber,
     this.isNicVerified,
+    this.numberOfActivePets,
+    this.numberOfAppointments,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -33,6 +37,8 @@ class User {
       roles: (json['roles'] as List?) ?? [],
       nicNumber: json['nicNumber'],
       isNicVerified: json['isNicVerified'],
+      numberOfActivePets: json['numberOfActivePets'] != null ? (json['numberOfActivePets'] as num).toInt() : null,
+      numberOfAppointments: json['numberOfAppointments'] != null ? (json['numberOfAppointments'] as num).toInt() : null,
     );
   }
 
@@ -42,6 +48,8 @@ class User {
     String? email,
     String? phone,
     String? address,
+    int? numberOfActivePets,
+    int? numberOfAppointments,
   }) {
     return User(
       id: id,
@@ -53,6 +61,8 @@ class User {
       roles: roles,
       nicNumber: nicNumber,
       isNicVerified: isNicVerified,
+      numberOfActivePets: numberOfActivePets,
+      numberOfAppointments: numberOfAppointments,
     );
   }
 }
