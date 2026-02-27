@@ -27,6 +27,7 @@ import 'package:pet_owner_mobile/pages/pet_management/chat_screen.dart';
 import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/symptom_checker_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/vaccinations_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/view_all_pets_page.dart';
@@ -168,6 +169,14 @@ final GoRouter appRouter = GoRouter(
               builder: (context, state) {
                 final petId = state.pathParameters['petId']!;
                 return PetProfileScreen(petId: petId);
+              },
+            ),
+            GoRoute(
+              path: '/symptom-checker/:petId',
+              name: 'SymptomCheckerScreen',
+              builder: (context, state) {
+                final petId = state.pathParameters['petId']!;
+                return SymptomCheckerPage(petId: petId);
               },
             ),
             GoRoute(
