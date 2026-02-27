@@ -40,6 +40,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>App needs to save photos</string>
 
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs location access to show your current area.</string>
+
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
