@@ -29,6 +29,7 @@ import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/symptom_checker_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/appointment_details_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/vaccinations_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/view_all_pets_page.dart';
 import 'package:pet_owner_mobile/pages/profile/change_password_screen.dart';
@@ -193,6 +194,14 @@ final GoRouter appRouter = GoRouter(
               path: '/upcomingappointments',
               name: 'UpcomingAppointmentsScreen',
               builder: (context, state) => UpcomingAppointmentsScreen(),
+            ),
+            GoRoute(
+              path: '/appointment-detail',
+              name: 'AppointmentDetailScreen',
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                return AppointmentDetailsPage(appointment: extra ?? {});
+              },
             ),
             GoRoute(
               path: '/vaccinations',

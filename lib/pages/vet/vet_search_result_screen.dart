@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/services/vet_service.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/vet/vet_search_card.dart';
 
@@ -18,6 +19,7 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
   bool _isLoading = true;
   List<VetModel> _results = [];
   String? _error;
+  String? _displayLocation;
 
   @override
   void initState() {
@@ -32,19 +34,36 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
     });
     try {
       final service = VetService();
-      // Try to detect if location is provided as 'lat,lng' (from current position)
+      // If caller passed the sentinel 'Current Location', acquire device GPS
       List<VetModel> results;
-      final parts = widget.location.split(',');
-      if (parts.length == 2) {
-        final lat = double.tryParse(parts[0].trim());
-        final lng = double.tryParse(parts[1].trim());
-        if (lat != null && lng != null) {
-          results = await service.searchVets(page: 1, limit: 20, lat: lat, lng: lng);
+  if (widget.location == 'Current Location') {
+        // Check permissions and get current position
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+          throw Exception('Location permission denied. Please enable location permissions and try again.');
+        }
+
+        final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+        results = await service.searchVets(page: 1, limit: 20, lat: pos.latitude, lng: pos.longitude);
+        // Update header to show coordinates instead of the sentinel
+        _displayLocation = '${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}';
+      } else {
+        // Try to detect if location is provided as 'lat,lng' (from other screens)
+        final parts = widget.location.split(',');
+        if (parts.length == 2) {
+          final lat = double.tryParse(parts[0].trim());
+          final lng = double.tryParse(parts[1].trim());
+          if (lat != null && lng != null) {
+            results = await service.searchVets(page: 1, limit: 20, lat: lat, lng: lng);
+          } else {
+            results = await service.searchVets(q: widget.location, page: 1, limit: 20);
+          }
         } else {
           results = await service.searchVets(q: widget.location, page: 1, limit: 20);
         }
-      } else {
-        results = await service.searchVets(q: widget.location, page: 1, limit: 20);
       }
       setState(() {
         _results = results;
@@ -52,7 +71,7 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Failed to load vets. Please try again.';
+        _error = e is Exception ? e.toString().replaceFirst('Exception: ', '') : 'Failed to load vets. Please try again.';
         _isLoading = false;
       });
     }
@@ -120,8 +139,8 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
                           ),
                           SizedBox(width: sw * 0.01),
                           Flexible(
-                            child: Text(
-                              widget.location,
+                                child: Text(
+                                  _displayLocation ?? widget.location,
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: sw * 0.033,
