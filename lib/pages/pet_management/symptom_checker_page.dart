@@ -4,154 +4,42 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../data/symptom_data.dart';
-import '../../models/diagnosis/symptom_models.dart';  
-import '../../services/pet_service.dart';
+import '../../models/diagnosis/symptom_models.dart';
+import '../../services/diagnosis_service.dart';
 
-enum CheckerStep { category, symptoms, details, results, photoUpload, photoResults }
+enum CheckerStep { category, symptoms, photoUpload, details, results, photoResults }
 
 class SymptomCheckerPage extends StatefulWidget {
   final String? petId;
-
   const SymptomCheckerPage({Key? key, this.petId}) : super(key: key);
-
   @override
-  State<SymptomCheckerPage> createState() => _SymptomCheckerPageState();
+  _SymptomCheckerPageState createState() => _SymptomCheckerPageState();
 }
 
 class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
   CheckerStep _currentStep = CheckerStep.category;
   String _selectedCategory = '';
   List<String> _selectedSymptoms = [];
-  String? _petName;
-  String _duration = '';
-  String _severity = '';
   File? _uploadedPhoto;
   bool _photoAnalyzing = false;
-
-  final ImagePicker _picker = ImagePicker();
-
-  @override
-  void initState() {
-    super.initState();
-    // If a petId was passed, fetch pet metadata to show the friendly name
-    if (widget.petId != null && widget.petId!.isNotEmpty) {
-      PetService().getPetById(widget.petId!).then((data) {
-        setState(() {
-          _petName = (data['name'] ?? '') as String;
-        });
-      }).catchError((e) {
-        // ignore - keep showing id if name fetch fails
-      });
-    }
-  }
-
-  Color _getSeverityColor(String severity) {
-    switch (severity) {
-      case 'low':
-        return Colors.green.shade100;
-      case 'medium':
-        return Colors.yellow.shade100;
-      case 'high':
-        return Colors.red.shade100;
-      default:
-        return Colors.grey.shade100;
-    }
-  }
-
-  Color _getSeverityBorderColor(String severity) {
-    switch (severity) {
-      case 'low':
-        return Colors.green.shade300;
-      case 'medium':
-        return Colors.yellow.shade300;
-      case 'high':
-        return Colors.red.shade300;
-      default:
-        return Colors.grey.shade300;
-    }
-  }
-
-  Color _getSeverityTextColor(String severity) {
-    switch (severity) {
-      case 'low':
-        return Colors.green.shade700;
-      case 'medium':
-        return Colors.yellow.shade900;
-      case 'high':
-        return Colors.red.shade700;
-      default:
-        return Colors.grey.shade700;
-    }
-  }
-
-  Color _getConfidenceColor(int confidence) {
-    if (confidence >= 70) return Colors.green.shade600;
-    if (confidence >= 50) return Colors.yellow.shade700;
-    return Colors.red.shade600;
-  }
-
-  double _getProgressValue() {
-    switch (_currentStep) {
-      case CheckerStep.category:
-        return 0.25;
-      case CheckerStep.symptoms:
-      case CheckerStep.photoUpload:
-        return 0.50;
-      case CheckerStep.details:
-        return 0.75;
-      case CheckerStep.results:
-      case CheckerStep.photoResults:
-        return 1.0;
-    }
-  }
-
-  String _getStepLabel() {
-    switch (_currentStep) {
-      case CheckerStep.category:
-        return 'Category';
-      case CheckerStep.symptoms:
-        return 'Symptoms';
-      case CheckerStep.photoUpload:
-        return 'Photo';
-      case CheckerStep.details:
-        return 'Details';
-      case CheckerStep.results:
-      case CheckerStep.photoResults:
-        return 'Results';
-    }
-  }
-
-  int _getStepNumber() {
-    switch (_currentStep) {
-      case CheckerStep.category:
-        return 1;
-      case CheckerStep.symptoms:
-      case CheckerStep.photoUpload:
-        return 2;
-      case CheckerStep.details:
-        return 3;
-      case CheckerStep.results:
-      case CheckerStep.photoResults:
-        return 4;
-    }
-  }
+  String _duration = '';
+  String _severity = '';
+  bool _loadingAssessment = false;
+  List<Map<String, dynamic>> _predictions = [];
 
   Future<void> _pickImage(ImageSource source) async {
-    final XFile? image = await _picker.pickImage(source: source);
-    if (image != null) {
+    final XFile? file = await ImagePicker().pickImage(source: source, imageQuality: 80);
+    if (file != null) {
       setState(() {
-        _uploadedPhoto = File(image.path);
+        _uploadedPhoto = File(file.path);
       });
     }
   }
 
   Future<void> _analyzePhoto() async {
-    setState(() {
-      _photoAnalyzing = true;
-    });
-    
-    await Future.delayed(const Duration(seconds: 2));
-    
+    setState(() => _photoAnalyzing = true);
+    // Minimal/no-op analysis: show photo results after a short delay.
+    await Future.delayed(const Duration(seconds: 1));
     setState(() {
       _photoAnalyzing = false;
       _currentStep = CheckerStep.photoResults;
@@ -163,110 +51,61 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
       _currentStep = CheckerStep.category;
       _selectedCategory = '';
       _selectedSymptoms = [];
-      _duration = '';
-      _severity = '';
       _uploadedPhoto = null;
       _photoAnalyzing = false;
+      _duration = '';
+      _severity = '';
+      _loadingAssessment = false;
+      _predictions = [];
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              color: Colors.pink.shade600,
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Symptom Checker',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          _petName != null && _petName!.isNotEmpty
-                              ? 'For: ${_petName}'
-                              : (widget.petId != null && widget.petId!.isNotEmpty ? 'For pet: ${widget.petId}' : 'AI-powered health assessment'),
-                          style: TextStyle(
-                            color: Colors.pink.shade100,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Progress Bar
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Step ${_getStepNumber()} of 4',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        _getStepLabel(),
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: _getProgressValue(),
-                    backgroundColor: Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.pink.shade600),
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ],
-              ),
-            ),
-
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: _buildStepContent(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Color _getSeverityColor(String s) {
+    switch (s) {
+      case 'mild':
+        return Colors.green.shade50;
+      case 'moderate':
+        return Colors.orange.shade50;
+      case 'severe':
+        return Colors.red.shade50;
+      default:
+        return Colors.grey.shade50;
+    }
   }
 
-  Widget _buildStepContent() {
+  Color _getSeverityBorderColor(String s) {
+    switch (s) {
+      case 'mild':
+        return Colors.green.shade200;
+      case 'moderate':
+        return Colors.orange.shade200;
+      case 'severe':
+        return Colors.red.shade200;
+      default:
+        return Colors.grey.shade200;
+    }
+  }
+
+  Color _getSeverityTextColor(String s) {
+    switch (s) {
+      case 'mild':
+        return Colors.green.shade700;
+      case 'moderate':
+        return Colors.orange.shade700;
+      case 'severe':
+        return Colors.red.shade700;
+      default:
+        return Colors.grey.shade700;
+    }
+  }
+
+  Color _getConfidenceColor(int pct) {
+    if (pct >= 75) return Colors.green.shade600;
+    if (pct >= 40) return Colors.orange.shade600;
+    return Colors.red.shade600;
+  }
+
+  Widget _buildContent() {
     switch (_currentStep) {
       case CheckerStep.category:
         return _buildCategorySelection();
@@ -283,6 +122,20 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Symptom Checker'),
+        backgroundColor: Colors.pink.shade600,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: _buildContent(),
+      ),
+    );
+  }
+  
   Widget _buildCategorySelection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -923,17 +776,67 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _currentStep = CheckerStep.results;
-                });
-              },
+              onPressed: _loadingAssessment
+                  ? null
+                  : () async {
+                      setState(() {
+                        _loadingAssessment = true;
+                      });
+
+                      // Build payload for the symptom-checker endpoint
+                      final payload = {
+                        'species': 0,
+                        'breed': 0,
+                        'sex': 0,
+                        'neutered': 0,
+                        'age_years': 1.0,
+                        'weight_kg': 1.0,
+                        'num_previous_visits': 0,
+                        'prev_diagnosis_class': 0,
+                        'days_since_last_visit': 9999,
+                        'chronic_flag': 0,
+                        'symptoms': _selectedSymptoms,
+                        'severity': _severity,
+                        'duration_days': 0,
+                      };
+
+                      try {
+                        final res = await DiagnosisService().predictSymptomChecker(payload);
+                        // Expected shape: { status, predictions: [ {class_name, confidence,...} ], all_class_probabilities }
+                        final preds = <Map<String, dynamic>>[];
+                        if (res['predictions'] is List) {
+                          for (final p in res['predictions']) {
+                            if (p is Map) preds.add(Map<String, dynamic>.from(p));
+                          }
+                        }
+
+                        setState(() {
+                          _predictions = preds;
+                          _currentStep = CheckerStep.results;
+                        });
+                      } catch (e) {
+                        // show error
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Failed to get assessment.')),
+                        );
+                      } finally {
+                        setState(() {
+                          _loadingAssessment = false;
+                        });
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink.shade600,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text('Get Assessment'),
+              child: _loadingAssessment
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Text('Get Assessment'),
             ),
           ),
         ],
@@ -981,15 +884,49 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           style: TextStyle(fontSize: 18),
         ),
         const SizedBox(height: 16),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: SymptomData.mockDiagnoses.length,
-          itemBuilder: (context, index) {
-            final diagnosis = SymptomData.mockDiagnoses[index];
-            return _buildDiagnosisCard(diagnosis, index + 1);
-          },
-        ),
+        if (_predictions.isEmpty) ...[
+          const Text('No predictions yet. Press "Get Assessment" to run the AI model.'),
+        ] else ...[
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _predictions.length,
+            itemBuilder: (context, index) {
+              final p = _predictions[index];
+              final name = p['class_name'] ?? p['predicted_class_name'] ?? 'Unknown';
+              final confidence = ((p['confidence'] ?? 0) as num).toDouble();
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(color: Colors.grey.shade300, blurRadius: 4, offset: const Offset(0,2)),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 6),
+                            LinearProgressIndicator(value: confidence, minHeight: 8, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation<Color>(_getConfidenceColor((confidence*100).toInt()))),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text('${(confidence*100).toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
