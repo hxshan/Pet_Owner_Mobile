@@ -6,8 +6,6 @@ class DietPlanService {
 
   Future<Map<String, dynamic>> generateDietPlan({
     required String petId,
-    required double ageMonths,
-    required double weightKg,
     required String activityLevel,
     required String disease,
     required String allergy,
@@ -16,8 +14,6 @@ class DietPlanService {
       '/diet-plans/generate',
       data: {
         'petId': petId,
-        'ageMonths': ageMonths,
-        'weightKg': weightKg,
         'activityLevel': activityLevel,
         'disease': disease,
         'allergy': allergy,
@@ -25,7 +21,6 @@ class DietPlanService {
       options: Options(extra: {'requiresAuth': true}),
     );
 
-    
     return (res.data['plan'] as Map).cast<String, dynamic>();
   }
 
