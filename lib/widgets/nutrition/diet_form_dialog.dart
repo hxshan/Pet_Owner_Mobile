@@ -179,7 +179,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
             ),
           ),
 
-          // ── Scrollable Form Body ─────────────────────────────
+          
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
