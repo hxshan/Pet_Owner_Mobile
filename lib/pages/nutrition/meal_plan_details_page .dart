@@ -434,7 +434,7 @@ class MealPlanDetailsScreen extends StatelessWidget {
                     style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
                 if (petBreed.trim().isNotEmpty) pw.Text('Breed: $petBreed'),
                 pw.SizedBox(height: 6),
-                pw.Text('Nutrition Plan Valid for 4–8 Weeks.Reassess Pet Profile Thereafter'),
+                pw.Text('Nutrition Plan Valid for 3 months'),
               ],
             ),
           ),
