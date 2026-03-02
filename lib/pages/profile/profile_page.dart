@@ -229,6 +229,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   SizedBox(height: sh * 0.02),
 
+                  // Adoption Section
+                  _buildSectionHeader(sw, 'Adoption'),
+
+                  _buildMenuItem(
+                    sw,
+                    sh,
+                    Icons.pets,
+                    'My Adoption Applications',
+                    'Track your adoption application status',
+                    () {
+                      context.pushNamed('MyApplicationsPage');
+                    },
+                  ),
+
+                  SizedBox(height: sh * 0.02),
+
                   // Support Section
                   _buildSectionHeader(sw, 'Support'),
 

@@ -1,6 +1,6 @@
-// lib/pages/adoption/pet_details_page.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
@@ -15,30 +15,35 @@ class PetDetailsPage extends StatefulWidget {
 }
 
 class _PetDetailsPageState extends State<PetDetailsPage> {
-  bool isFavorite = false;
+  bool _isFavorite = false;
 
   @override
   void initState() {
     super.initState();
-    isFavorite = widget.pet.isFavorite;
+    _isFavorite = widget.pet.isFavorite;
   }
 
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
+    final pet = widget.pet;
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
-          // App Bar with Pet Image
+          // ── Hero Image App Bar ───────────────────────────────────────────
           SliverAppBar(
             expandedHeight: sh * 0.4,
             pinned: true,
             backgroundColor: Colors.white,
-            leading: CustomBackButton(backgroundColor: Colors.white, iconColor: AppColors.darkPink,),
+            leading: CustomBackButton(
+              backgroundColor: Colors.white,
+              iconColor: AppColors.darkPink,
+            ),
             actions: [
+              // Share button
               Container(
                 margin: EdgeInsets.all(sw * 0.02),
                 decoration: BoxDecoration(
@@ -52,33 +57,72 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                   ],
                 ),
                 child: IconButton(
-                  icon: Icon(Icons.share, color: Colors.black, size: sw * 0.06),
+                  icon: Icon(
+                    Icons.share,
+                    color: Colors.black,
+                    size: sw * 0.06,
+                  ),
                   onPressed: () {},
                 ),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: Hero(
-                tag: 'pet_${widget.pet.name}',
-                child: Image.network(
-                  widget.pet.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: AppColors.lightGray,
-                      child: Icon(
-                        Icons.pets,
-                        size: sw * 0.2,
-                        color: AppColors.mainColor,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Pet image
+                  pet.primaryImage.isNotEmpty
+                      ? Hero(
+                          tag: 'pet_${pet.id}',
+                          child: Image.network(
+                            pet.primaryImage,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _imageFallback(sw),
+                          ),
+                        )
+                      : _imageFallback(sw),
+
+                  // Match score badge (shown if came from AI recommendation)
+                  if (pet.score != null && pet.score! > 0)
+                    Positioned(
+                      top: sw * 0.12,
+                      right: sw * 0.04,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 5.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.darkPink,
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              size: 12.sp,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '${(pet.score! * 100).toStringAsFixed(0)}% Match',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                ],
               ),
             ),
           ),
 
-          // Content
+          // ── Content ──────────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
               decoration: BoxDecoration(
@@ -93,7 +137,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Pet Name and Favorite
+                    // ── Name + Favorite ────────────────────────────────────
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -102,7 +146,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.pet.name,
+                                pet.name,
                                 style: TextStyle(
                                   fontSize: sw * 0.07,
                                   fontWeight: FontWeight.bold,
@@ -111,7 +155,9 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                               ),
                               SizedBox(height: sh * 0.005),
                               Text(
-                                widget.pet.breed,
+                                pet.breed.isNotEmpty
+                                    ? pet.breed
+                                    : pet.species,
                                 style: TextStyle(
                                   fontSize: sw * 0.04,
                                   color: Colors.black54,
@@ -122,21 +168,19 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            setState(() {
-                              isFavorite = !isFavorite;
-                            });
+                            setState(() => _isFavorite = !_isFavorite);
                           },
                           child: Container(
                             padding: EdgeInsets.all(sw * 0.03),
                             decoration: BoxDecoration(
-                              color: isFavorite
+                              color: _isFavorite
                                   ? AppColors.darkPink
                                   : AppColors.lightGray,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.favorite,
-                              color: isFavorite ? Colors.white : Colors.grey,
+                              color: _isFavorite ? Colors.white : Colors.grey,
                               size: sw * 0.07,
                             ),
                           ),
@@ -145,14 +189,16 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                     ),
                     SizedBox(height: sh * 0.025),
 
-                    // Quick Stats Cards
+                    // ── Stat Cards ─────────────────────────────────────────
                     Row(
                       children: [
                         Expanded(
                           child: _buildStatCard(
                             icon: Icons.cake_outlined,
                             label: 'Age',
-                            value: '${widget.pet.age} months',
+                            value: pet.age != null
+                                ? '${pet.age} yrs'
+                                : 'Unknown',
                             sw: sw,
                             sh: sh,
                           ),
@@ -160,11 +206,11 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                         SizedBox(width: sw * 0.03),
                         Expanded(
                           child: _buildStatCard(
-                            icon: widget.pet.gender.toLowerCase() == 'male'
+                            icon: pet.gender.toLowerCase() == 'male'
                                 ? Icons.male
                                 : Icons.female,
                             label: 'Gender',
-                            value: widget.pet.gender,
+                            value: pet.gender,
                             sw: sw,
                             sh: sh,
                           ),
@@ -174,16 +220,38 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                           child: _buildStatCard(
                             icon: Icons.monitor_weight_outlined,
                             label: 'Size',
-                            value: 'Small',
+                            value: pet.size.isNotEmpty ? pet.size : '—',
                             sw: sw,
                             sh: sh,
                           ),
                         ),
                       ],
                     ),
+                    SizedBox(height: sh * 0.02),
+
+                    // ── Trait badges ─────────────────────────────────────────
+                    if (pet.goodWithKids == true ||
+                        pet.goodWithPets == true ||
+                        pet.energyLevel != null)
+                      Wrap(
+                        spacing: 8.w,
+                        runSpacing: 6.h,
+                        children: [
+                          if (pet.goodWithKids == true)
+                            _buildBadge('Kids OK', Icons.child_care),
+                          if (pet.goodWithPets == true)
+                            _buildBadge('Pet-friendly', Icons.pets),
+                          if (pet.energyLevel != null)
+                            _buildBadge(
+                              '${pet.energyLevel} Energy',
+                              Icons.bolt,
+                            ),
+                        ],
+                      ),
+
                     SizedBox(height: sh * 0.025),
 
-                    // Location
+                    // ── Location ───────────────────────────────────────────
                     Container(
                       padding: EdgeInsets.all(sw * 0.04),
                       decoration: BoxDecoration(
@@ -200,7 +268,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                           SizedBox(width: sw * 0.03),
                           Expanded(
                             child: Text(
-                              widget.pet.location,
+                              pet.locationLabel,
                               style: TextStyle(
                                 fontSize: sw * 0.04,
                                 color: Colors.black87,
@@ -212,56 +280,46 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                     ),
                     SizedBox(height: sh * 0.03),
 
-                    // About Section
-                    _buildSectionTitle('About ${widget.pet.name}', sw),
+                    // ── About Section ─────────────────────────────────────
+                    _buildSectionTitle('About ${pet.name}', sw),
                     SizedBox(height: sh * 0.015),
-                    _buildInfoRow('Color', 'Chestnut orange', sw),
-                    _buildInfoRow('Type', 'Cat', sw),
-                    _buildInfoRow('Adoption Fee', '\$50', sw),
-                    _buildInfoRow('Home Visit', 'Yes', sw),
-                    _buildInfoRow('Contact', '+94 123 456 789', sw),
-                    SizedBox(height: sh * 0.03),
-
-                    // Requirements Section
-                    _buildSectionTitle('Requirements', sw),
-                    SizedBox(height: sh * 0.015),
-                    Text(
-                      'This is a brief space about the requirements as specified. The adopter should have a safe environment, provide regular meals, and ensure proper veterinary care.',
-                      style: TextStyle(
-                        fontSize: sw * 0.04,
-                        color: Colors.black54,
-                        height: 1.5,
-                      ),
+                    _buildInfoRow('Species', pet.species, sw),
+                    _buildInfoRow('Breed', pet.breed.isNotEmpty ? pet.breed : '—', sw),
+                    _buildInfoRow(
+                      'Adoption Fee',
+                      pet.adoptionFee > 0
+                          ? '\$${pet.adoptionFee.toStringAsFixed(0)}'
+                          : 'Free',
+                      sw,
                     ),
+
                     SizedBox(height: sh * 0.03),
 
-                    // Description Section
-                    _buildSectionTitle('Description', sw),
-                    SizedBox(height: sh * 0.015),
-                    Text(
-                      'This is a brief space where the description about the pet and more details is placed. ${widget.pet.name} is a friendly and playful companion looking for a loving home.',
-                      style: TextStyle(
-                        fontSize: sw * 0.04,
-                        color: Colors.black54,
-                        height: 1.5,
+                    // ── Description ───────────────────────────────────────
+                    if (pet.description != null &&
+                        pet.description!.isNotEmpty) ...[
+                      _buildSectionTitle('Description', sw),
+                      SizedBox(height: sh * 0.015),
+                      Text(
+                        pet.description!,
+                        style: TextStyle(
+                          fontSize: sw * 0.04,
+                          color: Colors.black54,
+                          height: 1.5,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: sh * 0.03),
+                      SizedBox(height: sh * 0.03),
+                    ],
 
-                    // Medical Details Section
+                    // ── Medical Details ───────────────────────────────────
                     _buildSectionTitle('Medical Details', sw),
                     SizedBox(height: sh * 0.015),
-
-                    // Medical Records Card
                     Container(
                       padding: EdgeInsets.all(sw * 0.04),
                       decoration: BoxDecoration(
                         color: AppColors.lightGray.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(sw * 0.04),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 1,
-                        ),
+                        border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,9 +330,8 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                                 padding: EdgeInsets.all(sw * 0.03),
                                 decoration: BoxDecoration(
                                   color: AppColors.mainColor.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(
-                                    sw * 0.02,
-                                  ),
+                                  borderRadius:
+                                      BorderRadius.circular(sw * 0.02),
                                 ),
                                 child: Icon(
                                   Icons.medical_services_outlined,
@@ -296,7 +353,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                                       ),
                                     ),
                                     Text(
-                                      'All vaccinations up to date',
+                                      'Managed by adoption center',
                                       style: TextStyle(
                                         fontSize: sw * 0.035,
                                         color: Colors.black54,
@@ -305,55 +362,39 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                                   ],
                                 ),
                               ),
-                              Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey,
-                                size: sw * 0.06,
-                              ),
                             ],
-                          ),
-                          SizedBox(height: sh * 0.015),
-                          Divider(color: Colors.grey.shade300),
-                          SizedBox(height: sh * 0.01),
-                          _buildMedicalInfoRow(
-                            'Medical Name',
-                            widget.pet.name,
-                            sw,
-                          ),
-                          SizedBox(height: sh * 0.01),
-                          _buildMedicalInfoRow(
-                            'Last Checkup',
-                            '15 Dec 2024',
-                            sw,
-                          ),
-                          SizedBox(height: sh * 0.01),
-                          _buildMedicalInfoRow(
-                            'Vaccination Status',
-                            'Complete',
-                            sw,
                           ),
                         ],
                       ),
                     ),
+
                     SizedBox(height: sh * 0.04),
 
-                    // Action Buttons
+                    // ── Action Buttons ────────────────────────────────────
                     Row(
                       children: [
+                        // Save button
                         Expanded(
                           child: SizedBox(
                             height: sh * 0.065,
                             child: OutlinedButton.icon(
                               onPressed: () {
+                                setState(() => _isFavorite = !_isFavorite);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Pet saved successfully!'),
+                                    content: Text(
+                                      _isFavorite
+                                          ? 'Pet saved!'
+                                          : 'Removed from saved',
+                                    ),
                                     backgroundColor: AppColors.darkPink,
                                   ),
                                 );
                               },
                               icon: Icon(
-                                Icons.bookmark_outline,
+                                _isFavorite
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_outline,
                                 size: sw * 0.05,
                               ),
                               label: Text(
@@ -370,33 +411,32 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                                   width: 2,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    sw * 0.03,
-                                  ),
+                                  borderRadius: BorderRadius.circular(sw * 0.03),
                                 ),
                               ),
                             ),
                           ),
                         ),
+
                         SizedBox(width: sw * 0.03),
+
+                        // Apply for Adoption button
                         Expanded(
                           flex: 2,
                           child: SizedBox(
                             height: sh * 0.065,
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Contacting pet owner...'),
-                                    backgroundColor: AppColors.darkPink,
-                                  ),
+                                context.pushNamed(
+                                  'AdoptionApplyPage',
+                                  extra: pet,
                                 );
                               },
-                              icon: Icon(Icons.phone, size: sw * 0.05),
+                              icon: Icon(Icons.favorite, size: sw * 0.05),
                               label: Text(
-                                'Contact Owner',
+                                'Apply for Adoption',
                                 style: TextStyle(
-                                  fontSize: sw * 0.04,
+                                  fontSize: sw * 0.038,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
                                 ),
@@ -404,9 +444,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.darkPink,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    sw * 0.03,
-                                  ),
+                                  borderRadius: BorderRadius.circular(sw * 0.03),
                                 ),
                                 elevation: 0,
                               ),
@@ -415,10 +453,43 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                         ),
                       ],
                     ),
+
                     SizedBox(height: sh * 0.02),
                   ],
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _imageFallback(double sw) {
+    return Container(
+      color: AppColors.lightGray,
+      child: Icon(Icons.pets, size: sw * 0.2, color: AppColors.mainColor),
+    );
+  }
+
+  Widget _buildBadge(String label, IconData icon) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: AppColors.mainColor.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13.sp, color: AppColors.darkPink),
+          SizedBox(width: 4.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: AppColors.darkPink,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -492,26 +563,6 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMedicalInfoRow(String label, String value, double sw) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: sw * 0.035, color: Colors.black54),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: sw * 0.035,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-      ],
     );
   }
 }

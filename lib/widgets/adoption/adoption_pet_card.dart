@@ -54,24 +54,35 @@ class _PetCardState extends State<PetCard> {
                 topLeft: Radius.circular(12.r),
                 bottomLeft: Radius.circular(12.r),
               ),
-              child: Image.network(
-                widget.pet.image,
-                width: 100.w,
-                height: 120.h,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 100.w,
-                    height: 120.h,
-                    color: AppColors.lightGray,
-                    child: Icon(
-                      Icons.pets,
-                      size: 40.sp,
-                      color: AppColors.mainColor,
+              child: widget.pet.primaryImage.isNotEmpty
+                  ? Image.network(
+                      widget.pet.primaryImage,
+                      width: 100.w,
+                      height: 120.h,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 100.w,
+                          height: 120.h,
+                          color: AppColors.lightGray,
+                          child: Icon(
+                            Icons.pets,
+                            size: 40.sp,
+                            color: AppColors.mainColor,
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      width: 100.w,
+                      height: 120.h,
+                      color: AppColors.lightGray,
+                      child: Icon(
+                        Icons.pets,
+                        size: 40.sp,
+                        color: AppColors.mainColor,
+                      ),
                     ),
-                  );
-                },
-              ),
             ),
 
             // Pet Details
@@ -96,7 +107,7 @@ class _PetCardState extends State<PetCard> {
 
                     // Age
                     Text(
-                      '${widget.pet.age} months old',
+                      widget.pet.age != null ? '${widget.pet.age} yrs old' : '',
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: Colors.black54,
@@ -127,7 +138,7 @@ class _PetCardState extends State<PetCard> {
                         SizedBox(width: 4.w),
                         Expanded(
                           child: Text(
-                            widget.pet.location,
+                            widget.pet.locationLabel,
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: Colors.black54,
