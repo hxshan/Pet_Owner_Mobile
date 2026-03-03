@@ -189,6 +189,54 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                     ),
                     SizedBox(height: sh * 0.025),
 
+                    // ── Adoption Fee Banner ────────────────────────────────
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: sw * 0.04,
+                        vertical: sh * 0.015,
+                      ),
+                      decoration: BoxDecoration(
+                        color: pet.adoptionFee == 0
+                            ? Colors.green.withOpacity(0.1)
+                            : AppColors.darkPink.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(sw * 0.03),
+                        border: Border.all(
+                          color: pet.adoptionFee == 0
+                              ? Colors.green
+                              : AppColors.darkPink,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            pet.adoptionFee == 0
+                                ? Icons.card_giftcard
+                                : Icons.attach_money,
+                            color: pet.adoptionFee == 0
+                                ? Colors.green
+                                : AppColors.darkPink,
+                            size: sw * 0.05,
+                          ),
+                          SizedBox(width: sw * 0.02),
+                          Text(
+                            pet.adoptionFee == 0
+                                ? 'Free Adoption'
+                                : 'Adoption Fee: \$${pet.adoptionFee.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: sw * 0.042,
+                              fontWeight: FontWeight.bold,
+                              color: pet.adoptionFee == 0
+                                  ? Colors.green
+                                  : AppColors.darkPink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: sh * 0.02),
+
                     // ── Stat Cards ─────────────────────────────────────────
                     Row(
                       children: [

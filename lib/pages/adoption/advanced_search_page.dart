@@ -232,7 +232,7 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage> {
       children: [
         _buildFilterSection(
           title: 'Species',
-          options: ['Dog', 'Cat', 'Rabbit', 'Bird', 'Other'],
+          options: ['Dog', 'Cat'],
           selected: _selectedSpecies,
           onSelect: (v) => setState(
             () => _selectedSpecies = _selectedSpecies == v ? null : v,

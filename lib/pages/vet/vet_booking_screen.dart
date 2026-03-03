@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/services/appointment_service.dart';
+import 'package:dio/dio.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
@@ -218,18 +218,63 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
       );
       return;
     }
-
-    setState(() => _isLoading = true);
-
     if (_selectedPetId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please select a pet to book with.')),
       );
-      setState(() => _isLoading = false);
       return;
     }
 
+    // Show confirmation dialog with selected details
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Confirm Booking'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.vet.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Text('${_weekdayShort(_selectedDate.weekday)}, ${_selectedDate.day} ${_monthShort(_selectedDate.month)}'),
+              const SizedBox(height: 4),
+              Text('Time: $_selectedTime'),
+              const SizedBox(height: 8),
+              Text('Pet: ${_myPets.firstWhere((p) => (p['_id'] ?? p['id'] ?? '') == _selectedPetId, orElse: () => {'name': 'My Pet'})['name'] ?? 'My Pet'}'),
+              const SizedBox(height: 8),
+              Text('Location: ${widget.vet.address}'),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+            ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Confirm')),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    // Perform booking after confirmation
+    await _performBooking();
+  }
+
+  Future<void> _performBooking() async {
+    setState(() => _isLoading = true);
+
     try {
+      // Refresh latest slots right before attempting to book to reduce race window
+      final dateStr = _selectedDate.toIso8601String().substring(0, 10);
+      try {
+        final latest = await _appointmentService.getAvailableSlots(widget.vet.id, dateStr);
+        setState(() {
+          _slots = latest.cast<Map<String, dynamic>>();
+        });
+      } catch (_) {
+        // ignore refresh errors; we'll proceed with current in-memory slots
+      }
+
       // Prefer using the slot object returned by the API
       String startIso = '';
       if (_slots.isNotEmpty) {
@@ -271,19 +316,20 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      context.goNamed(
-        'MyVetAppointmentScreen',
-        extra: AppointmentModel(
-          vetName: widget.vet.name,
-          specialization: widget.vet.specialization,
-          date: _selectedDate,
-          time: _selectedTime!,
-          address: widget.vet.address,
-          isUpcoming: true,
-        ),
-      );
+      // After successful booking, navigate the owner to their Upcoming Appointments screen
+      context.goNamed('UpcomingAppointmentsScreen');
     } catch (e) {
       setState(() => _isLoading = false);
+      // If the booking failed because the slot was just booked by someone else, refresh slots
+      if (e is DioError && e.response != null && e.response?.statusCode == 409) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Requested slot was just booked. Refreshing available slots...')),
+        );
+        // Refresh slots for the selected date
+        await _fetchSlotsForSelectedDate();
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Booking failed: ${e.toString()}')),
       );

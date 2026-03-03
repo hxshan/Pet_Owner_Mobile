@@ -45,6 +45,7 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
       );
     }
   }
+    
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +235,27 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                             ],
                           ),
                         ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Symptom Checker CTA
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: sw * 0.05, vertical: sh * 0.015),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // Navigate to symptom checker and pass petId
+                        context.push('/my-pets/symptom-checker/${widget.petId}');
+                      },
+                      icon: const Icon(Icons.medical_information, color: Colors.white),
+                      label: const Text('Run Symptom Checker', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.darkPink,
+                        padding: EdgeInsets.symmetric(vertical: sh * 0.018),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),

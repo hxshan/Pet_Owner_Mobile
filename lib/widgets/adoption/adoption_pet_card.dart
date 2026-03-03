@@ -149,6 +149,33 @@ class _PetCardState extends State<PetCard> {
                         ),
                       ],
                     ),
+                    SizedBox(height: 6.h),
+
+                    // Adoption Fee
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.attach_money,
+                          size: 14.sp,
+                          color: widget.pet.adoptionFee == 0
+                              ? Colors.green
+                              : AppColors.darkPink,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          widget.pet.adoptionFee == 0
+                              ? 'Free'
+                              : '\$${widget.pet.adoptionFee.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: widget.pet.adoptionFee == 0
+                                ? Colors.green
+                                : Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

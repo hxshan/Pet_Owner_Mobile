@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
+import 'package:pet_owner_mobile/services/appointment_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class MyVetAppointmentsScreen extends StatefulWidget {
@@ -14,8 +15,10 @@ class MyVetAppointmentsScreen extends StatefulWidget {
 class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  late List<AppointmentModel> _upcoming;
-  late List<AppointmentModel> _past;
+  final AppointmentService _appointmentService = AppointmentService();
+  late List<Map<String, dynamic>> _upcoming;
+  late List<Map<String, dynamic>> _past;
+  bool _loading = true;
   bool _showSuccessBanner = false;
 
   @override
@@ -23,9 +26,9 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
 
-    // Seed mock data
-    _upcoming = [..._mockUpcoming];
-    _past = [..._mockPast];
+  _upcoming = [];
+  _past = [];
+  _fetchAppointments();
 
     
   }
@@ -63,7 +66,6 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                   child: Row(
                     children: [
                       CustomBackButton(showPadding: false, backgroundColor: Colors.white, iconColor: AppColors.darkPink,),
-                      
                       SizedBox(width: sw * 0.035),
                       Text(
                         'My Appointments',
@@ -178,56 +180,60 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
               controller: _tabController,
               children: [
                 // Upcoming tab
-                _upcoming.isEmpty
-                    ? _EmptyState(
-                        icon: Icons.event_available_outlined,
-                        message: 'No upcoming appointments',
-                        sub: 'Book a vet to get started.',
-                        sw: sw,
-                        sh: sh,
-                      )
-                    : ListView.separated(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: sw * 0.04,
-                          vertical: sh * 0.02,
-                        ),
-                        itemCount: _upcoming.length,
-                        separatorBuilder: (_, __) =>
-                            SizedBox(height: sh * 0.014),
-                        itemBuilder: (_, i) => _AppointmentCard(
-                          appointment: _upcoming[i],
-                          isUpcoming: true,
-                          sw: sw,
-                          sh: sh,
-                          onCancel: () => setState(() => _upcoming.removeAt(i)),
-                        ),
-                      ),
+                _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _upcoming.isEmpty
+                        ? _EmptyState(
+                            icon: Icons.event_available_outlined,
+                            message: 'No upcoming appointments',
+                            sub: 'Book a vet to get started.',
+                            sw: sw,
+                            sh: sh,
+                          )
+                        : ListView.separated(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: sw * 0.04,
+                              vertical: sh * 0.02,
+                            ),
+                            itemCount: _upcoming.length,
+                            separatorBuilder: (_, __) =>
+                                SizedBox(height: sh * 0.014),
+                            itemBuilder: (_, i) => _AppointmentCard(
+                              appointment: _upcoming[i],
+                              isUpcoming: true,
+                              sw: sw,
+                              sh: sh,
+                              onCancel: () => setState(() => _upcoming.removeAt(i)),
+                            ),
+                          ),
 
                 // Past tab
-                _past.isEmpty
-                    ? _EmptyState(
-                        icon: Icons.history_outlined,
-                        message: 'No past visits yet',
-                        sub: 'Your completed appointments will appear here.',
-                        sw: sw,
-                        sh: sh,
-                      )
-                    : ListView.separated(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: sw * 0.04,
-                          vertical: sh * 0.02,
-                        ),
-                        itemCount: _past.length,
-                        separatorBuilder: (_, __) =>
-                            SizedBox(height: sh * 0.014),
-                        itemBuilder: (_, i) => _AppointmentCard(
-                          appointment: _past[i],
-                          isUpcoming: false,
-                          sw: sw,
-                          sh: sh,
-                          onCancel: null,
-                        ),
-                      ),
+                _loading
+                    ? const SizedBox.shrink()
+                    : _past.isEmpty
+                        ? _EmptyState(
+                            icon: Icons.history_outlined,
+                            message: 'No past visits yet',
+                            sub: 'Your completed appointments will appear here.',
+                            sw: sw,
+                            sh: sh,
+                          )
+                        : ListView.separated(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: sw * 0.04,
+                              vertical: sh * 0.02,
+                            ),
+                            itemCount: _past.length,
+                            separatorBuilder: (_, __) =>
+                                SizedBox(height: sh * 0.014),
+                            itemBuilder: (_, i) => _AppointmentCard(
+                              appointment: _past[i],
+                              isUpcoming: false,
+                              sw: sw,
+                              sh: sh,
+                              onCancel: null,
+                            ),
+                          ),
               ],
             ),
           ),
@@ -235,11 +241,53 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
       ),
     );
   }
+
+  void _fetchAppointments() async {
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      final List<Map<String, dynamic>> appts =
+          await _appointmentService.getMyUpcomingAppointments();
+
+      final now = DateTime.now();
+      final upcoming = <Map<String, dynamic>>[];
+      final past = <Map<String, dynamic>>[];
+
+      for (final a in appts) {
+        DateTime start;
+        try {
+          start = DateTime.parse(a['startTime'] ?? a['start_time']);
+        } catch (_) {
+          start = now;
+        }
+
+        if (start.isAfter(now)) {
+          upcoming.add(a);
+        } else {
+          past.add(a);
+        }
+      }
+
+      setState(() {
+        _upcoming = upcoming;
+        _past = past;
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('Failed to load appointments: $e');
+    } finally {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
 }
 
 // ── Appointment Card ──────────────────────────────────────────────────────────
 class _AppointmentCard extends StatelessWidget {
-  final AppointmentModel appointment;
+  final Map<String, dynamic> appointment;
   final bool isUpcoming;
   final double sw, sh;
   final VoidCallback? onCancel;
@@ -254,7 +302,31 @@ class _AppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+  final vet = appointment['veterinarian'] as Map<String, dynamic>?;
+  final clinic = (vet != null ? (vet['clinic'] as Map<String, dynamic>?) : null) ?? (appointment['clinic'] as Map<String, dynamic>?);
+
+  final vetName = vet != null
+    ? ((vet['firstname'] != null || vet['lastname'] != null)
+      ? '${(vet['firstname'] ?? '')} ${(vet['lastname'] ?? '')}'.trim()
+      : (vet['name'] ?? 'Vet'))
+    : (appointment['vetName'] ?? 'Vet');
+
+  final specialization = vet != null
+    ? (vet['specialization'] ?? (vet['veterinarianData']?['specialization'] ?? appointment['specialization']))
+    : (appointment['specialization'] ?? '');
+
+    DateTime date;
+    try {
+      date = DateTime.parse(appointment['startTime'] ?? appointment['start_time']);
+    } catch (_) {
+      date = DateTime.now();
+    }
+
+    final time = _formatTime(date);
+  final address = clinic?['address'] ?? clinic?['name'] ?? appointment['address'] ?? '';
+    return InkWell(
+      onTap: () => context.pushNamed('AppointmentDetailScreen', extra: appointment),
+      child: Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -297,7 +369,7 @@ class _AppointmentCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        appointment.vetName,
+                        vetName,
                         style: TextStyle(
                           fontSize: sw * 0.04,
                           fontWeight: FontWeight.w700,
@@ -309,7 +381,7 @@ class _AppointmentCard extends StatelessWidget {
                       ),
                       SizedBox(height: sh * 0.004),
                       Text(
-                        appointment.specialization,
+                        specialization,
                         style: TextStyle(
                           fontSize: sw * 0.032,
                           color: const Color(0xFF888888),
@@ -363,19 +435,17 @@ class _AppointmentCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                _InfoPill(
-                  icon: Icons.calendar_today_outlined,
-                  label:
-                      '${_weekdayShort(appointment.date.weekday)}, '
-                      '${appointment.date.day} '
-                      '${_monthShort(appointment.date.month)}',
-                  sw: sw,
-                  sh: sh,
-                ),
+                  _InfoPill(
+                    icon: Icons.calendar_today_outlined,
+                    label:
+                        '${_weekdayShort(date.weekday)}, ${date.day} ${_monthShort(date.month)}',
+                    sw: sw,
+                    sh: sh,
+                  ),
                 SizedBox(width: sw * 0.025),
                 _InfoPill(
                   icon: Icons.access_time_outlined,
-                  label: appointment.time,
+                  label: time,
                   sw: sw,
                   sh: sh,
                 ),
@@ -399,8 +469,8 @@ class _AppointmentCard extends StatelessWidget {
                 ),
                 SizedBox(width: sw * 0.018),
                 Expanded(
-                  child: Text(
-                    appointment.address,
+                    child: Text(
+                    address,
                     style: TextStyle(
                       fontSize: sw * 0.032,
                       color: const Color(0xFF777777),
@@ -440,8 +510,8 @@ class _AppointmentCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(sw * 0.025),
                           ),
                         ),
-                        child: Text(
-                          'Cancel',
+                          child: Text(
+                            'Yes, Cancel',
                           style: TextStyle(
                             fontSize: sw * 0.035,
                             fontWeight: FontWeight.w600,
@@ -519,56 +589,96 @@ class _AppointmentCard extends StatelessWidget {
             ),
         ],
       ),
-    );
+    ));
   }
 
   void _showCancelDialog(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
-    final double sh = MediaQuery.of(context).size.height;
+    final vet = appointment['veterinarian'] as Map<String, dynamic>?;
+    final vetDisplay = vet != null
+        ? ((vet['firstname'] != null || vet['lastname'] != null)
+            ? '${(vet['firstname'] ?? '')} ${(vet['lastname'] ?? '')}'.trim()
+            : (vet['name'] ?? 'the vet'))
+        : (appointment['vetName'] ?? 'the vet');
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(sw * 0.04),
-        ),
-        title: Text(
-          'Cancel Appointment?',
-          style: TextStyle(fontSize: sw * 0.042, fontWeight: FontWeight.w700),
-        ),
-        content: Text(
-          'Are you sure you want to cancel your appointment with ${appointment.vetName}?',
-          style: TextStyle(
-            fontSize: sw * 0.036,
-            color: const Color(0xFF666666),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Keep',
+      builder: (_) {
+        // local loading state inside the dialog
+        bool isLoading = false;
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(sw * 0.04),
+            ),
+            title: Text(
+              'Cancel Appointment?',
+              style: TextStyle(fontSize: sw * 0.042, fontWeight: FontWeight.w700),
+            ),
+            content: Text(
+              'Are you sure you want to cancel your appointment with $vetDisplay?',
               style: TextStyle(
-                color: const Color(0xFF888888),
                 fontSize: sw * 0.036,
+                color: const Color(0xFF666666),
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onCancel?.call();
-            },
-            child: Text(
-              'Yes, Cancel',
-              style: TextStyle(
-                color: AppColors.darkPink,
-                fontWeight: FontWeight.w700,
-                fontSize: sw * 0.036,
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Navigator.pop(context),
+                child: Text(
+                  'Keep',
+                  style: TextStyle(
+                    color: const Color(0xFF888888),
+                    fontSize: sw * 0.036,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
+              TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() => isLoading = true);
+                        final apptId = (appointment['id'] ?? appointment['_id'] ?? appointment['appointmentId'] ?? '').toString();
+                        if (apptId.isEmpty) {
+                          setState(() => isLoading = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Unable to cancel: missing appointment id')),
+                          );
+                          return;
+                        }
+                        try {
+                          await AppointmentService().cancelAppointment(apptId);
+                          Navigator.pop(context);
+                          onCancel?.call();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Appointment cancelled')),
+                          );
+                        } catch (e) {
+                          setState(() => isLoading = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Failed to cancel appointment')),
+                          );
+                        }
+                      },
+                child: isLoading
+                    ? SizedBox(
+                        width: sw * 0.064,
+                        height: sw * 0.064,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        'Yes, Cancel',
+                        style: TextStyle(
+                          color: AppColors.darkPink,
+                          fontWeight: FontWeight.w700,
+                          fontSize: sw * 0.036,
+                        ),
+                      ),
+              ),
+            ],
+          );
+        });
+      },
     );
   }
 }
@@ -693,41 +803,9 @@ String _monthShort(int m) => [
   'Dec',
 ][m - 1];
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-final List<AppointmentModel> _mockUpcoming = [
-  AppointmentModel(
-    vetName: 'Dr. Sarah Mitchell',
-    specialization: 'General Veterinarian',
-    date: DateTime.now().add(const Duration(days: 3)),
-    time: '10:00 AM',
-    address: '12 Maple Ave',
-    isUpcoming: true,
-  ),
-  AppointmentModel(
-    vetName: 'Paws & Claws Animal Clinic',
-    specialization: 'Small Animal Specialist',
-    date: DateTime.now().add(const Duration(days: 8)),
-    time: '2:30 PM',
-    address: '45 Birch St',
-    isUpcoming: true,
-  ),
-];
-
-final List<AppointmentModel> _mockPast = [
-  AppointmentModel(
-    vetName: 'CityPet Veterinary Centre',
-    specialization: 'Emergency & General Care',
-    date: DateTime.now().subtract(const Duration(days: 12)),
-    time: '11:00 AM',
-    address: '99 Elm Road',
-    isUpcoming: false,
-  ),
-  AppointmentModel(
-    vetName: 'Dr. James Okafor',
-    specialization: 'Exotic Animals & Surgery',
-    date: DateTime.now().subtract(const Duration(days: 30)),
-    time: '3:00 PM',
-    address: '7 Oak Blvd',
-    isUpcoming: false,
-  ),
-];
+String _formatTime(DateTime dt) {
+  final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+  return '$hour:$minute $ampm';
+}

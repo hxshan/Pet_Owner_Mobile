@@ -28,11 +28,9 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
     'All': null,
     'Dogs': 'Dog',
     'Cats': 'Cat',
-    'Birds': 'Bird',
-    'Others': null,
   };
 
-  final List<String> categories = ['All', 'Dogs', 'Cats', 'Birds', 'Others'];
+  final List<String> categories = ['All', 'Dogs', 'Cats'];
 
   @override
   void initState() {
@@ -126,6 +124,49 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
                       horizontal: 20.w,
                       vertical: 12.h,
                     ),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Find Adoption Centers Button ──────────────────────────────
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: InkWell(
+                onTap: () {
+                  context.pushNamed('AdoptionCenterHomeScreen');
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkPink,
+                    borderRadius: BorderRadius.circular(12.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.darkPink.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: Colors.white,
+                        size: 24.sp,
+                      ),
+                      SizedBox(width: 12.w),
+                      Text(
+                        'Find Adoption Centers Near You',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

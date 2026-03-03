@@ -32,4 +32,19 @@ class AppointmentService {
 
     return response.data;
   }
+
+  /// Get upcoming appointments for the authenticated pet owner
+  Future<List<Map<String, dynamic>>> getMyUpcomingAppointments() async {
+    final response = await _dio.get('/appointments/my/upcoming', options: Options(extra: {'requiresAuth': true}));
+    final data = response.data;
+    if (data == null || data['appointments'] == null) return [];
+    final List appts = data['appointments'];
+    return List<Map<String, dynamic>>.from(appts);
+  }
+
+  /// Cancel an appointment (owner)
+  Future<Map<String, dynamic>> cancelAppointment(String appointmentId) async {
+    final response = await _dio.post('/appointments/$appointmentId/cancel', options: Options(extra: {'requiresAuth': true}));
+    return response.data;
+  }
 }

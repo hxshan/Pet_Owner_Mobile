@@ -3,11 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/address_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
+import 'package:pet_owner_mobile/models/adoption/adoption_center_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_apply_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/advanced_search_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/my_applications_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
+import 'package:pet_owner_mobile/pages/adoption_center/adoption_center_home_screen.dart';
+import 'package:pet_owner_mobile/pages/adoption_center/adoption_center_search_result_screen.dart';
+import 'package:pet_owner_mobile/pages/adoption_center/adoption_center_detail_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/CheckoutScreen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/OrderSuccessScreen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/add_edit_address_screen.dart';
@@ -30,7 +34,9 @@ import 'package:pet_owner_mobile/pages/pet_management/chat_screen.dart';
 import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/symptom_checker_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/upcoming_appointments_page.dart';
+import 'package:pet_owner_mobile/pages/pet_management/appointment_details_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/vaccinations_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/view_all_pets_page.dart';
 import 'package:pet_owner_mobile/pages/profile/change_password_screen.dart';
@@ -174,6 +180,14 @@ final GoRouter appRouter = GoRouter(
               },
             ),
             GoRoute(
+              path: '/symptom-checker/:petId',
+              name: 'SymptomCheckerScreen',
+              builder: (context, state) {
+                final petId = state.pathParameters['petId']!;
+                return SymptomCheckerPage(petId: petId);
+              },
+            ),
+            GoRoute(
               path: '/aichat',
               name: 'ChatScreen',
               builder: (context, state) => ChatScreen(),
@@ -187,6 +201,14 @@ final GoRouter appRouter = GoRouter(
               path: '/upcomingappointments',
               name: 'UpcomingAppointmentsScreen',
               builder: (context, state) => UpcomingAppointmentsScreen(),
+            ),
+            GoRoute(
+              path: '/appointment-detail',
+              name: 'AppointmentDetailScreen',
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                return AppointmentDetailsPage(appointment: extra ?? {});
+              },
             ),
             GoRoute(
               path: '/vaccinations',
@@ -232,6 +254,31 @@ final GoRouter appRouter = GoRouter(
               path: 'my-applications',
               name: 'MyApplicationsPage',
               builder: (context, state) => const MyApplicationsPage(),
+            ),
+          ],
+        ),
+
+        // Adoption Center Routes
+        GoRoute(
+          path: '/adoption-center',
+          name: 'AdoptionCenterHomeScreen',
+          builder: (context, state) => const AdoptionCenterHomeScreen(),
+          routes: [
+            GoRoute(
+              path: 'search',
+              name: 'AdoptionCenterSearchResultScreen',
+              builder: (context, state) {
+                final location = (state.extra as String?) ?? '';
+                return AdoptionCenterSearchResultScreen(location: location);
+              },
+            ),
+            GoRoute(
+              path: 'detail',
+              name: 'AdoptionCenterDetailScreen',
+              builder: (context, state) {
+                final center = state.extra as AdoptionCenter;
+                return AdoptionCenterDetailScreen(center: center);
+              },
             ),
           ],
         ),
