@@ -8,9 +8,8 @@ class DietFormDialog extends StatefulWidget {
   final String breed;
   final String gender;
 
+ 
   final Future<void> Function({
-    required double ageMonths,
-    required double weightKg,
     required String activityLevel,
     required String disease,
     required String allergy,
@@ -31,8 +30,6 @@ class DietFormDialog extends StatefulWidget {
 
 class _DietFormDialogState extends State<DietFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _ageCtrl = TextEditingController();
-  final _weightCtrl = TextEditingController();
 
   String _activity = 'Medium';
   String _disease = 'None';
@@ -40,20 +37,11 @@ class _DietFormDialogState extends State<DietFormDialog> {
 
   bool _loading = false;
 
-  @override
-  void dispose() {
-    _ageCtrl.dispose();
-    _weightCtrl.dispose();
-    super.dispose();
-  }
-
   InputDecoration _inputDecoration(String label, {IconData? icon}) {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.black54, fontSize: 13.5),
-      prefixIcon: icon != null
-          ? Icon(icon, color: AppColors.darkPink, size: 20)
-          : null,
+      prefixIcon: icon != null ? Icon(icon, color: AppColors.darkPink, size: 20) : null,
       filled: true,
       fillColor: AppColors.lightGray,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -105,7 +93,8 @@ class _DietFormDialogState extends State<DietFormDialog> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("• ", style: TextStyle(fontSize: 13, color: AppColors.darkPink, height: 1.4)),
+          const Text("• ",
+              style: TextStyle(fontSize: 13, color: AppColors.darkPink, height: 1.4)),
           Expanded(
             child: Text(
               text,
@@ -132,7 +121,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Header ──────────────────────────────────────────
+          // Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -151,10 +140,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.restaurant_menu, color: AppColors.darkPink, size: 22),
                 ),
                 const SizedBox(width: 12),
@@ -163,14 +149,10 @@ class _DietFormDialogState extends State<DietFormDialog> {
                   children: [
                     Text(
                       'Generate Meal Plan',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                     ),
                     Text(
-                      'Fill in your pet\'s details below',
+                      'Age & weight will be taken from your pet profile',
                       style: TextStyle(fontSize: 12, color: Colors.black54),
                     ),
                   ],
@@ -179,7 +161,6 @@ class _DietFormDialogState extends State<DietFormDialog> {
             ),
           ),
 
-          // ── Scrollable Form Body ─────────────────────────────
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
@@ -188,7 +169,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Pet Info (read-only)
+                    
                     _sectionLabel('PET INFO'),
                     Row(
                       children: [
@@ -221,40 +202,6 @@ class _DietFormDialogState extends State<DietFormDialog> {
 
                     const SizedBox(height: 18),
 
-                    // Measurements
-                    _sectionLabel('MEASUREMENTS'),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _ageCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: _inputDecoration('Age (months)', icon: Icons.cake_outlined),
-                            validator: (v) {
-                              final x = double.tryParse((v ?? '').trim());
-                              if (x == null || x <= 0) return 'Enter valid age';
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _weightCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: _inputDecoration('Weight (kg)', icon: Icons.monitor_weight_outlined),
-                            validator: (v) {
-                              final x = double.tryParse((v ?? '').trim());
-                              if (x == null || x <= 0) return 'Enter valid weight';
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
                     // Activity Level
                     _sectionLabel('ACTIVITY LEVEL'),
                     DropdownButtonFormField<String>(
@@ -263,7 +210,10 @@ class _DietFormDialogState extends State<DietFormDialog> {
                       dropdownColor: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       items: activityLevels
-                          .map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14))))
+                          .map((e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(e, style: const TextStyle(fontSize: 14)),
+                              ))
                           .toList(),
                       onChanged: (v) => setState(() => _activity = v ?? 'Medium'),
                     ),
@@ -343,7 +293,7 @@ class _DietFormDialogState extends State<DietFormDialog> {
             ),
           ),
 
-          // ── Actions ──────────────────────────────────────────
+          // Actions
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
             decoration: const BoxDecoration(
@@ -379,8 +329,6 @@ class _DietFormDialogState extends State<DietFormDialog> {
                             setState(() => _loading = true);
                             try {
                               await widget.onGenerate(
-                                ageMonths: double.parse(_ageCtrl.text.trim()),
-                                weightKg: double.parse(_weightCtrl.text.trim()),
                                 activityLevel: _activity,
                                 disease: _disease,
                                 allergy: _allergy,
