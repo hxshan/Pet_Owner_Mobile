@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/services/location_service.dart';
+import 'package:pet_owner_mobile/services/push_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
@@ -26,7 +27,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     _loadUserData();
     _loadLocation();
+    _requestNotificationPermittion();
   }
+
+  Future<void> _requestNotificationPermittion() async {
+  final ok = await PushService.instance.requestPermissionAndRegister();
+
+  if (!ok) {
+    // Optional: show a snackbar or do nothing
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   const SnackBar(content: Text("Notifications not enabled")),
+    // );
+  }
+}
 
   Future<void> _loadUserData() async {
     final name = await SecureStorage.getData('first_name');

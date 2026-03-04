@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pet_owner_mobile/models/notification_model.dart';
+import 'package:pet_owner_mobile/services/notification_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/notification_card_widget.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -11,95 +14,92 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   String selectedFilter = 'All';
-  
-  // Sample notification data
-  List<Map<String, dynamic>> notifications = [
-    {
-      'type': NotificationType.appointment,
-      'title': 'Appointment Reminder',
-      'message': 'Annual checkup for Suddu Putha scheduled tomorrow at 10:30 AM with Dr. Sarah Johnson',
-      'time': '2 hours ago',
-      'isRead': false,
-    },
-    {
-      'type': NotificationType.vaccination,
-      'title': 'Vaccination Due',
-      'message': 'Rabies vaccine for Suddu Putha is due in 3 days. Please schedule an appointment.',
-      'time': '5 hours ago',
-      'isRead': false,
-    },
-    {
-      'type': NotificationType.health,
-      'title': 'Health Alert',
-      'message': 'Bordetella vaccine for Suddu Putha is overdue. Immediate attention required.',
-      'time': '1 day ago',
-      'isRead': true,
-    },
-    {
-      'type': NotificationType.reminder,
-      'title': 'Medication Reminder',
-      'message': 'Time to give Suddu Putha the daily medication. Don\'t forget!',
-      'time': '1 day ago',
-      'isRead': true,
-    },
-    {
-      'type': NotificationType.appointment,
-      'title': 'Appointment Confirmed',
-      'message': 'Your appointment for dental cleaning on 05/04/2025 has been confirmed.',
-      'time': '2 days ago',
-      'isRead': true,
-    },
-    {
-      'type': NotificationType.general,
-      'title': 'Profile Updated',
-      'message': 'Pet profile for Suddu Putha has been successfully updated.',
-      'time': '3 days ago',
-      'isRead': true,
-    },
-    {
-      'type': NotificationType.vaccination,
-      'title': 'Vaccination Completed',
-      'message': 'DHPP vaccine for Suddu Putha has been administered successfully.',
-      'time': '1 week ago',
-      'isRead': true,
-    },
-  ];
 
-  List<Map<String, dynamic>> get filteredNotifications {
-    if (selectedFilter == 'All') {
-      return notifications;
-    } else if (selectedFilter == 'Unread') {
-      return notifications.where((n) => !n['isRead']).toList();
-    } else {
-      return notifications.where((n) => n['isRead']).toList();
+  bool isLoading = true;
+  String? errorText;
+
+  List<AppNotification> notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    setState(() {
+      isLoading = true;
+      errorText = null;
+    });
+
+    try {
+      final list = await NotificationService.instance.fetchNotifications();
+      setState(() => notifications = list);
+    } catch (e) {
+      setState(() => errorText = e.toString());
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
-  int get unreadCount {
-    return notifications.where((n) => !n['isRead']).length;
+  List<AppNotification> get filteredNotifications {
+    if (selectedFilter == 'All') return notifications;
+    if (selectedFilter == 'Unread') {
+      return notifications.where((n) => !n.isRead).toList();
+    }
+    return notifications.where((n) => n.isRead).toList();
   }
 
-  void _markAllAsRead() {
-    setState(() {
-      for (var notification in notifications) {
-        notification['isRead'] = true;
-      }
-    });
+  int get unreadCount => notifications.where((n) => !n.isRead).length;
+
+  Future<void> _markAllAsRead() async {
+    try {
+      await NotificationService.instance.markAllRead();
+      setState(() {
+        notifications = notifications
+            .map(
+              (n) => AppNotification(
+                id: n.id,
+                type: n.type,
+                title: n.title,
+                message: n.message,
+                createdAt: n.createdAt,
+                isRead: true,
+              ),
+            )
+            .toList();
+      });
+    } catch (e) {
+      _showSnack(e.toString());
+    }
   }
 
-  void _deleteNotification(int index) {
-    setState(() {
-      notifications.removeAt(index);
-    });
+  Future<void> _markOneRead(AppNotification n) async {
+    try {
+      await NotificationService.instance.markRead(n.id);
+      setState(() {
+        notifications = notifications.map((x) {
+          if (x.id == n.id) {
+            return AppNotification(
+              id: x.id,
+              type: x.type,
+              title: x.title,
+              message: x.message,
+              createdAt: x.createdAt,
+              isRead: true,
+            );
+          }
+          return x;
+        }).toList();
+      });
+    } catch (e) {
+      _showSnack(e.toString());
+    }
+  }
+
+  void _showSnack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Notification deleted',
-          style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
-        ),
-        duration: Duration(seconds: 2),
-        backgroundColor: Colors.black87,
-      ),
+      SnackBar(content: Text(msg), backgroundColor: Colors.black87),
     );
   }
 
@@ -114,14 +114,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         backgroundColor: Colors.white,
         scrolledUnderElevation: 0,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black87,
-            size: sw * 0.05,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: CustomBackButton(),
         title: Text(
           'Notifications',
           style: TextStyle(
@@ -157,10 +150,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey.shade200,
-                    width: 1,
-                  ),
+                  bottom: BorderSide(color: Colors.grey.shade200, width: 1),
                 ),
               ),
               child: Row(
@@ -178,37 +168,47 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ],
               ),
             ),
-        
+
             // Notifications List
             Expanded(
-              child: filteredNotifications.isEmpty
-                  ? _buildEmptyState(sw, sh)
-                  : ListView.builder(
-                      padding: EdgeInsets.all(sw * 0.05),
-                      itemCount: filteredNotifications.length,
-                      itemBuilder: (context, index) {
-                        final notification = filteredNotifications[index];
-                        return NotificationCard(
-                          sw: sw,
-                          sh: sh,
-                          type: notification['type'],
-                          title: notification['title'],
-                          message: notification['message'],
-                          time: notification['time'],
-                          isRead: notification['isRead'],
-                          onTap: () {
-                            setState(() {
-                              notification['isRead'] = true;
-                            });
-                            // Handle notification tap - navigate to relevant screen
-                          },
-                          onDismiss: () {
-                            final originalIndex = notifications.indexOf(notification);
-                            _deleteNotification(originalIndex);
-                          },
-                        );
-                      },
-                    ),
+              child: Builder(
+                builder: (_) {
+                  if (isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (errorText != null) {
+                    return Center(child: Text(errorText!));
+                  }
+
+                  if (filteredNotifications.isEmpty) {
+                    return _buildEmptyState(sw, sh);
+                  }
+
+                  return ListView.builder(
+                    padding: EdgeInsets.all(sw * 0.05),
+                    itemCount: filteredNotifications.length,
+                    itemBuilder: (context, index) {
+                      final n = filteredNotifications[index];
+                      return NotificationCard(
+                        sw: sw,
+                        sh: sh,
+                        type: n.type,
+                        title: n.title,
+                        message: n.message,
+                        time: NotificationService.instance.timeAgo(n.createdAt),
+                        isRead: n.isRead,
+                        onTap: () => _markOneRead(n),
+                        onDismiss: () {
+                          setState(() {
+                            notifications.removeWhere((x) => x.id == n.id);
+                          });
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -218,7 +218,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildFilterChip(double sw, double sh, String label, int count) {
     final isSelected = selectedFilter == label;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -256,9 +256,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 vertical: sh * 0.002,
               ),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.darkPink
-                    : Colors.grey.shade400,
+                color: isSelected ? AppColors.darkPink : Colors.grey.shade400,
                 borderRadius: BorderRadius.circular(sw * 0.03),
               ),
               child: Text(
@@ -300,10 +298,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             selectedFilter == 'Unread'
                 ? 'You\'re all caught up!'
                 : 'No notifications to show',
-            style: TextStyle(
-              fontSize: sw * 0.035,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: sw * 0.035, color: Colors.grey.shade500),
           ),
         ],
       ),
