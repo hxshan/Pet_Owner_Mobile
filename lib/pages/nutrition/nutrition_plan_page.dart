@@ -6,7 +6,6 @@ import 'package:pet_owner_mobile/widgets/nutrition/meal_plan_card.dart';
 
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/services/diet_plan_service.dart';
-
 import 'package:pet_owner_mobile/widgets/nutrition/diet_form_dialog.dart';
 
 class NutritionPlanScreen extends StatefulWidget {
@@ -66,10 +65,6 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: CustomBackButton(),
-        // IconButton(
-        //   icon: Icon(Icons.arrow_back_ios, color: Colors.black87, size: sw * 0.05),
-        //   onPressed: () => context.pop(),
-        // ),
         title: Text(
           'Nutrition Plans',
           style: TextStyle(
@@ -87,96 +82,82 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _plans.isEmpty
-                  ? _buildEmptyState(sw, sh)
-                  : RefreshIndicator(
-                      onRefresh: _loadAll,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: sh * 0.02),
-                              _buildHeaderSection(sw, sh),
-                              SizedBox(height: sh * 0.025),
-                              Text(
-                                'Active Meal Plans',
-                                style: TextStyle(
-                                  fontSize: sw * 0.048,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              SizedBox(height: sh * 0.015),
-
-                              ..._plans.map((plan) {
-                                final profile =
-                                    (plan['profile'] as Map?)
-                                        ?.cast<String, dynamic>() ??
-                                    {};
-                                final nutrition =
-                                    (plan['nutrition'] as Map?)
-                                        ?.cast<String, dynamic>() ??
-                                    {};
-
-                                final petId = (plan['petId'] ?? '').toString();
-                                final pet = _pets.firstWhere(
-                                  (p) => (p['_id'] ?? '').toString() == petId,
-                                  orElse: () => <String, dynamic>{},
-                                );
-
-                                final petName = (pet['name'] ?? 'Pet')
-                                    .toString();
-                                final petBreed =
-                                    (profile['breed'] ?? pet['breed'] ?? '')
-                                        .toString();
-
-                                final mealsCount =
-                                    (nutrition['meals_per_day'] is num)
-                                    ? (nutrition['meals_per_day'] as num)
-                                          .toInt()
-                                    : 0;
-
-                                final createdAt = (plan['createdAt'] ?? '')
-                                    .toString();
-                                final planDate = createdAt.isNotEmpty
-                                    ? 'Generated on $createdAt'
-                                    : 'Generated recently';
-
-                                return Padding(
-                                  padding: EdgeInsets.only(bottom: sh * 0.015),
-                                  child: MealPlanCard(
-                                    petName: petName,
-                                    petBreed: petBreed,
-                                    petAge: _formatAgeFromProfile(profile),
-                                    planDate: planDate,
-                                    mealsCount: mealsCount,
-                                    bgColor: AppColors.darkPink.withOpacity(
-                                      0.12,
+                      ? _buildEmptyState(sw, sh)
+                      : RefreshIndicator(
+                          onRefresh: _loadAll,
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: sh * 0.02),
+                                  _buildHeaderSection(sw, sh),
+                                  SizedBox(height: sh * 0.025),
+                                  Text(
+                                    'Active Meal Plans',
+                                    style: TextStyle(
+                                      fontSize: sw * 0.048,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
                                     ),
-                                    onTap: () {
-                                      context.pushNamed(
-                                        'NutritionPlanDetailsScreen',
-                                        extra: {
-                                          'plan': {
-                                            ...plan,
-                                            'petName': petName,
-                                            'petBreed': petBreed,
-                                          },
-                                        },
-                                      );
-                                    },
                                   ),
-                                );
-                              }).toList(),
+                                  SizedBox(height: sh * 0.015),
 
-                              SizedBox(height: sh * 0.02),
-                            ],
+                                  ..._plans.map((plan) {
+                                    final profile = (plan['profile'] as Map?)?.cast<String, dynamic>() ?? {};
+                                    final nutrition = (plan['nutrition'] as Map?)?.cast<String, dynamic>() ?? {};
+
+                                    final petId = (plan['petId'] ?? '').toString();
+                                    final pet = _pets.firstWhere(
+                                      (p) => (p['_id'] ?? '').toString() == petId,
+                                      orElse: () => <String, dynamic>{},
+                                    );
+
+                                    final petName = (pet['name'] ?? 'Pet').toString();
+                                    final petBreed = (profile['breed'] ?? pet['breed'] ?? '').toString();
+
+                                    final mealsCount = (nutrition['meals_per_day'] is num)
+                                        ? (nutrition['meals_per_day'] as num).toInt()
+                                        : 0;
+
+                                    final createdAt = (plan['createdAt'] ?? '').toString();
+                                    final planDate = createdAt.isNotEmpty
+                                        ? 'Generated on $createdAt'
+                                        : 'Generated recently';
+
+                                    return Padding(
+                                      padding: EdgeInsets.only(bottom: sh * 0.015),
+                                      child: MealPlanCard(
+                                        petName: petName,
+                                        petBreed: petBreed,
+                                        petAge: _formatAgeFromProfile(profile),
+                                        planDate: planDate,
+                                        mealsCount: mealsCount,
+                                        bgColor: AppColors.darkPink.withOpacity(0.12),
+                                        onTap: () {
+                                          context.pushNamed(
+                                            'NutritionPlanDetailsScreen',
+                                            extra: {
+                                              'plan': {
+                                                ...plan,
+                                                'petName': petName,
+                                                'petBreed': petBreed,
+                                              },
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  }).toList(),
+
+                                  SizedBox(height: sh * 0.02),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
             ),
             _buildGenerateButton(sw, sh),
           ],
@@ -222,11 +203,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(sw * 0.03),
             ),
-            child: Icon(
-              Icons.restaurant_menu,
-              size: sw * 0.08,
-              color: AppColors.darkPink,
-            ),
+            child: Icon(Icons.restaurant_menu, size: sw * 0.08, color: AppColors.darkPink),
           ),
           SizedBox(width: sw * 0.04),
           Expanded(
@@ -264,33 +241,18 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
             Container(
               width: sw * 0.3,
               height: sw * 0.3,
-              decoration: BoxDecoration(
-                color: AppColors.lightGray,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.restaurant,
-                size: sw * 0.15,
-                color: Colors.grey[400],
-              ),
+              decoration: BoxDecoration(color: AppColors.lightGray, shape: BoxShape.circle),
+              child: Icon(Icons.restaurant, size: sw * 0.15, color: Colors.grey[400]),
             ),
             SizedBox(height: sh * 0.03),
             Text(
               'No Meal Plans Yet',
-              style: TextStyle(
-                fontSize: sw * 0.055,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              style: TextStyle(fontSize: sw * 0.055, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
             SizedBox(height: sh * 0.01),
             Text(
               'Generate personalized nutrition plans for your pets to keep them healthy and happy',
-              style: TextStyle(
-                fontSize: sw * 0.038,
-                color: Colors.black54,
-                height: 1.5,
-              ),
+              style: TextStyle(fontSize: sw * 0.038, color: Colors.black54, height: 1.5),
               textAlign: TextAlign.center,
             ),
           ],
@@ -320,9 +282,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
           backgroundColor: AppColors.darkPink,
           foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(vertical: sh * 0.018),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(sw * 0.03),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(sw * 0.03)),
           elevation: 0,
         ),
         child: Row(
@@ -332,10 +292,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
             SizedBox(width: sw * 0.02),
             Text(
               'Generate Meal Plan',
-              style: TextStyle(
-                fontSize: sw * 0.042,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: sw * 0.042, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -369,13 +326,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
               ),
             ),
             SizedBox(height: sh * 0.025),
-            Text(
-              'Select Pet',
-              style: TextStyle(
-                fontSize: sw * 0.052,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('Select Pet', style: TextStyle(fontSize: sw * 0.052, fontWeight: FontWeight.bold)),
             SizedBox(height: sh * 0.02),
             ..._pets.map((pet) {
               final name = (pet['name'] ?? 'Pet').toString();
@@ -393,10 +344,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                     decoration: BoxDecoration(
                       color: Colors.pink[50],
                       borderRadius: BorderRadius.circular(sw * 0.03),
-                      border: Border.all(
-                        color: Colors.pink.withOpacity(0.2),
-                        width: 1,
-                      ),
+                      border: Border.all(color: Colors.pink.withOpacity(0.2), width: 1),
                     ),
                     child: Row(
                       children: [
@@ -409,28 +357,12 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                name,
-                                style: TextStyle(
-                                  fontSize: sw * 0.042,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                breed,
-                                style: TextStyle(
-                                  fontSize: sw * 0.033,
-                                  color: Colors.black54,
-                                ),
-                              ),
+                              Text(name, style: TextStyle(fontSize: sw * 0.042, fontWeight: FontWeight.bold)),
+                              Text(breed, style: TextStyle(fontSize: sw * 0.033, color: Colors.black54)),
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: sw * 0.045,
-                          color: Colors.black38,
-                        ),
+                        Icon(Icons.arrow_forward_ios, size: sw * 0.045, color: Colors.black38),
                       ],
                     ),
                   ),
@@ -463,40 +395,36 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
             species: (pet['species'] ?? '').toString(),
             breed: (pet['breed'] ?? '').toString(),
             gender: (pet['gender'] ?? '').toString(),
-            onGenerate:
-                ({
-                  required double ageMonths,
-                  required double weightKg,
-                  required String activityLevel,
-                  required String disease,
-                  required String allergy,
-                }) async {
-                  final plan = await _dietPlanService.generateDietPlan(
-                    petId: petId,
-                    ageMonths: ageMonths,
-                    weightKg: weightKg,
-                    activityLevel: activityLevel,
-                    disease: disease,
-                    allergy: allergy,
-                  );
+           
+            onGenerate: ({
+              required String activityLevel,
+              required String disease,
+              required String allergy,
+            }) async {
+              final plan = await _dietPlanService.generateDietPlan(
+                petId: petId,
+                activityLevel: activityLevel,
+                disease: disease,
+                allergy: allergy,
+              );
 
-                  await _loadAll();
-                  if (!mounted) return;
+              await _loadAll();
+              if (!mounted) return;
 
-                  final petName = (pet['name'] ?? 'Pet').toString();
-                  final petBreed = (pet['breed'] ?? '').toString();
+              final petName = (pet['name'] ?? 'Pet').toString();
+              final petBreed = (pet['breed'] ?? '').toString();
 
-                  context.goNamed(
-                    'NutritionPlanDetailsScreen',
-                    extra: {
-                      'plan': {
-                        ...plan,
-                        'petName': petName,
-                        'petBreed': petBreed,
-                      },
-                    },
-                  );
+              context.goNamed(
+                'NutritionPlanDetailsScreen',
+                extra: {
+                  'plan': {
+                    ...plan,
+                    'petName': petName,
+                    'petBreed': petBreed,
+                  },
                 },
+              );
+            },
           );
         },
       );

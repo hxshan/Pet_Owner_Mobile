@@ -11,7 +11,6 @@ const diseases = [
 
 const allergies = [
   'Beef',
-  'Pork',
   'Dairy',
   'Wheat',
   'Chicken',
