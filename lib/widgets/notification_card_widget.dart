@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_owner_mobile/models/notification_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
-
-enum NotificationType {
-  appointment,
-  vaccination,
-  reminder,
-  health,
-  general,
-}
 
 class NotificationCard extends StatelessWidget {
   final double sw;
@@ -45,6 +38,8 @@ class NotificationCard extends StatelessWidget {
         return AppColors.errorMessage;
       case NotificationType.general:
         return Colors.grey;
+      case NotificationType.unknown:
+        return Colors.grey;
     }
   }
 
@@ -59,6 +54,8 @@ class NotificationCard extends StatelessWidget {
       case NotificationType.health:
         return Icons.favorite;
       case NotificationType.general:
+        return Icons.info;
+      case NotificationType.unknown:
         return Icons.info;
     }
   }
@@ -83,11 +80,7 @@ class NotificationCard extends StatelessWidget {
           color: AppColors.errorMessage,
           borderRadius: BorderRadius.circular(sw * 0.03),
         ),
-        child: Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: sw * 0.06,
-        ),
+        child: Icon(Icons.delete, color: Colors.white, size: sw * 0.06),
       ),
       child: GestureDetector(
         onTap: onTap,
@@ -98,9 +91,7 @@ class NotificationCard extends StatelessWidget {
             color: isRead ? Colors.white : typeColor.withOpacity(0.05),
             borderRadius: BorderRadius.circular(sw * 0.03),
             border: Border.all(
-              color: isRead
-                  ? Colors.grey.shade300
-                  : typeColor.withOpacity(0.3),
+              color: isRead ? Colors.grey.shade300 : typeColor.withOpacity(0.3),
               width: 1.5,
             ),
             boxShadow: [
@@ -121,15 +112,11 @@ class NotificationCard extends StatelessWidget {
                   color: typeColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(sw * 0.02),
                 ),
-                child: Icon(
-                  typeIcon,
-                  color: typeColor,
-                  size: sw * 0.055,
-                ),
+                child: Icon(typeIcon, color: typeColor, size: sw * 0.055),
               ),
-              
+
               SizedBox(width: sw * 0.035),
-              
+
               // Content Section
               Expanded(
                 child: Column(
@@ -159,9 +146,9 @@ class NotificationCard extends StatelessWidget {
                           ),
                       ],
                     ),
-                    
+
                     SizedBox(height: sh * 0.006),
-                    
+
                     Text(
                       message,
                       style: TextStyle(
@@ -172,9 +159,9 @@ class NotificationCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     SizedBox(height: sh * 0.008),
-                    
+
                     Row(
                       children: [
                         Icon(

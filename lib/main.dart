@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'package:pet_owner_mobile/routes/router.dart';
+import 'package:pet_owner_mobile/services/push_service.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  // No permission prompt here
+  await PushService.instance.initSilent();
+
   runApp(const MyApp());
 
   // runApp(DevicePreview(enabled: true, builder: (context) => MyApp()));
