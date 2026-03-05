@@ -29,10 +29,16 @@ class MealPlanDetailsScreen extends StatelessWidget {
     final meals = (plan['meals'] as List?)?.cast<dynamic>() ?? [];
     final warnings =
         (plan['warnings'] as List?)?.map((e) => e.toString()).toList() ?? [];
-    final tips = (plan['tips'] as List?)?.map((e) => e.toString()).toList() ?? [];
+    final tips =
+        (plan['tips'] as List?)?.map((e) => e.toString()).toList() ?? [];
 
     final petName = (plan['petName'] ?? 'Pet').toString();
     final petBreed = (profile['breed'] ?? '').toString();
+
+   
+    final activityLevel = (profile['activityLevel'] ?? 'Medium').toString();
+    final disease = (profile['disease'] ?? 'None').toString();
+    final allergy = (profile['allergy'] ?? 'None').toString();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -40,7 +46,6 @@ class MealPlanDetailsScreen extends StatelessWidget {
         child: Column(
           children: [
             _buildHeader(context, sw, sh),
-
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -58,8 +63,8 @@ class MealPlanDetailsScreen extends StatelessWidget {
                     _sectionTitle(sw, 'Daily Meal Plan'),
                     SizedBox(height: sh * 0.01),
                     ...meals
-                        .map((m) => _mealCard(
-                            sw, sh, (m as Map).cast<String, dynamic>()))
+                        .map((m) =>
+                            _mealCard(sw, sh, (m as Map).cast<String, dynamic>()))
                         .toList(),
 
                     SizedBox(height: sh * 0.02),
@@ -74,6 +79,18 @@ class MealPlanDetailsScreen extends StatelessWidget {
                       _bullets(sw, tips),
                       SizedBox(height: sh * 0.02),
                     ],
+
+                    //plan context
+                    _sectionTitle(sw, 'Plan Context'),
+                    SizedBox(height: sh * 0.01),
+                    _planContextCard(
+                      sw: sw,
+                      sh: sh,
+                      activityLevel: activityLevel,
+                      disease: disease,
+                      allergy: allergy,
+                    ),
+                    SizedBox(height: sh * 0.02),
 
                     _downloadButton(
                       context: context,
@@ -100,6 +117,144 @@ class MealPlanDetailsScreen extends StatelessWidget {
   }
 
  
+  String _activityMeaning(String level) {
+    final x = level.trim().toLowerCase();
+    if (x == 'low') {
+      return 'Mostly resting, indoor-only, senior pets.';
+    }
+    if (x == 'high') {
+      return 'Very active pets: long walks, frequent play, working or energetic breeds.';
+    }
+    return 'Normal daily activity: regular walks and playtime.';
+  }
+
+  String _diseaseMeaning(String disease) {
+    final d = disease.trim();
+    if (d.isEmpty || d.toLowerCase() == 'none') {
+      return 'No medical condition selected. This plan is based on general health.';
+    }
+    return 'This plan is adjusted to be safer considering the selected condition.';
+  }
+
+  String _allergyMeaning(String allergy) {
+    final a = allergy.trim();
+    if (a.isEmpty || a.toLowerCase() == 'none') {
+      return 'No food restrictions/allergy selected.';
+    }
+    return 'Foods related to this restriction should be avoided.';
+  }
+
+  Widget _planContextCard({
+    required double sw,
+    required double sh,
+    required String activityLevel,
+    required String disease,
+    required String allergy,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: sw * 0.05),
+      padding: EdgeInsets.all(sw * 0.04),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(sw * 0.04),
+        border: Border.all(color: Colors.grey[200]!, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _contextRow(
+            sw: sw,
+            title: 'Activity Level',
+            value: activityLevel,
+            icon: Icons.directions_run,
+            desc: _activityMeaning(activityLevel),
+          ),
+          SizedBox(height: sh * 0.012),
+          _contextRow(
+            sw: sw,
+            title: 'Disease / Condition',
+            value: disease,
+            icon: Icons.medical_services_outlined,
+            desc: _diseaseMeaning(disease),
+          ),
+          SizedBox(height: sh * 0.012),
+          _contextRow(
+            sw: sw,
+            title: 'Food Restriction',
+            value: allergy,
+            icon: Icons.no_food_outlined,
+            desc: _allergyMeaning(allergy),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _contextRow({
+    required double sw,
+    required String title,
+    required String value,
+    required IconData icon,
+    required String desc,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: EdgeInsets.all(sw * 0.02),
+          decoration: BoxDecoration(
+            color: AppColors.darkPink.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(sw * 0.02),
+          ),
+          child: Icon(icon, size: sw * 0.05, color: AppColors.darkPink),
+        ),
+        SizedBox(width: sw * 0.03),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: sw * 0.038,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: sw * 0.006),
+              Text(
+                value.isEmpty ? 'Not specified' : value,
+                style: TextStyle(
+                  fontSize: sw * 0.036,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.darkPink,
+                ),
+              ),
+              SizedBox(height: sw * 0.01),
+              Text(
+                desc,
+                style: TextStyle(
+                  fontSize: sw * 0.032,
+                  color: Colors.black54,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Download PDF
+
   Widget _downloadButton({
     required BuildContext context,
     required double sw,
@@ -187,7 +342,7 @@ class MealPlanDetailsScreen extends StatelessWidget {
       final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final fileName = _safeFileName('Meal_Plan_$dateStr.pdf');
 
-       final docsDir = await getApplicationDocumentsDirectory();
+      final docsDir = await getApplicationDocumentsDirectory();
       final filePath = p.join(docsDir.path, fileName);
 
       final file = File(filePath);
@@ -229,7 +384,6 @@ class MealPlanDetailsScreen extends StatelessWidget {
     return name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
   }
 
-  
   Future<Uint8List> _buildPdfBytes({
     required String petName,
     required String petBreed,
@@ -240,6 +394,10 @@ class MealPlanDetailsScreen extends StatelessWidget {
     required List<String> tips,
   }) async {
     final doc = pw.Document();
+
+    final activityLevel = (profile['activityLevel'] ?? 'Medium').toString();
+    final disease = (profile['disease'] ?? 'None').toString();
+    final allergy = (profile['allergy'] ?? 'None').toString();
 
     String v(String key, {String suffix = ''}) {
       final x = nutrition[key];
@@ -276,7 +434,7 @@ class MealPlanDetailsScreen extends StatelessWidget {
                     style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
                 if (petBreed.trim().isNotEmpty) pw.Text('Breed: $petBreed'),
                 pw.SizedBox(height: 6),
-                pw.Text('Plan valid for 14 days'),
+                pw.Text('Nutrition Plan Valid for 3 months'),
               ],
             ),
           ),
@@ -357,6 +515,20 @@ class MealPlanDetailsScreen extends StatelessWidget {
             pw.SizedBox(height: 6),
             ...tips.map((t) => pw.Bullet(text: t)).toList(),
           ],
+
+          
+          pw.SizedBox(height: 10),
+          pw.Text('Plan Context',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 6),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey300),
+            children: [
+              _pdfRow('Activity Level', activityLevel),
+              _pdfRow('Disease / Condition', disease),
+              _pdfRow('Food Restriction', allergy),
+            ],
+          ),
         ],
       ),
     );
@@ -379,7 +551,6 @@ class MealPlanDetailsScreen extends StatelessWidget {
     );
   }
 
- 
   Widget _buildHeader(BuildContext context, double sw, double sh) {
     return Container(
       padding: EdgeInsets.all(sw * 0.05),
