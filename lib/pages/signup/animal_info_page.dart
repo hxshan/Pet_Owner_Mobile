@@ -306,7 +306,7 @@ class _AnimalInfoPageState extends State<AnimalInfoPage> {
                   SizedBox(height: sh * 0.015),
                   // Title
                   Text(
-                    'PetCareHub',
+                    'PawConnect',
                     style: TextStyle(
                       fontSize: sw * 0.065,
                       fontWeight: FontWeight.bold,

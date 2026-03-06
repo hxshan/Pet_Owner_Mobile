@@ -197,7 +197,7 @@ class _SplashScreenState extends State<SplashScreen>
                     FadeTransition(
                       opacity: _fadeAnimation,
                       child: Text(
-                        'PetCareHub',
+                        'PawConnect',
                         style: TextStyle(
                           fontSize: sw * 0.09,
                           fontWeight: FontWeight.bold,

@@ -31,11 +31,11 @@ class WelcomePage extends StatelessWidget {
                 right: -sw * 0.05,
                 child: Transform(
                   alignment: Alignment.center,
-                  transform: Matrix4.rotationY(math.pi), 
+                  transform: Matrix4.rotationY(math.pi),
                   child: Opacity(
                     opacity: 0.4,
                     child: Image.asset(
-                      'assets/logo.png', 
+                      'assets/logo.png',
                       width: sw * 0.4,
                       height: sw * 0.4,
                       fit: BoxFit.contain,
@@ -87,25 +87,9 @@ class WelcomePage extends StatelessWidget {
                   SizedBox(height: sh * 0.06),
 
                   // App title
-                  Text(
-                    'PetCareHub',
-                    style: TextStyle(
-                      fontSize: sw * 0.085,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          offset: const Offset(0, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
+                  Image.asset('assets/text_logo.png', width: sw * 0.55),
 
                   // Small heart below title
-                  SizedBox(height: sh * 0.015),
                   Icon(
                     Icons.favorite,
                     size: sw * 0.04,

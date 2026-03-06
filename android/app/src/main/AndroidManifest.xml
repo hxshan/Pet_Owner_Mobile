@@ -15,7 +15,7 @@
 
     <application
         android:usesCleartextTraffic="true"
-        android:label="PetCareHub"
+        android:label="PawConnect"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
