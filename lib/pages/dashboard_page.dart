@@ -15,7 +15,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   LocationService _locationService = LocationService();
-  late String firstName;
+  String firstName = 'User'; // Initialize with default value
   String _currentLocation = '';
   final PetService _petService = PetService();
   bool _loadingPets = true;
