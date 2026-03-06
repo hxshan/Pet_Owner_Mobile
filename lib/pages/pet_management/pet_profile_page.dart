@@ -7,6 +7,8 @@ import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Appointment_card.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Vaccination_card.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/medical_report_card.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PetProfileScreen extends StatefulWidget {
   final String petId;
@@ -24,6 +26,79 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
   void initState() {
     super.initState();
     _petFuture = PetService().getPetById(widget.petId);
+  }
+
+  void _showQrPopup(String token, Map<String, dynamic> pet) {
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.03),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  pet['name'] ?? 'Pet',
+                  style: TextStyle(fontSize: sw * 0.05, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: sh * 0.02),
+                QrImageView(
+                  data: token,
+                  version: QrVersions.auto,
+                  size: sw * 0.5,
+                  gapless: false,
+                ),
+                SizedBox(height: sh * 0.02),
+                // Text(
+                //   token,
+                //   style: TextStyle(fontSize: sw * 0.034, color: Colors.black54),
+                //   textAlign: TextAlign.center,
+                // ),
+                SizedBox(height: sh * 0.02),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade200,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: Text('Close', style: TextStyle(color: Colors.black87)),
+                    ),
+                    SizedBox(width: sw * 0.04),
+                    ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          await Share.share(token, subject: 'Pet Token - ${pet['name'] ?? ''}');
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Failed to share token')),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.darkPink,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Share', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   String ageFromDob(String dob) {
@@ -107,6 +182,27 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                                   ),
 
                                   SizedBox(width: sw * 0.1),
+
+                                  // QR Button: shows pet UUID token as QR
+                                  GestureDetector(
+                                    onTap: () {
+                                      final token = pet['uuidToken'] ?? pet['token'] ?? pet['id']?.toString();
+                                      if (token == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('No token available for this pet')),
+                                        );
+                                        return;
+                                      }
+                                      _showQrPopup(token, pet);
+                                    },
+                                    child: Icon(
+                                      Icons.qr_code,
+                                      size: sw * 0.065,
+                                      color: AppColors.darkPink,
+                                    ),
+                                  ),
+
+                                  SizedBox(width: sw * 0.06),
 
                                   GestureDetector(
                                     onTap: () {

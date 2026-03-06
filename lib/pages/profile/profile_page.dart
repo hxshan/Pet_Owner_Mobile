@@ -211,9 +211,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Icons.person_outline,
                     'Edit Profile',
                     'Update your personal information',
-                    () {
-                      context.pushNamed('EditProfileScreen');
-                    },
+                    () async {
+                        final res = await context.pushNamed('EditProfileScreen');
+                        // If edit screen returned true (profile updated), refresh cached profile
+                        if (res == true) {
+                          await loadUser();
+                        }
+                      },
                   ),
 
                   _buildMenuItem(

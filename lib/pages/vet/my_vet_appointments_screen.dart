@@ -5,7 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
 class MyVetAppointmentsScreen extends StatefulWidget {
-  const MyVetAppointmentsScreen({super.key});
+  /// Set to [true] when navigating here immediately after a successful booking
+  /// so the green confirmation banner is shown automatically.
+  final bool showSuccessBanner;
+
+  const MyVetAppointmentsScreen({super.key, this.showSuccessBanner = false});
 
   @override
   State<MyVetAppointmentsScreen> createState() =>
@@ -25,6 +29,7 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _showSuccessBanner = widget.showSuccessBanner;
 
   _upcoming = [];
   _past = [];
@@ -492,63 +497,29 @@ class _AppointmentCard extends StatelessWidget {
                 sw * 0.042,
                 sw * 0.042,
               ),
-              child: Row(
-                children: [
-                  // Cancel button
-                  Expanded(
-                    child: SizedBox(
-                      height: sh * 0.052,
-                      child: OutlinedButton(
-                        onPressed: () => _showCancelDialog(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.darkPink,
-                          side: const BorderSide(
-                            color: AppColors.darkPink,
-                            width: 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(sw * 0.025),
-                          ),
-                        ),
-                          child: Text(
-                            'Yes, Cancel',
-                          style: TextStyle(
-                            fontSize: sw * 0.035,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+              child: SizedBox(
+                width: double.infinity,
+                height: sh * 0.052,
+                child: OutlinedButton(
+                  onPressed: () => _showCancelDialog(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.darkPink,
+                    side: const BorderSide(
+                      color: AppColors.darkPink,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(sw * 0.025),
                     ),
                   ),
-                  SizedBox(width: sw * 0.03),
-                  // Reschedule button
-                  Expanded(
-                    child: SizedBox(
-                      height: sh * 0.052,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: navigate to booking screen to reschedule
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.darkPink,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(sw * 0.025),
-                          ),
-                        ),
-                        child: Text(
-                          'Reschedule',
-                          style: TextStyle(
-                            fontSize: sw * 0.035,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                  child: Text(
+                    'Cancel Appointment',
+                    style: TextStyle(
+                      fontSize: sw * 0.035,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
+                ),
               ),
             )
           else
@@ -603,79 +574,228 @@ class _AppointmentCard extends StatelessWidget {
 
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (_) {
-        // local loading state inside the dialog
         bool isLoading = false;
         return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(sw * 0.04),
-            ),
-            title: Text(
-              'Cancel Appointment?',
-              style: TextStyle(fontSize: sw * 0.042, fontWeight: FontWeight.w700),
-            ),
-            content: Text(
-              'Are you sure you want to cancel your appointment with $vetDisplay?',
-              style: TextStyle(
-                fontSize: sw * 0.036,
-                color: const Color(0xFF666666),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isLoading ? null : () => Navigator.pop(context),
-                child: Text(
-                  'Keep',
-                  style: TextStyle(
-                    color: const Color(0xFF888888),
-                    fontSize: sw * 0.036,
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: EdgeInsets.symmetric(horizontal: sw * 0.06),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(sw * 0.05),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
-                ),
+                ],
               ),
-              TextButton(
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                        setState(() => isLoading = true);
-                        final apptId = (appointment['id'] ?? appointment['_id'] ?? appointment['appointmentId'] ?? '').toString();
-                        if (apptId.isEmpty) {
-                          setState(() => isLoading = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Unable to cancel: missing appointment id')),
-                          );
-                          return;
-                        }
-                        try {
-                          await AppointmentService().cancelAppointment(apptId);
-                          Navigator.pop(context);
-                          onCancel?.call();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Appointment cancelled')),
-                          );
-                        } catch (e) {
-                          setState(() => isLoading = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Failed to cancel appointment')),
-                          );
-                        }
-                      },
-                child: isLoading
-                    ? SizedBox(
-                        width: sw * 0.064,
-                        height: sw * 0.064,
-                        child: const CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        'Yes, Cancel',
-                        style: TextStyle(
-                          color: AppColors.darkPink,
-                          fontWeight: FontWeight.w700,
-                          fontSize: sw * 0.036,
-                        ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Warning top band ──────────────────────────────────
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                        horizontal: sw * 0.06,
+                        vertical: MediaQuery.of(context).size.height * 0.022),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3F3),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(sw * 0.05),
+                        topRight: Radius.circular(sw * 0.05),
                       ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(sw * 0.025),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFE0E0),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.cancel_outlined,
+                            color: const Color(0xFFC62828),
+                            size: sw * 0.055,
+                          ),
+                        ),
+                        SizedBox(width: sw * 0.035),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Cancel Appointment?',
+                                style: TextStyle(
+                                  fontSize: sw * 0.042,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1A1A1A),
+                                ),
+                              ),
+                              Text(
+                                'This action cannot be undone',
+                                style: TextStyle(
+                                  fontSize: sw * 0.03,
+                                  color: const Color(0xFF999999),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Body ─────────────────────────────────────────────
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: sw * 0.06,
+                        vertical:
+                            MediaQuery.of(context).size.height * 0.02),
+                    child: Text(
+                      'Are you sure you want to cancel your appointment with $vetDisplay?',
+                      style: TextStyle(
+                        fontSize: sw * 0.036,
+                        color: const Color(0xFF555555),
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
+                  // ── Buttons ───────────────────────────────────────────
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(sw * 0.06, 0, sw * 0.06,
+                        MediaQuery.of(context).size.height * 0.025),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed:
+                                isLoading ? null : () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF888888),
+                              side: const BorderSide(
+                                  color: Color(0xFFDDDDDD), width: 1.5),
+                              padding: EdgeInsets.symmetric(
+                                  vertical:
+                                      MediaQuery.of(context).size.height *
+                                          0.016),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(sw * 0.03),
+                              ),
+                            ),
+                            child: Text(
+                              'Keep',
+                              style: TextStyle(
+                                fontSize: sw * 0.036,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: sw * 0.03),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isLoading
+                                ? null
+                                : () async {
+                                    setState(() => isLoading = true);
+                                    final apptId = (appointment['id'] ??
+                                            appointment['_id'] ??
+                                            appointment['appointmentId'] ??
+                                            '')
+                                        .toString();
+                                    if (apptId.isEmpty) {
+                                      setState(() => isLoading = false);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Unable to cancel: missing appointment id')),
+                                      );
+                                      return;
+                                    }
+                                    try {
+                                      await AppointmentService()
+                                          .cancelAppointment(apptId);
+                                      Navigator.pop(context);
+                                      onCancel?.call();
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                              'Appointment cancelled'),
+                                          backgroundColor:
+                                              const Color(0xFF2E7D32),
+                                          behavior:
+                                              SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                      );
+                                    } catch (e) {
+                                      setState(() => isLoading = false);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                              'Failed to cancel appointment'),
+                                          backgroundColor:
+                                              AppColors.darkPink,
+                                          behavior:
+                                              SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC62828),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(
+                                  vertical:
+                                      MediaQuery.of(context).size.height *
+                                          0.016),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(sw * 0.03),
+                              ),
+                            ),
+                            child: isLoading
+                                ? SizedBox(
+                                    width: sw * 0.05,
+                                    height: sw * 0.05,
+                                    child: const CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white),
+                                  )
+                                : Text(
+                                    'Yes, Cancel',
+                                    style: TextStyle(
+                                      fontSize: sw * 0.036,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           );
         });
       },

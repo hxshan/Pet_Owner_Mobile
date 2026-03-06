@@ -226,30 +226,202 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
     }
 
     // Show confirmation dialog with selected details
+    final petName = _myPets
+        .firstWhere(
+          (p) => (p['_id'] ?? p['id'] ?? '') == _selectedPetId,
+          orElse: () => {'name': 'My Pet'},
+        )['name'] ?? 'My Pet';
+
     final confirmed = await showDialog<bool>(
       context: context,
+      barrierDismissible: true,
       builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Confirm Booking'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.vet.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Text('${_weekdayShort(_selectedDate.weekday)}, ${_selectedDate.day} ${_monthShort(_selectedDate.month)}'),
-              const SizedBox(height: 4),
-              Text('Time: $_selectedTime'),
-              const SizedBox(height: 8),
-              Text('Pet: ${_myPets.firstWhere((p) => (p['_id'] ?? p['id'] ?? '') == _selectedPetId, orElse: () => {'name': 'My Pet'})['name'] ?? 'My Pet'}'),
-              const SizedBox(height: 8),
-              Text('Location: ${widget.vet.address}'),
-            ],
+        final sw = MediaQuery.of(ctx).size.width;
+        final sh = MediaQuery.of(ctx).size.height;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding:
+              EdgeInsets.symmetric(horizontal: sw * 0.05, vertical: sh * 0.08),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(sw * 0.05),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Coloured top band ─────────────────────────────────────
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                      horizontal: sw * 0.06, vertical: sh * 0.022),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.darkPink,
+                        AppColors.darkPink.withOpacity(0.82),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(sw * 0.05),
+                      topRight: Radius.circular(sw * 0.05),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(sw * 0.025),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.event_available_outlined,
+                            color: Colors.white, size: sw * 0.055),
+                      ),
+                      SizedBox(width: sw * 0.035),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Confirm Booking',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: sw * 0.046,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Review your appointment details',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: sw * 0.03,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Detail rows ───────────────────────────────────────────
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: sw * 0.06, vertical: sh * 0.02),
+                  child: Column(
+                    children: [
+                      _ConfirmRow(
+                        icon: Icons.local_hospital_outlined,
+                        label: 'Veterinarian',
+                        value: widget.vet.name,
+                        sw: sw,
+                        sh: sh,
+                      ),
+                      _ConfirmDivider(),
+                      _ConfirmRow(
+                        icon: Icons.calendar_today_outlined,
+                        label: 'Date',
+                        value:
+                            '${_weekdayShort(_selectedDate.weekday)}, ${_selectedDate.day} ${_monthShort(_selectedDate.month)} ${_selectedDate.year}',
+                        sw: sw,
+                        sh: sh,
+                      ),
+                      _ConfirmDivider(),
+                      _ConfirmRow(
+                        icon: Icons.access_time_outlined,
+                        label: 'Time',
+                        value: _selectedTime!,
+                        sw: sw,
+                        sh: sh,
+                      ),
+                      _ConfirmDivider(),
+                      _ConfirmRow(
+                        icon: Icons.pets,
+                        label: 'Pet',
+                        value: petName,
+                        sw: sw,
+                        sh: sh,
+                      ),
+                      _ConfirmDivider(),
+                      _ConfirmRow(
+                        icon: Icons.location_on_outlined,
+                        label: 'Location',
+                        value: widget.vet.address,
+                        sw: sw,
+                        sh: sh,
+                        isMultiLine: true,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Action buttons ────────────────────────────────────────
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                      sw * 0.06, 0, sw * 0.06, sh * 0.025),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF888888),
+                            side: const BorderSide(
+                                color: Color(0xFFDDDDDD), width: 1.5),
+                            padding:
+                                EdgeInsets.symmetric(vertical: sh * 0.016),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(sw * 0.03),
+                            ),
+                          ),
+                          child: Text(
+                            'Go Back',
+                            style: TextStyle(
+                              fontSize: sw * 0.036,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: sw * 0.03),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.darkPink,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding:
+                                EdgeInsets.symmetric(vertical: sh * 0.016),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(sw * 0.03),
+                            ),
+                          ),
+                          child: Text(
+                            'Confirm',
+                            style: TextStyle(
+                              fontSize: sw * 0.036,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-            ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Confirm')),
-          ],
         );
       },
     );
@@ -316,8 +488,11 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // After successful booking, navigate the owner to their Upcoming Appointments screen
-      context.goNamed('UpcomingAppointmentsScreen');
+      // After successful booking, navigate to My Appointments and show the success banner
+      context.goNamed(
+        'MyVetAppointmentScreen',
+        extra: {'showSuccessBanner': true},
+      );
     } catch (e) {
       setState(() => _isLoading = false);
       // If the booking failed because the slot was just booked by someone else, refresh slots
@@ -885,3 +1060,82 @@ String _monthFull(int m) => [
   'November',
   'December',
 ][m - 1];
+
+// ── Confirmation dialog helpers ────────────────────────────────────────────────
+
+class _ConfirmRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final double sw, sh;
+  final bool isMultiLine;
+
+  const _ConfirmRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.sw,
+    required this.sh,
+    this.isMultiLine = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: sh * 0.009),
+      child: Row(
+        crossAxisAlignment:
+            isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: sw * 0.085,
+            height: sw * 0.085,
+            decoration: BoxDecoration(
+              color: AppColors.mainColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(sw * 0.02),
+            ),
+            child:
+                Icon(icon, color: AppColors.darkPink, size: sw * 0.04),
+          ),
+          SizedBox(width: sw * 0.035),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: sw * 0.028,
+                    color: const Color(0xFF999999),
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                SizedBox(height: sh * 0.002),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: sw * 0.036,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                  maxLines: isMultiLine ? 3 : 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConfirmDivider extends StatelessWidget {
+  const _ConfirmDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Divider(height: 1, thickness: 1, color: const Color(0xFFF2F2F2));
+  }
+}

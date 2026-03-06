@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pet_owner_mobile/core/dio_client.dart';
@@ -7,10 +9,32 @@ import 'package:pet_owner_mobile/utils/secure_storage.dart';
 class ProfileService {
   final Dio _dio = DioClient().dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  User? _cachedUser;
+  static const String _cacheKey = 'cached_profile_json';
 
   /// GET Pet Owner profile
-  Future<User> getPetOwnerProfile() async {
+  /// Fetch pet owner profile. Returns cached value when available unless
+  /// `forceRefresh` is true. Cache is kept in-memory and persisted to secure storage.
+  Future<User> getPetOwnerProfile({bool forceRefresh = false}) async {
     try {
+      // Return in-memory cache if present and not forced
+      if (!forceRefresh && _cachedUser != null) return _cachedUser!;
+
+      // Try loading from secure storage
+      if (!forceRefresh) {
+        final cached = await _storage.read(key: _cacheKey);
+        if (cached != null && cached.isNotEmpty) {
+          try {
+            final Map<String, dynamic> parsed = json.decode(cached) as Map<String, dynamic>;
+            final user = User.fromJson(parsed);
+            _cachedUser = user;
+            return user;
+          } catch (_) {
+            // ignore parse errors and fall through to network fetch
+          }
+        }
+      }
+
       final response = await _dio.get(
         '/user/pet-owner/profile',
         options: Options(extra: {'requiresAuth': true}),
@@ -19,7 +43,14 @@ class ProfileService {
       final data = response.data;
       final userJson = (data['user'] as Map<String, dynamic>);
 
-      return User.fromJson(userJson);
+      final user = User.fromJson(userJson);
+      // update caches
+      _cachedUser = user;
+      try {
+        await _storage.write(key: _cacheKey, value: json.encode(userJson));
+      } catch (_) {}
+
+      return user;
     } on DioException catch (e) {
       throw Exception(_readableDioError(e));
     } catch (e) {
@@ -56,6 +87,23 @@ class ProfileService {
       // Update local storage first_name if changed
       if (oldFirstName == null || oldFirstName != firstname) {
         await SecureStorage.saveData('first_name', firstname);
+      }
+
+      // If backend returned the updated user, update cache. Otherwise clear
+      // cache so subsequent reads fetch fresh data.
+      try {
+        final resp = response.data as Map<String, dynamic>;
+        if (resp.containsKey('user') && resp['user'] is Map) {
+          final Map<String, dynamic> ujson = resp['user'].cast<String, dynamic>();
+          final user = User.fromJson(ujson);
+          _cachedUser = user;
+          await _storage.write(key: _cacheKey, value: json.encode(ujson));
+        } else {
+          _cachedUser = null;
+          await _storage.delete(key: _cacheKey);
+        }
+      } catch (_) {
+        // ignore cache write errors
       }
 
       return response.data as Map<String, dynamic>;
@@ -107,5 +155,15 @@ class ProfileService {
     }
 
     return 'Request failed${status != null ? " ($status)" : ""}: ${e.message}';
+  }
+
+  /// Clear cached profile both in-memory and persisted
+  Future<void> clearCachedProfile() async {
+    try {
+      _cachedUser = null;
+      await _storage.delete(key: _cacheKey);
+    } catch (_) {
+      // ignore errors during cache clear
+    }
   }
 }

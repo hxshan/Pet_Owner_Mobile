@@ -6,6 +6,7 @@ import 'package:pet_owner_mobile/models/auth/login_request.dart';
 import 'package:pet_owner_mobile/models/auth/login_response.dart';
 import 'package:pet_owner_mobile/services/push_service.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
+import 'package:pet_owner_mobile/services/profile_service.dart';
 
 class AuthService {
   final Dio _dio = DioClient().dio;
@@ -65,6 +66,12 @@ class AuthService {
       if (fcmToken != null) {
         await PushService.instance.unregisterTokenFromBackend(fcmToken);
       }
+
+      // Clear in-memory and persisted profile cache before wiping storage so
+      // the in-memory cache does not remain after logout.
+      try {
+        await ProfileService().clearCachedProfile();
+      } catch (_) {}
 
       await _storage.deleteAll();
 
