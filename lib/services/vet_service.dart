@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:pet_owner_mobile/core/dio_client.dart';
+import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 
 class VetService {
@@ -31,8 +32,7 @@ class VetService {
     return _fromApi(v);
   }
 
-  VetModel _fromApi(Map<String, dynamic> v) {
-    final id = v['_id'] ?? v['id'] ?? '';
+  VetModel _fromApi(Map<String, dynamic> v) {    final id = v['_id'] ?? v['id'] ?? '';
     final first = v['firstname'] ?? '';
     final last = v['lastname'] ?? '';
     final vetData = v['veterinarianData'] ?? {};
@@ -68,5 +68,27 @@ class VetService {
       phone: phone ?? '',
       isOpen: true,
     );
+  }
+
+  /// Fetches the upcoming appointments for the currently logged-in pet owner.
+  /// Calls GET /my/upcoming with the auth token.
+  Future<List<AppointmentModel>> fetchUpcomingAppointments() async {
+    try {
+      final response = await _dio.get(
+        '/my/upcoming',
+        options: Options(extra: {'requiresAuth': true}),
+      );
+
+      final data = response.data;
+      if (data == null || data['appointments'] == null) return [];
+
+      final List raw = data['appointments'];
+      return raw
+          .map((e) => AppointmentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('Error fetching upcoming appointments: $e');
+      return [];
+    }
   }
 }

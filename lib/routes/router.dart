@@ -408,7 +408,11 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: 'my-appointments',
               name: 'MyVetAppointmentScreen',
-              builder: (context, state) => MyVetAppointmentsScreen(),
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                final showBanner = extra?['showSuccessBanner'] == true;
+                return MyVetAppointmentsScreen(showSuccessBanner: showBanner);
+              },
             ),
           ],
         ),
