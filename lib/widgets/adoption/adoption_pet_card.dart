@@ -54,24 +54,35 @@ class _PetCardState extends State<PetCard> {
                 topLeft: Radius.circular(12.r),
                 bottomLeft: Radius.circular(12.r),
               ),
-              child: Image.network(
-                widget.pet.image,
-                width: 100.w,
-                height: 120.h,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 100.w,
-                    height: 120.h,
-                    color: AppColors.lightGray,
-                    child: Icon(
-                      Icons.pets,
-                      size: 40.sp,
-                      color: AppColors.mainColor,
+              child: widget.pet.primaryImage.isNotEmpty
+                  ? Image.network(
+                      widget.pet.primaryImage,
+                      width: 100.w,
+                      height: 120.h,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 100.w,
+                          height: 120.h,
+                          color: AppColors.lightGray,
+                          child: Icon(
+                            Icons.pets,
+                            size: 40.sp,
+                            color: AppColors.mainColor,
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      width: 100.w,
+                      height: 120.h,
+                      color: AppColors.lightGray,
+                      child: Icon(
+                        Icons.pets,
+                        size: 40.sp,
+                        color: AppColors.mainColor,
+                      ),
                     ),
-                  );
-                },
-              ),
             ),
 
             // Pet Details
@@ -96,7 +107,7 @@ class _PetCardState extends State<PetCard> {
 
                     // Age
                     Text(
-                      '${widget.pet.age} months old',
+                      widget.pet.age != null ? '${widget.pet.age} yrs old' : '',
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: Colors.black54,
@@ -127,13 +138,40 @@ class _PetCardState extends State<PetCard> {
                         SizedBox(width: 4.w),
                         Expanded(
                           child: Text(
-                            widget.pet.location,
+                            widget.pet.locationLabel,
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: Colors.black54,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6.h),
+
+                    // Adoption Fee
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.attach_money,
+                          size: 14.sp,
+                          color: widget.pet.adoptionFee == 0
+                              ? Colors.green
+                              : AppColors.darkPink,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          widget.pet.adoptionFee == 0
+                              ? 'Free'
+                              : '\$${widget.pet.adoptionFee.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: widget.pet.adoptionFee == 0
+                                ? Colors.green
+                                : Colors.black87,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],

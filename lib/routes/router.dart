@@ -3,8 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/address_model.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
+import 'package:pet_owner_mobile/models/adoption/adoption_center_model.dart';
+import 'package:pet_owner_mobile/pages/adoption/adoption_apply_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
+import 'package:pet_owner_mobile/pages/adoption/advanced_search_page.dart';
+import 'package:pet_owner_mobile/pages/adoption/my_applications_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
+import 'package:pet_owner_mobile/pages/adoption_center/adoption_center_home_screen.dart';
+import 'package:pet_owner_mobile/pages/adoption_center/adoption_center_search_result_screen.dart';
+import 'package:pet_owner_mobile/pages/adoption_center/adoption_center_detail_screen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/CheckoutScreen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/OrderSuccessScreen.dart';
 import 'package:pet_owner_mobile/pages/ecommerce/add_edit_address_screen.dart';
@@ -228,6 +235,49 @@ final GoRouter appRouter = GoRouter(
               builder: (context, state) {
                 final pet = state.extra as AdoptionPet;
                 return PetDetailsPage(pet: pet);
+              },
+            ),
+            GoRoute(
+              path: 'advanced-search',
+              name: 'AdvancedSearchPage',
+              builder: (context, state) => const AdvancedSearchPage(),
+            ),
+            GoRoute(
+              path: 'apply',
+              name: 'AdoptionApplyPage',
+              builder: (context, state) {
+                final pet = state.extra as AdoptionPet;
+                return AdoptionApplyPage(pet: pet);
+              },
+            ),
+            GoRoute(
+              path: 'my-applications',
+              name: 'MyApplicationsPage',
+              builder: (context, state) => const MyApplicationsPage(),
+            ),
+          ],
+        ),
+
+        // Adoption Center Routes
+        GoRoute(
+          path: '/adoption-center',
+          name: 'AdoptionCenterHomeScreen',
+          builder: (context, state) => const AdoptionCenterHomeScreen(),
+          routes: [
+            GoRoute(
+              path: 'search',
+              name: 'AdoptionCenterSearchResultScreen',
+              builder: (context, state) {
+                final location = (state.extra as String?) ?? '';
+                return AdoptionCenterSearchResultScreen(location: location);
+              },
+            ),
+            GoRoute(
+              path: 'detail',
+              name: 'AdoptionCenterDetailScreen',
+              builder: (context, state) {
+                final center = state.extra as AdoptionCenter;
+                return AdoptionCenterDetailScreen(center: center);
               },
             ),
           ],
