@@ -92,19 +92,6 @@ class MealPlanDetailsScreen extends StatelessWidget {
                     ),
                     SizedBox(height: sh * 0.02),
 
-                    _downloadButton(
-                      context: context,
-                      sw: sw,
-                      sh: sh,
-                      petName: petName.isEmpty ? 'Pet' : petName,
-                      petBreed: petBreed,
-                      profile: profile,
-                      nutrition: nutrition,
-                      meals: meals,
-                      warnings: warnings,
-                      tips: tips,
-                    ),
-
                     SizedBox(height: sh * 0.04),
                   ],
                 ),
@@ -145,58 +132,80 @@ class MealPlanDetailsScreen extends StatelessWidget {
   }
 
   Widget _planContextCard({
-    required double sw,
-    required double sh,
-    required String activityLevel,
-    required String disease,
-    required String allergy,
-  }) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: sw * 0.05),
-      padding: EdgeInsets.all(sw * 0.04),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(sw * 0.04),
-        border: Border.all(color: Colors.grey[200]!, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _contextRow(
-            sw: sw,
-            title: 'Activity Level',
-            value: activityLevel,
-            icon: Icons.directions_run,
-            desc: _activityMeaning(activityLevel),
-          ),
-          SizedBox(height: sh * 0.012),
-          _contextRow(
-            sw: sw,
-            title: 'Disease / Condition',
-            value: disease,
-            icon: Icons.medical_services_outlined,
-            desc: _diseaseMeaning(disease),
-          ),
-          SizedBox(height: sh * 0.012),
-          _contextRow(
-            sw: sw,
-            title: 'Food Restriction',
-            value: allergy,
-            icon: Icons.no_food_outlined,
-            desc: _allergyMeaning(allergy),
-          ),
-        ],
-      ),
-    );
-  }
+  required double sw,
+  required double sh,
+  required String activityLevel,
+  required String disease,
+  required String allergy,
+}) {
+  return Container(
+    margin: EdgeInsets.symmetric(horizontal: sw * 0.05),
+    padding: EdgeInsets.all(sw * 0.04),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(sw * 0.04),
+      border: Border.all(color: Colors.grey[200]!, width: 1.5),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 10,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _contextRow(
+          sw: sw,
+          title: 'Activity Level',
+          value: activityLevel,
+          icon: Icons.directions_run,
+          desc: _activityMeaning(activityLevel),
+        ),
 
+        SizedBox(height: sh * 0.012),
+
+        _contextRow(
+          sw: sw,
+          title: 'Disease / Condition',
+          value: disease,
+          icon: Icons.medical_services_outlined,
+          desc: _diseaseMeaning(disease),
+        ),
+
+        SizedBox(height: sh * 0.012),
+
+        _contextRow(
+          sw: sw,
+          title: 'Food Restriction',
+          value: allergy,
+          icon: Icons.no_food_outlined,
+          desc: _allergyMeaning(allergy),
+        ),
+
+        SizedBox(height: sh * 0.02),
+
+        Container(
+          padding: EdgeInsets.symmetric(
+              horizontal: sw * 0.025, vertical: sh * 0.006),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(sw * 0.015),
+          ),
+          child: Text(
+            'Nutrition plans remain active for 3 months, then automatically deleted after 1 year',
+            style: TextStyle(
+              fontSize: sw * 0.03,
+              fontWeight: FontWeight.w600,
+              color: AppColors.darkPink,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
   Widget _contextRow({
     required double sw,
     required String title,
@@ -528,7 +537,9 @@ class MealPlanDetailsScreen extends StatelessWidget {
               _pdfRow('Disease / Condition', disease),
               _pdfRow('Food Restriction', allergy),
             ],
+            
           ),
+          
         ],
       ),
     );
@@ -614,18 +625,7 @@ class MealPlanDetailsScreen extends StatelessWidget {
                 SizedBox(height: sh * 0.005),
                 Text(petBreed, style: TextStyle(fontSize: sw * 0.038, color: Colors.black54)),
                 SizedBox(height: sh * 0.008),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: sw * 0.025, vertical: sh * 0.006),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(sw * 0.015)),
-                  child: Text(
-                    'Plan valid for 14 days',
-                    style: TextStyle(
-                      fontSize: sw * 0.03,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.darkPink,
-                    ),
-                  ),
-                ),
+              
               ],
             ),
           ),
