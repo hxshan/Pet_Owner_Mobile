@@ -1,14 +1,18 @@
-﻿// lib/pages/pet_management/symptom_checker_page.dart
+// lib/pages/pet_management/symptom_checker_page.dart
 
+import 'dart:async';
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
+import '../../consts/cnn_skin_conditions.dart';
 import '../../data/symptom_data.dart';
 import '../../models/diagnosis/symptom_models.dart';
 import '../../services/diagnosis_service.dart';
 import '../../services/pet_service.dart';
 import '../../consts/diagnosis_predictions_constants.dart';
+import '../../theme/app_colors.dart';
 
 enum CheckerStep { landing, symptoms, photoUpload, details, results, photoResults }
 
@@ -24,8 +28,11 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
   List<String> _selectedSymptoms = [];
   File? _uploadedPhoto;
   bool _photoAnalyzing = false;
+  String _photoPhase = '';         // animated loading phase text
+  Timer? _phaseTimer;
+  List<Map<String, dynamic>> _cnnPredictions = [];  // top_k from CNN API
 
-  // Pet context — prefilled from API, user fills in anything missing
+  // Pet context � prefilled from API, user fills in anything missing
   bool _petLoading = false;
   String _petName = '';
   String _petBreed = 'Unknown';
@@ -53,7 +60,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
         // Name
         _petName = (data['name'] as String?) ?? '';
 
-        // Species: "Dog" → 'dog', "Cat" → 'cat'
+        // Species: "Dog" ? 'dog', "Cat" ? 'cat'
         final rawSpecies = (data['species'] as String? ?? '').toLowerCase();
         if (rawSpecies == 'dog' || rawSpecies == 'cat') _species = rawSpecies;
 
@@ -61,7 +68,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
         _petBreed = (data['breed'] as String? ?? 'Unknown');
         if (_petBreed.isEmpty) _petBreed = 'Unknown';
 
-        // Sex / gender: "Male" → 'male', "Female" → 'female', "Unknown" → ''
+        // Sex / gender: "Male" ? 'male', "Female" ? 'female', "Unknown" ? ''
         final rawGender = (data['gender'] as String? ?? '').toLowerCase();
         if (rawGender == 'male' || rawGender == 'female') _sex = rawGender;
 
@@ -104,21 +111,85 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     if (file != null) setState(() => _uploadedPhoto = File(file.path));
   }
 
-  Future<void> _analyzePhoto() async {
-    setState(() => _photoAnalyzing = true);
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      _photoAnalyzing = false;
-      _currentStep = CheckerStep.photoResults;
+  static const _loadingPhases = [
+    'Looking at the image�',
+    'Identifying patterns�',
+    'Analysing skin condition�',
+    'Cross-referencing database�',
+    'Thinking�',
+    'Almost there�',
+  ];
+
+  void _startPhaseAnimation() {
+    int idx = 0;
+    setState(() => _photoPhase = _loadingPhases[0]);
+    _phaseTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      idx = (idx + 1) % _loadingPhases.length;
+      if (mounted) setState(() => _photoPhase = _loadingPhases[idx]);
     });
   }
 
+  void _stopPhaseAnimation() {
+    _phaseTimer?.cancel();
+    _phaseTimer = null;
+  }
+
+  Future<void> _analyzePhoto() async {
+    setState(() {
+      _photoAnalyzing = true;
+      _cnnPredictions = [];
+    });
+    _startPhaseAnimation();
+    try {
+      final result = await DiagnosisService().predictCnn(_uploadedPhoto!);
+      final topK = result['top_k'];
+      final preds = <Map<String, dynamic>>[];
+      if (topK is List) {
+        for (final p in topK) {
+          if (p is Map) preds.add(Map<String, dynamic>.from(p));
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _cnnPredictions = preds;
+        _currentStep = CheckerStep.photoResults;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      String msg = 'Photo analysis failed. Please try again.';
+      if (e is DioException) {
+        if (e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.connectionTimeout) {
+          msg = 'Analysis is taking too long. Please try again in a moment.';
+        } else if (e.response?.statusCode != null) {
+          msg = 'Server error (${e.response!.statusCode}). Please try again.';
+        }
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), duration: const Duration(seconds: 4)),
+      );
+    } finally {
+      _stopPhaseAnimation();
+      if (mounted) setState(() => _photoAnalyzing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _phaseTimer?.cancel();
+    super.dispose();
+  }
+
   void _resetChecker() {
+    _stopPhaseAnimation();
     setState(() {
       _currentStep = CheckerStep.landing;
       _selectedSymptoms = [];
       _uploadedPhoto = null;
       _photoAnalyzing = false;
+      _photoPhase = '';
+      _cnnPredictions = [];
       _petName = '';
       _petBreed = 'Unknown';
       _petAgeYears = 1.0;
@@ -134,40 +205,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     if (widget.petId != null) _loadPetData(widget.petId!);
   }
 
-  Color _severityBg(String s) {
-    switch (s) {
-      case 'mild': return Colors.green.shade50;
-      case 'moderate': return Colors.orange.shade50;
-      case 'severe': return Colors.red.shade50;
-      default: return Colors.grey.shade50;
-    }
-  }
-
-  Color _severityBorder(String s) {
-    switch (s) {
-      case 'mild': return Colors.green.shade200;
-      case 'moderate': return Colors.orange.shade200;
-      case 'severe': return Colors.red.shade200;
-      default: return Colors.grey.shade200;
-    }
-  }
-
-  Color _severityText(String s) {
-    switch (s) {
-      case 'mild': return Colors.green.shade700;
-      case 'moderate': return Colors.orange.shade700;
-      case 'severe': return Colors.red.shade700;
-      default: return Colors.grey.shade700;
-    }
-  }
-
-  Color _confidenceColor(int pct) {
-    if (pct >= 75) return Colors.green.shade600;
-    if (pct >= 40) return Colors.orange.shade600;
-    return Colors.red.shade600;
-  }
-
-  /// Converts a PascalCase class name like "TickFever" → "Tick Fever"
+  /// Converts a PascalCase class name like "TickFever" ? "Tick Fever"
   String _formatClassName(String name) {
     return name.replaceAllMapped(
       RegExp(r'(?<=[a-z])(?=[A-Z])'),
@@ -192,27 +230,70 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     }
   }
 
+  // Returns true if we're past the landing screen (so back should step back, not pop)
+  bool get _isOnSubStep => _currentStep != CheckerStep.landing;
+
+  void _handleBack() {
+    switch (_currentStep) {
+      case CheckerStep.landing:
+        Navigator.of(context).maybePop();
+        break;
+      case CheckerStep.symptoms:
+        setState(() => _currentStep = CheckerStep.landing);
+        break;
+      case CheckerStep.photoUpload:
+        setState(() {
+          _uploadedPhoto = null;
+          _currentStep = CheckerStep.landing;
+        });
+        break;
+      case CheckerStep.details:
+        setState(() => _currentStep = CheckerStep.symptoms);
+        break;
+      case CheckerStep.results:
+        setState(() => _currentStep = CheckerStep.details);
+        break;
+      case CheckerStep.photoResults:
+        setState(() {
+          _cnnPredictions = [];
+          _currentStep = CheckerStep.photoUpload;
+        });
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      appBar: AppBar(
-        title: const Text(
-          'Symptom Checker',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+    return PopScope(
+      canPop: !_isOnSubStep,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF7F7F7),
+        appBar: AppBar(
+          title: const Text(
+            'Symptom Checker',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: AppColors.darkPink,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _handleBack,
+          ),
         ),
-        backgroundColor: Colors.pink.shade600,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: _buildContent(),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: _buildContent(),
+        ),
       ),
     );
   }
 
-  // ── Landing ────────────────────────────────────────────────────────────────
+  // -- Landing ----------------------------------------------------------------
   Widget _buildLanding() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,7 +327,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
         const SizedBox(height: 16),
         _PathCard(
           icon: Icons.checklist_rounded,
-          iconColor: Colors.pink.shade600,
+          iconColor: AppColors.darkPink,
           iconBg: Colors.pink.shade50,
           title: 'Manual Symptom Selection',
           description:
@@ -299,7 +380,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     );
   }
 
-  // ── Manual symptom selection ───────────────────────────────────────────────
+  // -- Manual symptom selection -----------------------------------------------
   Widget _buildSymptomSelection() {
     final Map<String, List<Symptom>> grouped = {};
     for (final cat in SymptomData.categories) {
@@ -311,12 +392,6 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextButton.icon(
-          onPressed: () => setState(() => _currentStep = CheckerStep.landing),
-          icon: const Icon(Icons.arrow_back, size: 16),
-          label: const Text('Back'),
-          style: TextButton.styleFrom(foregroundColor: Colors.pink.shade600),
-        ),
         const SizedBox(height: 8),
         const Text(
           'Select all symptoms your pet is showing',
@@ -379,11 +454,11 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 9),
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.pink.shade600 : Colors.white,
+                        color: isSelected ? AppColors.darkPink : Colors.white,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: isSelected
-                              ? Colors.pink.shade600
+                              ? AppColors.darkPink
                               : Colors.grey.shade300,
                         ),
                         boxShadow: [
@@ -436,7 +511,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
             child: Row(
               children: [
                 Icon(Icons.check_circle_outline,
-                    color: Colors.pink.shade600, size: 18),
+                    color: AppColors.darkPink, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   '${_selectedSymptoms.length} symptom${_selectedSymptoms.length == 1 ? '' : 's'} selected',
@@ -455,7 +530,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               onPressed: () =>
                   setState(() => _currentStep = CheckerStep.details),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink.shade600,
+                backgroundColor: AppColors.darkPink,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -471,17 +546,11 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     );
   }
 
-  // ── Photo upload ───────────────────────────────────────────────────────────
+  // -- Photo upload -----------------------------------------------------------
   Widget _buildPhotoUpload() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextButton.icon(
-          onPressed: () => setState(() => _currentStep = CheckerStep.landing),
-          icon: const Icon(Icons.arrow_back, size: 16),
-          label: const Text('Back'),
-          style: TextButton.styleFrom(foregroundColor: Colors.pink.shade600),
-        ),
         const SizedBox(height: 8),
         const Text(
           'Upload a Photo of the Affected Area',
@@ -527,7 +596,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
         if (_uploadedPhoto == null) ...[
           _PhotoOptionTile(
             icon: Icons.camera_alt_outlined,
-            iconColor: Colors.pink.shade600,
+            iconColor: AppColors.darkPink,
             borderColor: Colors.pink.shade300,
             title: 'Take a Photo',
             subtitle: 'Use your camera to capture the affected area',
@@ -592,65 +661,95 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _photoAnalyzing ? null : _analyzePhoto,
-              icon: _photoAnalyzing
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Icon(Icons.search),
-              label: Text(_photoAnalyzing ? 'Analyzing...' : 'Analyze Photo'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple.shade600,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+          if (_photoAnalyzing) ...[
+            // -- Animated loading card -------------------------------------
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.purple.shade50,
+                border: Border.all(color: Colors.purple.shade200),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: CircularProgressIndicator(
+                      color: Colors.purple.shade600,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: Text(
+                      _photoPhase,
+                      key: ValueKey(_photoPhase),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.purple.shade700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'AI is examining your photo',
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () => setState(() => _uploadedPhoto = null),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.grey.shade700,
-                side: BorderSide(color: Colors.grey.shade300),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+          ] else ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _analyzePhoto,
+                icon: const Icon(Icons.search),
+                label: const Text('Analyze Photo'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple.shade600,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
               ),
-              child: const Text('Use a Different Photo'),
             ),
-          ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => setState(() => _uploadedPhoto = null),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.grey.shade700,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Use a Different Photo'),
+              ),
+            ),
+          ],
         ],
       ],
     );
   }
 
-  // ── Details input ──────────────────────────────────────────────────────────
+  // -- Details input ----------------------------------------------------------
   Widget _buildDetailsInput() {
     // While pet data is loading, show a spinner
     if (_petLoading) {
       return Column(
         children: [
-          TextButton.icon(
-            onPressed: () => setState(() => _currentStep = CheckerStep.symptoms),
-            icon: const Icon(Icons.arrow_back, size: 16),
-            label: const Text('Back to symptoms'),
-            style: TextButton.styleFrom(foregroundColor: Colors.pink.shade600),
-          ),
           const SizedBox(height: 40),
           const Center(child: CircularProgressIndicator()),
           const SizedBox(height: 16),
           Center(
-            child: Text('Loading pet details…',
+            child: Text('Loading pet details�',
                 style: TextStyle(color: Colors.grey.shade600)),
           ),
         ],
@@ -674,12 +773,6 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextButton.icon(
-          onPressed: () => setState(() => _currentStep = CheckerStep.symptoms),
-          icon: const Icon(Icons.arrow_back, size: 16),
-          label: const Text('Back to symptoms'),
-          style: TextButton.styleFrom(foregroundColor: Colors.pink.shade600),
-        ),
         const SizedBox(height: 8),
         Text(
           anyMissing ? 'A few quick questions' : 'Pet details confirmed',
@@ -694,7 +787,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
         ),
         const SizedBox(height: 16),
 
-        // ── Prefilled summary card ──────────────────────────────────────
+        // -- Prefilled summary card --------------------------------------
         if (prefilled.isNotEmpty)
           Container(
             width: double.infinity,
@@ -726,7 +819,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        prefilled.join(' · '),
+                        prefilled.join(' � '),
                         style: TextStyle(
                             fontSize: 13, color: Colors.green.shade700),
                       ),
@@ -737,7 +830,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
             ),
           ),
 
-        // ── Species (only if not known) ──────────────────────────────────
+        // -- Species (only if not known) ----------------------------------
         if (needsSpecies) ...[
           _SectionBox(
             title: 'What species is your pet?',
@@ -757,7 +850,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           const SizedBox(height: 16),
         ],
 
-        // ── Sex (only if unknown / not set) ──────────────────────────────
+        // -- Sex (only if unknown / not set) ------------------------------
         if (needsSex) ...[
           _SectionBox(
             title: 'What is your pet\'s sex?',
@@ -777,7 +870,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           const SizedBox(height: 16),
         ],
 
-        // ── Neutered (only if not known) ─────────────────────────────────
+        // -- Neutered (only if not known) ---------------------------------
         if (needsNeutered) ...[
           _SectionBox(
             title: 'Is your pet neutered / spayed?',
@@ -797,7 +890,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           const SizedBox(height: 16),
         ],
 
-        // ── Vaccinated (only if not known) ───────────────────────────────
+        // -- Vaccinated (only if not known) -------------------------------
         if (needsVaccinated) ...[
           _SectionBox(
             title: 'Up to date on vaccinations?',
@@ -825,7 +918,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
             child: ElevatedButton(
               onPressed: _loadingAssessment ? null : _runAssessment,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink.shade600,
+                backgroundColor: AppColors.darkPink,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -849,7 +942,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
   Future<void> _runAssessment() async {
     setState(() => _loadingAssessment = true);
 
-    // All 18 recognised symptom IDs — each becomes a 0/1 flag in the payload
+    // All 18 recognised symptom IDs � each becomes a 0/1 flag in the payload
     const allSymptoms = [
       'vomiting', 'diarrhea', 'dehydration', 'loss_appetite',
       'fever', 'lethargy', 'itching', 'red_skin', 'hair_loss',
@@ -900,7 +993,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     }
   }
 
-  // ── Results (manual) ───────────────────────────────────────────────────────
+  // -- Results (manual) -------------------------------------------------------
   Widget _buildResults() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -915,7 +1008,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.verified_outlined, color: Colors.pink.shade600, size: 20),
+              Icon(Icons.verified_outlined, color: AppColors.darkPink, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -965,8 +1058,8 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               child: OutlinedButton(
                 onPressed: _resetChecker,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.pink.shade600,
-                  side: BorderSide(color: Colors.pink.shade600),
+                  foregroundColor: AppColors.darkPink,
+                  side: BorderSide(color: AppColors.darkPink),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
@@ -979,7 +1072,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               child: ElevatedButton(
                 onPressed: () => context.goNamed('VetHomeScreen'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink.shade600,
+                  backgroundColor: AppColors.darkPink,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -995,11 +1088,12 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     );
   }
 
-  // ── Photo results ──────────────────────────────────────────────────────────
+  // -- Photo results ----------------------------------------------------------
   Widget _buildPhotoResults() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // -- Header banner --------------------------------------------------
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -1015,7 +1109,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'AI photo analysis complete. Possible skin conditions are listed below. This is not a substitute for veterinary examination.',
+                  'AI photo analysis complete. Results are ranked by likelihood. This is not a substitute for veterinary examination.',
                   style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
                 ),
               ),
@@ -1023,6 +1117,8 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           ),
         ),
         const SizedBox(height: 16),
+
+        // -- Analyzed photo thumbnail ---------------------------------------
         if (_uploadedPhoto != null) ...[
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
@@ -1035,30 +1131,48 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           ),
           const SizedBox(height: 6),
           Center(
-            child: Text('Analyzed image',
-                style:
-                    TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+            child: Text(
+              'Analyzed image',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            ),
           ),
           const SizedBox(height: 20),
         ],
+
+        // -- Results title --------------------------------------------------
         const Text(
           'Possible Skin Conditions',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-        ...SymptomData.mockSkinDiagnoses
-            .asMap()
-            .entries
-            .map((e) => _SkinDiagnosisCard(
-                  rank: e.key + 1,
-                  diagnosis: e.value,
-                  severityBg: _severityBg,
-                  severityBorder: _severityBorder,
-                  severityText: _severityText,
-                  confidenceColor: _confidenceColor,
-                  onBookVet: () => context.goNamed('VetHomeScreen'),
-                ))
-            .toList(),
+
+        // -- CNN prediction cards -------------------------------------------
+        if (_cnnPredictions.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Text(
+                'No predictions returned.',
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
+            ),
+          )
+        else
+          ..._cnnPredictions.asMap().entries.map((entry) {
+            final rank = entry.key + 1;
+            final p = entry.value;
+            final rawClass = (p['class'] ?? 'Unknown') as String;
+            final prob = ((p['prob'] ?? 0) as num).toDouble();
+            final info = cnnSkinConditionInfo[rawClass] ?? cnnFallbackInfo(rawClass);
+            return _CnnResultCard(
+              rank: rank,
+              rawClass: rawClass,
+              info: info,
+              confidence: prob,
+              onBookVet: () => context.goNamed('VetHomeScreen'),
+            );
+          }).toList(),
+
         const SizedBox(height: 16),
         _DisclaimerBox(
           message:
@@ -1071,8 +1185,8 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               child: OutlinedButton(
                 onPressed: _resetChecker,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.pink.shade600,
-                  side: BorderSide(color: Colors.pink.shade600),
+                  foregroundColor: AppColors.darkPink,
+                  side: BorderSide(color: AppColors.darkPink),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
@@ -1085,7 +1199,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               child: ElevatedButton(
                 onPressed: () => context.goNamed('VetHomeScreen'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink.shade600,
+                  backgroundColor: AppColors.darkPink,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -1102,9 +1216,9 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// -------------------------------------------------------------------------------
 // Helper widgets
-// ═══════════════════════════════════════════════════════════════════════════════
+// -------------------------------------------------------------------------------
 
 class _PathCard extends StatelessWidget {
   final IconData icon;
@@ -1129,7 +1243,7 @@ class _PathCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final btnColor = buttonColor ?? Colors.pink.shade600;
+    final btnColor = buttonColor ?? AppColors.darkPink;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1490,7 +1604,7 @@ class _DiagnosisCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onBookVet,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink.shade600,
+                    backgroundColor: AppColors.darkPink,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(
@@ -1508,37 +1622,69 @@ class _DiagnosisCard extends StatelessWidget {
   }
 }
 
-class _SkinDiagnosisCard extends StatelessWidget {
+// -- CNN result card ------------------------------------------------------------
+class _CnnResultCard extends StatelessWidget {
   final int rank;
-  final SkinDiagnosis diagnosis;
-  final Color Function(String) severityBg;
-  final Color Function(String) severityBorder;
-  final Color Function(String) severityText;
-  final Color Function(int) confidenceColor;
+  final String rawClass;
+  final Map<String, dynamic> info;
+  final double confidence; // 0.0 � 1.0
   final VoidCallback onBookVet;
 
-  const _SkinDiagnosisCard({
+  const _CnnResultCard({
     required this.rank,
-    required this.diagnosis,
-    required this.severityBg,
-    required this.severityBorder,
-    required this.severityText,
-    required this.confidenceColor,
+    required this.rawClass,
+    required this.info,
+    required this.confidence,
     required this.onBookVet,
   });
 
+  Color get _severityAccent {
+    switch ((info['severity'] as String?) ?? '') {
+      case 'mild': return Colors.green.shade600;
+      case 'moderate': return Colors.orange.shade600;
+      case 'severe': return Colors.red.shade600;
+      case 'none': return Colors.green.shade600;
+      default: return Colors.grey.shade600;
+    }
+  }
+
+  Color get _severityBg {
+    switch ((info['severity'] as String?) ?? '') {
+      case 'mild': return Colors.green.shade50;
+      case 'moderate': return Colors.orange.shade50;
+      case 'severe': return Colors.red.shade50;
+      case 'none': return Colors.green.shade50;
+      default: return Colors.grey.shade50;
+    }
+  }
+
+  Color get _confColor {
+    if (confidence >= 0.75) return Colors.green.shade600;
+    if (confidence >= 0.40) return Colors.orange.shade600;
+    return Colors.red.shade600;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayName = (info['display_name'] as String?) ?? rawClass;
+    final description = (info['description'] as String?) ?? '';
+    final action = (info['action'] as String?) ?? '';
+    final otcMed = info['otc_medication'] as String?;
+    final causes = (info['common_causes'] as List?)?.cast<String>() ?? [];
+    final pct = (confidence * 100).toStringAsFixed(0);
+    final severity = (info['severity'] as String?) ?? '';
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.grey.shade200,
-              blurRadius: 4,
-              offset: const Offset(0, 2)),
+            color: Colors.grey.shade200,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Padding(
@@ -1546,21 +1692,26 @@ class _SkinDiagnosisCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // -- Title row --------------------------------------------------
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 26,
-                  height: 26,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
-                      color: Colors.purple.shade100,
-                      shape: BoxShape.circle),
+                    color: Colors.purple.shade100,
+                    shape: BoxShape.circle,
+                  ),
                   child: Center(
-                    child: Text('$rank',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.purple.shade700)),
+                    child: Text(
+                      '$rank',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.purple.shade700,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1568,50 +1719,78 @@ class _SkinDiagnosisCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(diagnosis.condition,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15)),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: severityBg(diagnosis.severity),
-                          border: Border.all(
-                              color: severityBorder(diagnosis.severity)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${diagnosis.severity[0].toUpperCase()}${diagnosis.severity.substring(1)} severity',
-                          style: TextStyle(
-                              color: severityText(diagnosis.severity),
-                              fontSize: 11),
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
                         ),
                       ),
+                      if (severity.isNotEmpty && severity != 'unknown') ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _severityBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: _severityAccent.withOpacity(0.4)),
+                          ),
+                          child: Text(
+                            severity[0].toUpperCase() + severity.substring(1),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _severityAccent,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('${diagnosis.confidence}%',
-                        style: TextStyle(
-                            color: confidenceColor(diagnosis.confidence),
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700)),
-                    Text('match',
-                        style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 12)),
+                    Text(
+                      '$pct%',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        color: _confColor,
+                      ),
+                    ),
+                    Text(
+                      'match',
+                      style: TextStyle(
+                          color: Colors.grey.shade500, fontSize: 12),
+                    ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(diagnosis.description,
-                style:
-                    TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-            if (diagnosis.commonCauses.isNotEmpty) ...[
-              const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            // -- Confidence bar ---------------------------------------------
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: confidence,
+                minHeight: 5,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(_confColor),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // -- Description ------------------------------------------------
+            if (description.isNotEmpty)
+              Text(
+                description,
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+              ),
+            // -- Common causes ----------------------------------------------
+            if (causes.isNotEmpty) ...[
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -1621,45 +1800,67 @@ class _SkinDiagnosisCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Common causes',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: Colors.purple.shade700)),
-                    const SizedBox(height: 4),
-                    ...diagnosis.commonCauses.map((c) => Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text('  $c',
-                              style: TextStyle(
-                                  color: Colors.grey.shade700,
-                                  fontSize: 13)),
-                        )),
+                    Text(
+                      'Common causes',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: Colors.purple.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: causes
+                          .map((c) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: Colors.purple.shade200),
+                                ),
+                                child: Text(c,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.purple.shade800)),
+                              ))
+                          .toList(),
+                    ),
                   ],
                 ),
               ),
             ],
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.medical_services_outlined,
-                      size: 16, color: Colors.blue.shade600),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(diagnosis.action,
+            // -- Recommended action -----------------------------------------
+            if (action.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.medical_services_outlined,
+                        size: 16, color: Colors.blue.shade600),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        action,
                         style: TextStyle(
-                            fontSize: 13, color: Colors.grey.shade800)),
-                  ),
-                ],
+                            fontSize: 13, color: Colors.grey.shade800),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (diagnosis.otcMedication != null) ...[
+            ],
+            // -- OTC medication ---------------------------------------------
+            if (otcMed != null && otcMed.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(10),
@@ -1672,10 +1873,10 @@ class _SkinDiagnosisCard extends StatelessWidget {
                   children: [
                     Icon(Icons.local_pharmacy_outlined,
                         size: 16, color: Colors.green.shade600),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'OTC option: ${diagnosis.otcMedication}',
+                        'OTC option: $otcMed',
                         style: TextStyle(
                             fontSize: 13, color: Colors.grey.shade800),
                       ),
@@ -1684,14 +1885,15 @@ class _SkinDiagnosisCard extends StatelessWidget {
                 ),
               ),
             ],
-            if (diagnosis.confidence < 70) ...[
+            // -- Book vet CTA for lower confidence --------------------------
+            if (confidence < 0.6) ...[
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onBookVet,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink.shade600,
+                    backgroundColor: AppColors.darkPink,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(
