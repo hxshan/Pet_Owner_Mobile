@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'dart:io';
+import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
@@ -155,8 +156,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
           SnackBar(content: Text(message), backgroundColor: Colors.green),
         );
 
-        Future.delayed(Duration(seconds: 1), () {
-          Navigator.pop(context);
+        PetScope.of(context).refresh();
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) Navigator.pop(context);
         });
       } on DioException catch (e) {
         String message = 'Failed to add pet';

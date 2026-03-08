@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pet_owner_mobile/models/pet_management/pet_card_model.dart';
-import 'package:pet_owner_mobile/services/pet_service.dart';
+import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/theme/button_styles.dart';
 import 'package:pet_owner_mobile/widgets/pet_card_widget.dart';
@@ -15,24 +14,21 @@ class MyPetsScreen extends StatefulWidget {
 }
 
 class _MyPetsScreenState extends State<MyPetsScreen> {
-  late Future<List<Pet>> _petsFuture;
-
   @override
   void initState() {
     super.initState();
-    _loadPets();
-  }
-
-  void _loadPets() {
-    _petsFuture = PetService().getMyPets().then(
-      (list) => list.map(Pet.fromJson).toList(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) PetScope.of(context).loadOnce();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
+    final store = PetScope.of(context);
+    final isLoading = store.isLoading || !store.isLoaded;
+    final pets = store.pets.length > 2 ? store.pets.sublist(0, 2) : store.pets;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -59,8 +55,9 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        context.pushNamed('AddPetScreen');
+                      onTap: () async {
+                        await context.pushNamed('AddPetScreen');
+                        if (mounted) PetScope.of(context).refresh();
                       },
                       child: Container(
                         padding: EdgeInsets.symmetric(
@@ -97,43 +94,26 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                 SizedBox(height: sh * 0.025),
 
                 // Pet Cards
-                FutureBuilder<List<Pet>>(
-                  future: _petsFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    }
-
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error loading pets'));
-                    }
-
-                    final pets = snapshot.data ?? [];
-
-                    if (pets.isEmpty) {
-                      return Center(child: Text('No pets found'));
-                    }
-
-                    final petsToShow = pets.length > 2
-                        ? pets.sublist(0, 2)
-                        : pets;
-
-                    return ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: petsToShow.length,
-                      separatorBuilder: (_, __) => SizedBox(height: sh * 0.02),
-                      itemBuilder: (context, index) {
-                        final pet = petsToShow[index];
-                        return PetCard(
-                          sw: sw,
-                          sh: sh,
-                          pet: pet,
-                          onDeleted: _loadPets,
-                        );
-                      },
-                    );
-                  },
-                ),
+                if (isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (store.pets.isEmpty)
+                  const Center(child: Text('No pets found'))
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: pets.length,
+                    separatorBuilder: (_, __) => SizedBox(height: sh * 0.02),
+                    itemBuilder: (context, index) {
+                      final pet = pets[index];
+                      return PetCard(
+                        sw: sw,
+                        sh: sh,
+                        pet: pet,
+                        onDeleted: () => PetScope.of(context).refresh(),
+                      );
+                    },
+                  ),
 
                 SizedBox(height: sh * 0.02),
 
@@ -183,12 +163,12 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                 UpdateCard(
                   sw: sw,
                   sh: sh,
-                  backgroundColor: Color(0xFFE3F2FD),
-                  borderColor: Color(0xFF2196F3),
+                  backgroundColor: const Color(0xFFE3F2FD),
+                  borderColor: const Color(0xFF2196F3),
                   title: 'Due Date Nearing',
                   date: '15/02/2025',
                   description: 'Vaccination for Suddu Putha is due in 3 days',
-                  titleColor: Color(0xFF2196F3),
+                  titleColor: const Color(0xFF2196F3),
                 ),
 
                 SizedBox(height: sh * 0.03),
