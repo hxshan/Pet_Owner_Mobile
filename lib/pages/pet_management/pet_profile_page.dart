@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
-import 'package:pet_owner_mobile/services/pet_service.dart';
+import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Appointment_card.dart';
@@ -21,11 +20,15 @@ class PetProfileScreen extends StatefulWidget {
 
 class _PetProfileScreenState extends State<PetProfileScreen> {
   late Future<Map<String, dynamic>> _petFuture;
+  bool _didInit = false;
 
   @override
-  void initState() {
-    super.initState();
-    _petFuture = PetService().getPetById(widget.petId);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didInit) {
+      _didInit = true;
+      _petFuture = PetScope.of(context).getPetDetail(widget.petId);
+    }
   }
 
   void _showQrPopup(String token, Map<String, dynamic> pet) {
@@ -109,12 +112,14 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
 
   Future<void> deletePet() async {
     try {
-      await PetService().deletePet(widget.petId);
+      await PetScope.of(context).deletePet(widget.petId);
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Pet deleted successfully')));
       Navigator.pop(context);
     } catch (error) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('An error occurred while deleting pet')),
       );
@@ -171,8 +176,17 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                               Row(
                                 children: [
                                   GestureDetector(
-                                    onTap: () {
-                                      // Navigate to edit pet screen
+                                    onTap: () async {
+                                      final updated = await context.push(
+                                        '/my-pets/editpet/${widget.petId}',
+                                      );
+                                      if (updated == true && mounted) {
+                                        final store = PetScope.of(context);
+                                        store.invalidatePetDetail(widget.petId);
+                                        setState(() {
+                                          _petFuture = store.getPetDetail(widget.petId);
+                                        });
+                                      }
                                     },
                                     child: Icon(
                                       Icons.edit,

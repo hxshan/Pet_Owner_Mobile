@@ -82,7 +82,46 @@ class PetService {
       '/pet/$petId',
       options: Options(extra: {'requiresAuth': true}),
     );
+  }
 
-    // return response.data;
+  // Update an existing pet profile
+  Future<Map<String, dynamic>> updatePet({
+    required String petId,
+    required String name,
+    required String breed,
+    required String species,
+    required DateTime dob,
+    required String gender,
+    required String weight,
+    required String color,
+    required String health,
+    required String lifeStatus,
+    required bool neutered,
+  }) async {
+    final response = await _dio.put(
+      '/pet/$petId',
+      data: {
+        'name': name,
+        'breed': breed,
+        'species': species,
+        'dob': dob.toIso8601String(),
+        'gender': gender,
+        'weightHistory': [
+          {
+            'weight': double.tryParse(weight) ?? 0,
+            'date': DateTime.now().toIso8601String(),
+          },
+        ],
+        'color': color,
+        'health': health,
+        'lifeStatus': lifeStatus,
+        'neutered': neutered,
+      },
+      options: Options(
+        contentType: 'application/json',
+        extra: {'requiresAuth': true},
+      ),
+    );
+    return response.data;
   }
 }

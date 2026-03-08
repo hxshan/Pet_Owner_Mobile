@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/services/location_service.dart';
 import 'package:pet_owner_mobile/services/push_service.dart';
+import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
-import 'package:pet_owner_mobile/services/pet_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -14,57 +14,31 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  LocationService _locationService = LocationService();
-  String firstName = 'User'; // Initialize with default value
+  final LocationService _locationService = LocationService();
+  String firstName = 'User';
   String _currentLocation = '';
-  final PetService _petService = PetService();
-  bool _loadingPets = true;
-  List<Map<String, dynamic>> _myPets = [];
 
   @override
   initState() {
     super.initState();
-
     _loadUserData();
     _loadLocation();
     _requestNotificationPermittion();
+    // Trigger pet list load via store (no-op if already cached)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PetScope.of(context).loadOnce();
+    });
   }
 
   Future<void> _requestNotificationPermittion() async {
-  final ok = await PushService.instance.requestPermissionAndRegister();
-
-  if (!ok) {
-    // Optional: show a snackbar or do nothing
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   const SnackBar(content: Text("Notifications not enabled")),
-    // );
+    final ok = await PushService.instance.requestPermissionAndRegister();
+    if (!ok) {}
   }
-}
 
   Future<void> _loadUserData() async {
     final name = await SecureStorage.getData('first_name');
-
     if (!mounted) return;
-
-    setState(() {
-      firstName = name ?? 'User';
-    });
-    _loadMyPets();
-  }
-
-  Future<void> _loadMyPets() async {
-    setState(() => _loadingPets = true);
-    try {
-      final pets = await _petService.getMyPets();
-      if (!mounted) return;
-      setState(() {
-        _myPets = pets;
-        _loadingPets = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _loadingPets = false);
-    }
+    setState(() => firstName = name ?? 'User');
   }
 
   Future<void> _loadLocation() async {
@@ -175,6 +149,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMyPetsSection(double sw, double sh) {
+    final store = PetScope.of(context);
+    final loadingPets = store.isLoading || !store.isLoaded;
+    // Convert Pet models to raw maps for reuse in card builder
+    final myPets = store.pets.map((p) => {
+      'name': p.name,
+      'breed': p.breed,
+      'species': p.species,
+      'dob': p.dob,
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -207,17 +191,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         SizedBox(height: sh * 0.015),
         SizedBox(
           height: sh * 0.22,
-          child: _loadingPets
-              ? Center(child: CircularProgressIndicator())
-              : _myPets.isEmpty
+          child: loadingPets
+              ? const Center(child: CircularProgressIndicator())
+              : myPets.isEmpty
               ? _buildNoPetsCard(sw, sh)
               : ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    // show only first 2 pets
                     for (
                       var i = 0;
-                      i < (_myPets.length > 2 ? 2 : _myPets.length);
+                      i < (myPets.length > 2 ? 2 : myPets.length);
                       i++
                     )
                       Padding(
@@ -225,14 +208,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: _buildPetCard(
                           sw,
                           sh,
-                          _myPets[i]['name'] ?? 'Pet',
-                          _myPets[i]['breed'] ?? _myPets[i]['species'] ?? '',
-                          _formatPetAge(_myPets[i]),
+                          myPets[i]['name'] ?? 'Pet',
+                          myPets[i]['breed'] ?? myPets[i]['species'] ?? '',
+                          _formatPetAge(myPets[i]),
                           i == 0 ? Colors.amber[100]! : Colors.purple[100]!,
                         ),
                       ),
-                    // show AddPetCard only when user has less than 2 pets
-                    if (_myPets.length < 2) ...[
+                    if (myPets.length < 2) ...[
                       SizedBox(width: sw * 0.02),
                       _buildAddPetCard(sw, sh),
                     ],
@@ -356,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ElevatedButton(
                   onPressed: () async {
                     await context.pushNamed('AddPetScreen');
-                    await _loadMyPets();
+                    if (mounted) PetScope.of(context).refresh();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.darkPink,
@@ -387,9 +369,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildAddPetCard(double sw, double sh) {
     return GestureDetector(
       onTap: () async {
-        // Navigate to Add Pet screen and refresh pets when returning
         await context.pushNamed('AddPetScreen');
-        await _loadMyPets();
+        if (mounted) PetScope.of(context).refresh();
       },
       child: Container(
         width: sw * 0.42,

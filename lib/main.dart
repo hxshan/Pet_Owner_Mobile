@@ -4,7 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:pet_owner_mobile/routes/router.dart';
+import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/services/push_service.dart';
+import 'package:pet_owner_mobile/store/pet_scope.dart';
+import 'package:pet_owner_mobile/store/pet_store.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 void main() async {
@@ -22,9 +25,14 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // Single store instance — lives for the lifetime of the app
+  static final _petStore = PetStore(PetService());
+
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
+    return PetScope(
+      notifier: _petStore,
+      child: ScreenUtilInit(
       designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
@@ -43,6 +51,7 @@ class MyApp extends StatelessWidget {
           routerConfig: appRouter,
         );
       },
-    );
+    ),   // ScreenUtilInit
+    );   // PetScope
   }
 }
