@@ -1,4 +1,4 @@
-// lib/pages/symptom_checker_page.dart
+﻿// lib/pages/pet_management/symptom_checker_page.dart
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -7,9 +7,10 @@ import 'package:go_router/go_router.dart';
 import '../../data/symptom_data.dart';
 import '../../models/diagnosis/symptom_models.dart';
 import '../../services/diagnosis_service.dart';
+import '../../services/pet_service.dart';
 import '../../consts/diagnosis_predictions_constants.dart';
 
-enum CheckerStep { category, symptoms, photoUpload, details, results, photoResults }
+enum CheckerStep { landing, symptoms, photoUpload, details, results, photoResults }
 
 class SymptomCheckerPage extends StatefulWidget {
   final String? petId;
@@ -19,28 +20,92 @@ class SymptomCheckerPage extends StatefulWidget {
 }
 
 class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
-  CheckerStep _currentStep = CheckerStep.category;
-  List<String> _selectedCategories = [];
+  CheckerStep _currentStep = CheckerStep.landing;
   List<String> _selectedSymptoms = [];
   File? _uploadedPhoto;
   bool _photoAnalyzing = false;
-  String _duration = '';
-  String _severity = '';
+
+  // Pet context — prefilled from API, user fills in anything missing
+  bool _petLoading = false;
+  String _petName = '';
+  String _petBreed = 'Unknown';
+  double _petAgeYears = 1.0;
+  double _petWeightKg = 5.0;
+  String _species = '';    // 'dog' | 'cat'
+  String _sex = '';        // 'male' | 'female'
+  String _neutered = '';   // 'yes' | 'no'
+  String _vaccinated = ''; // '1' | '0'
+
   bool _loadingAssessment = false;
   List<Map<String, dynamic>> _predictions = [];
 
-  Future<void> _pickImage(ImageSource source) async {
-    final XFile? file = await ImagePicker().pickImage(source: source, imageQuality: 80);
-    if (file != null) {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.petId != null) _loadPetData(widget.petId!);
+  }
+
+  Future<void> _loadPetData(String petId) async {
+    setState(() => _petLoading = true);
+    try {
+      final data = await PetService().getPetById(petId);
       setState(() {
-        _uploadedPhoto = File(file.path);
+        // Name
+        _petName = (data['name'] as String?) ?? '';
+
+        // Species: "Dog" → 'dog', "Cat" → 'cat'
+        final rawSpecies = (data['species'] as String? ?? '').toLowerCase();
+        if (rawSpecies == 'dog' || rawSpecies == 'cat') _species = rawSpecies;
+
+        // Breed
+        _petBreed = (data['breed'] as String? ?? 'Unknown');
+        if (_petBreed.isEmpty) _petBreed = 'Unknown';
+
+        // Sex / gender: "Male" → 'male', "Female" → 'female', "Unknown" → ''
+        final rawGender = (data['gender'] as String? ?? '').toLowerCase();
+        if (rawGender == 'male' || rawGender == 'female') _sex = rawGender;
+
+        // Neutered: boolean field
+        final neuteredVal = data['neutered'];
+        if (neuteredVal is bool) {
+          _neutered = neuteredVal ? 'yes' : 'no';
+        }
+
+        // Vaccinated: non-empty vaccinations array means vaccinated
+        final vax = data['vaccinations'];
+        if (vax is List) {
+          _vaccinated = vax.isNotEmpty ? '1' : '0';
+        }
+
+        // Weight: last entry in weightHistory
+        final wh = data['weightHistory'];
+        if (wh is List && wh.isNotEmpty) {
+          final lastWeight = (wh.last['weight'] as num?)?.toDouble();
+          if (lastWeight != null && lastWeight > 0) _petWeightKg = lastWeight;
+        }
+
+        // Age: use computedAge (years) if available
+        final age = data['computedAge'] ?? data['age'];
+        if (age != null) {
+          final ageNum = (age as num).toDouble();
+          if (ageNum > 0) _petAgeYears = ageNum;
+        }
       });
+    } catch (_) {
+      // If fetch fails, user will fill in all fields manually
+    } finally {
+      setState(() => _petLoading = false);
     }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? file =
+        await ImagePicker().pickImage(source: source, imageQuality: 80);
+    if (file != null) setState(() => _uploadedPhoto = File(file.path));
   }
 
   Future<void> _analyzePhoto() async {
     setState(() => _photoAnalyzing = true);
-    // Minimal/no-op analysis: show photo results after a short delay.
     await Future.delayed(const Duration(seconds: 1));
     setState(() {
       _photoAnalyzing = false;
@@ -50,67 +115,70 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
 
   void _resetChecker() {
     setState(() {
-      _currentStep = CheckerStep.category;
-  _selectedCategories = [];
+      _currentStep = CheckerStep.landing;
       _selectedSymptoms = [];
       _uploadedPhoto = null;
       _photoAnalyzing = false;
-      _duration = '';
-      _severity = '';
+      _petName = '';
+      _petBreed = 'Unknown';
+      _petAgeYears = 1.0;
+      _petWeightKg = 5.0;
+      _species = '';
+      _sex = '';
+      _neutered = '';
+      _vaccinated = '';
       _loadingAssessment = false;
       _predictions = [];
     });
+    // Re-fetch pet data so prefills are restored on restart
+    if (widget.petId != null) _loadPetData(widget.petId!);
   }
 
-  Color _getSeverityColor(String s) {
+  Color _severityBg(String s) {
     switch (s) {
-      case 'mild':
-        return Colors.green.shade50;
-      case 'moderate':
-        return Colors.orange.shade50;
-      case 'severe':
-        return Colors.red.shade50;
-      default:
-        return Colors.grey.shade50;
+      case 'mild': return Colors.green.shade50;
+      case 'moderate': return Colors.orange.shade50;
+      case 'severe': return Colors.red.shade50;
+      default: return Colors.grey.shade50;
     }
   }
 
-  Color _getSeverityBorderColor(String s) {
+  Color _severityBorder(String s) {
     switch (s) {
-      case 'mild':
-        return Colors.green.shade200;
-      case 'moderate':
-        return Colors.orange.shade200;
-      case 'severe':
-        return Colors.red.shade200;
-      default:
-        return Colors.grey.shade200;
+      case 'mild': return Colors.green.shade200;
+      case 'moderate': return Colors.orange.shade200;
+      case 'severe': return Colors.red.shade200;
+      default: return Colors.grey.shade200;
     }
   }
 
-  Color _getSeverityTextColor(String s) {
+  Color _severityText(String s) {
     switch (s) {
-      case 'mild':
-        return Colors.green.shade700;
-      case 'moderate':
-        return Colors.orange.shade700;
-      case 'severe':
-        return Colors.red.shade700;
-      default:
-        return Colors.grey.shade700;
+      case 'mild': return Colors.green.shade700;
+      case 'moderate': return Colors.orange.shade700;
+      case 'severe': return Colors.red.shade700;
+      default: return Colors.grey.shade700;
     }
   }
 
-  Color _getConfidenceColor(int pct) {
+  Color _confidenceColor(int pct) {
     if (pct >= 75) return Colors.green.shade600;
     if (pct >= 40) return Colors.orange.shade600;
     return Colors.red.shade600;
   }
 
+  /// Converts a PascalCase class name like "TickFever" → "Tick Fever"
+  String _formatClassName(String name) {
+    return name.replaceAllMapped(
+      RegExp(r'(?<=[a-z])(?=[A-Z])'),
+      (m) => ' ',
+    );
+  }
+
   Widget _buildContent() {
     switch (_currentStep) {
-      case CheckerStep.category:
-        return _buildCategorySelection();
+      case CheckerStep.landing:
+        return _buildLanding();
       case CheckerStep.symptoms:
         return _buildSymptomSelection();
       case CheckerStep.photoUpload:
@@ -127,9 +195,15 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
-        title: const Text('Symptom Checker'),
+        title: const Text(
+          'Symptom Checker',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.pink.shade600,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -137,486 +211,370 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
       ),
     );
   }
-  
-  Widget _buildCategorySelection() {
+
+  // ── Landing ────────────────────────────────────────────────────────────────
+  Widget _buildLanding() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.blue.shade50,
             border: Border.all(color: Colors.blue.shade200),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'How it works',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Select the category that best describes your pet\'s symptoms, then choose specific symptoms to get an AI-powered assessment.',
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+              Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Describe your pet\'s symptoms for an AI-powered health assessment, or upload a photo of a skin condition for visual analysis.',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 24),
         const Text(
-          'What type of symptoms is your pet experiencing?',
-          style: TextStyle(fontSize: 18),
+          'How would you like to proceed?',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.2,
-          ),
-          itemCount: SymptomData.categories.length,
-          itemBuilder: (context, index) {
-            final category = SymptomData.categories[index];
-            final isSelected = _selectedCategories.contains(category.id);
-            return InkWell(
-              onTap: () {
-                setState(() {
-                  if (isSelected) {
-                    _selectedCategories.remove(category.id);
-                  } else {
-                    _selectedCategories.add(category.id);
-                  }
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.pink.shade50 : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected ? Colors.pink.shade600 : Colors.grey.shade200,
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.shade300,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(category.icon, style: const TextStyle(fontSize: 48)),
-                    const SizedBox(height: 8),
-                    Text(
-                      category.name,
-                      style: TextStyle(fontSize: 14, color: isSelected ? Colors.black : Colors.grey.shade800),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (isSelected) ...[
-                      const SizedBox(height: 8),
-                      Icon(Icons.check_circle, color: Colors.pink.shade600),
-                    ]
-                  ],
-                ),
-              ),
-            );
-          },
+        _PathCard(
+          icon: Icons.checklist_rounded,
+          iconColor: Colors.pink.shade600,
+          iconBg: Colors.pink.shade50,
+          title: 'Manual Symptom Selection',
+          description:
+              'Choose from a list of symptoms your pet is showing across different body systems to get a detailed AI assessment.',
+          buttonLabel: 'Select Symptoms',
+          onTap: () => setState(() {
+            _selectedSymptoms = [];
+            _currentStep = CheckerStep.symptoms;
+          }),
         ),
-        const SizedBox(height: 16),
-        if (_selectedCategories.isNotEmpty)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _currentStep = CheckerStep.symptoms;
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink.shade600,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text('Continue to Symptoms'),
-            ),
+        const SizedBox(height: 14),
+        _PathCard(
+          icon: Icons.camera_alt_outlined,
+          iconColor: Colors.purple.shade600,
+          iconBg: Colors.purple.shade50,
+          title: 'Skin Photo Analysis',
+          description:
+              'Upload or take a photo of your pet\'s affected skin area. Our AI will analyze it and identify possible conditions.',
+          buttonLabel: 'Upload Photo',
+          buttonColor: Colors.purple.shade600,
+          onTap: () => setState(() {
+            _uploadedPhoto = null;
+            _currentStep = CheckerStep.photoUpload;
+          }),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.yellow.shade50,
+            border: Border.all(color: Colors.yellow.shade300),
+            borderRadius: BorderRadius.circular(8),
           ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.warning_amber_rounded,
+                  color: Colors.yellow.shade700, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Results are AI-generated and are not a substitute for professional veterinary advice.',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 
+  // ── Manual symptom selection ───────────────────────────────────────────────
   Widget _buildSymptomSelection() {
-    final categorySymptoms = SymptomData.symptoms
-        .where((s) => _selectedCategories.contains(s.category))
-        .toList();
+    final Map<String, List<Symptom>> grouped = {};
+    for (final cat in SymptomData.categories) {
+      final list =
+          SymptomData.symptoms.where((s) => s.category == cat.id).toList();
+      if (list.isNotEmpty) grouped[cat.id] = list;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextButton.icon(
-          onPressed: () {
-            setState(() {
-              _currentStep = CheckerStep.category;
-            });
-          },
+          onPressed: () => setState(() => _currentStep = CheckerStep.landing),
           icon: const Icon(Icons.arrow_back, size: 16),
-          label: const Text('Change category'),
+          label: const Text('Back'),
           style: TextButton.styleFrom(foregroundColor: Colors.pink.shade600),
         ),
-        const SizedBox(height: 16),
-
-  // Photo analysis option for skin category
-  if (_selectedCategories.contains('skin')) ...[
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.pink.shade50, Colors.purple.shade50],
-              ),
-              border: Border.all(color: Colors.pink.shade300, width: 2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        const SizedBox(height: 8),
+        const Text(
+          'Select all symptoms your pet is showing',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Tap each symptom that applies. You can select from multiple categories.',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 20),
+        ...SymptomData.categories.map((cat) {
+          final list = grouped[cat.id];
+          if (list == null) return const SizedBox.shrink();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8, top: 4),
+                child: Row(
                   children: [
-                    Icon(Icons.camera_alt, color: Colors.pink.shade600, size: 20),
+                    Container(
+                      width: 4,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.pink.shade400,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Try Photo Analysis',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                    Text(
+                      cat.name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade700,
+                        letterSpacing: 0.4,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'For skin conditions, you can take or upload a photo for faster, more accurate AI diagnosis.',
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+              ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: list.map((symptom) {
+                  final isSelected = _selectedSymptoms.contains(symptom.id);
+                  return GestureDetector(
+                    onTap: () {
                       setState(() {
-                        _currentStep = CheckerStep.photoUpload;
+                        if (isSelected) {
+                          _selectedSymptoms.remove(symptom.id);
+                        } else {
+                          _selectedSymptoms.add(symptom.id);
+                        }
                       });
                     },
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Use Photo Analysis'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pink.shade600,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.pink.shade600 : Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: isSelected
+                              ? Colors.pink.shade600
+                              : Colors.grey.shade300,
+                        ),
+                        boxShadow: [
+                          if (!isSelected)
+                            BoxShadow(
+                              color: Colors.grey.shade200,
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isSelected) ...[
+                            const Icon(Icons.check,
+                                color: Colors.white, size: 14),
+                            const SizedBox(width: 4),
+                          ],
+                          Text(
+                            symptom.name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.grey.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    'or',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    'Continue with manual symptom selection below',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                    textAlign: TextAlign.center,
-                  ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+            ],
+          );
+        }).toList(),
+        if (_selectedSymptoms.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.pink.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.pink.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle_outline,
+                    color: Colors.pink.shade600, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  '${_selectedSymptoms.length} symptom${_selectedSymptoms.length == 1 ? '' : 's'} selected',
+                  style: TextStyle(
+                      color: Colors.pink.shade700,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-        ],
-
-        const Text(
-          'Select all symptoms your pet is showing',
-          style: TextStyle(fontSize: 18),
-        ),
-        const SizedBox(height: 16),
-        
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: categorySymptoms.length,
-          itemBuilder: (context, index) {
-            final symptom = categorySymptoms[index];
-            final isSelected = _selectedSymptoms.contains(symptom.id);
-            
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      _selectedSymptoms.remove(symptom.id);
-                    } else {
-                      _selectedSymptoms.add(symptom.id);
-                    }
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isSelected ? Colors.pink.shade100 : Colors.white,
-                    border: Border.all(
-                      color: isSelected ? Colors.pink.shade600 : Colors.grey.shade200,
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: Colors.pink.shade200,
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Text(symptom.icon, style: const TextStyle(fontSize: 32)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          symptom.name,
-                          style: TextStyle(
-                            color: isSelected ? Colors.black : Colors.grey.shade700,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      if (isSelected)
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: Colors.pink.shade600,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        
-        if (_selectedSymptoms.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _currentStep = CheckerStep.details;
-                });
-              },
+              onPressed: () =>
+                  setState(() => _currentStep = CheckerStep.details),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink.shade600,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text('Continue'),
-                  SizedBox(width: 8),
-                  Icon(Icons.chevron_right),
-                ],
-              ),
+              child: const Text('Continue',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ),
         ],
+        const SizedBox(height: 24),
       ],
     );
   }
 
+  // ── Photo upload ───────────────────────────────────────────────────────────
   Widget _buildPhotoUpload() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextButton.icon(
-          onPressed: () {
-            setState(() {
-              _currentStep = CheckerStep.symptoms;
-            });
-          },
+          onPressed: () => setState(() => _currentStep = CheckerStep.landing),
           icon: const Icon(Icons.arrow_back, size: 16),
-          label: const Text('Back to symptoms'),
+          label: const Text('Back'),
           style: TextButton.styleFrom(foregroundColor: Colors.pink.shade600),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         const Text(
           'Upload a Photo of the Affected Area',
-          style: TextStyle(fontSize: 18),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
-
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.blue.shade50,
             border: Border.all(color: Colors.blue.shade200),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
+                  Icon(Icons.lightbulb_outline,
+                      color: Colors.blue.shade600, size: 18),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Tips for best results',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue.shade800),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                '• Ensure good lighting\n'
-                '• Get close to the affected area\n'
-                '• Keep the photo in focus\n'
-                '• Show the entire affected area',
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                '  Ensure good lighting\n'
+                '  Get close to the affected area\n'
+                '  Keep the photo in focus\n'
+                '  Show the entire affected area',
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
               ),
             ],
           ),
         ),
         const SizedBox(height: 24),
-
         if (_uploadedPhoto == null) ...[
-          InkWell(
+          _PhotoOptionTile(
+            icon: Icons.camera_alt_outlined,
+            iconColor: Colors.pink.shade600,
+            borderColor: Colors.pink.shade300,
+            title: 'Take a Photo',
+            subtitle: 'Use your camera to capture the affected area',
             onTap: () => _pickImage(ImageSource.camera),
-            child: Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(
-                  color: Colors.pink.shade300,
-                  width: 2,
-                  style: BorderStyle.solid,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Icon(Icons.camera_alt, size: 64, color: Colors.pink.shade600),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Take a Photo',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Use your camera to capture the area',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
           ),
           const SizedBox(height: 12),
-          InkWell(
+          _PhotoOptionTile(
+            icon: Icons.photo_library_outlined,
+            iconColor: Colors.purple.shade600,
+            borderColor: Colors.purple.shade300,
+            title: 'Upload from Gallery',
+            subtitle: 'Choose an existing photo from your device',
             onTap: () => _pickImage(ImageSource.gallery),
-            child: Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(
-                  color: Colors.blue.shade300,
-                  width: 2,
-                  style: BorderStyle.solid,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Icon(Icons.upload_file, size: 64, color: Colors.blue.shade600),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Upload from Gallery',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Choose an existing photo',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
           ),
         ] else ...[
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade300,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
             child: Stack(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _uploadedPhoto!,
-                    height: 256,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                Image.file(
+                  _uploadedPhoto!,
+                  height: 260,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
                 ),
                 Positioned(
                   top: 8,
                   right: 8,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.red.shade600,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () {
-                        setState(() {
-                          _uploadedPhoto = null;
-                        });
-                      },
+                  child: Material(
+                    color: Colors.red.shade600,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => setState(() => _uploadedPhoto = null),
+                      child: const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Icon(Icons.close, color: Colors.white, size: 18),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.green.shade50,
               border: Border.all(color: Colors.green.shade200),
@@ -624,11 +582,11 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
             ),
             child: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.green.shade600),
-                const SizedBox(width: 12),
+                Icon(Icons.check_circle, color: Colors.green.shade600, size: 18),
+                const SizedBox(width: 8),
                 Text(
-                  'Photo uploaded successfully',
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                  'Photo ready for analysis',
+                  style: TextStyle(color: Colors.green.shade700, fontSize: 14),
                 ),
               ],
             ),
@@ -636,47 +594,39 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            child: ElevatedButton.icon(
               onPressed: _photoAnalyzing ? null : _analyzePhoto,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink.shade600,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _photoAnalyzing
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text('Analyzing with AI...'),
-                      ],
+              icon: _photoAnalyzing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text('Analyze Photo'),
+                  : const Icon(Icons.search),
+              label: Text(_photoAnalyzing ? 'Analyzing...' : 'Analyze Photo'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple.shade600,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () {
-                setState(() {
-                  _uploadedPhoto = null;
-                });
-              },
+              onPressed: () => setState(() => _uploadedPhoto = null),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.grey.shade700,
-                side: BorderSide(color: Colors.grey.shade300, width: 2),
+                side: BorderSide(color: Colors.grey.shade300),
                 padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text('Upload Different Photo'),
+              child: const Text('Use a Different Photo'),
             ),
           ),
         ],
@@ -684,357 +634,330 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
     );
   }
 
+  // ── Details input ──────────────────────────────────────────────────────────
   Widget _buildDetailsInput() {
+    // While pet data is loading, show a spinner
+    if (_petLoading) {
+      return Column(
+        children: [
+          TextButton.icon(
+            onPressed: () => setState(() => _currentStep = CheckerStep.symptoms),
+            icon: const Icon(Icons.arrow_back, size: 16),
+            label: const Text('Back to symptoms'),
+            style: TextButton.styleFrom(foregroundColor: Colors.pink.shade600),
+          ),
+          const SizedBox(height: 40),
+          const Center(child: CircularProgressIndicator()),
+          const SizedBox(height: 16),
+          Center(
+            child: Text('Loading pet details…',
+                style: TextStyle(color: Colors.grey.shade600)),
+          ),
+        ],
+      );
+    }
+
+    final bool needsSpecies = _species.isEmpty;
+    final bool needsSex = _sex.isEmpty;
+    final bool needsNeutered = _neutered.isEmpty;
+    final bool needsVaccinated = _vaccinated.isEmpty;
+    final bool anyMissing = needsSpecies || needsSex || needsNeutered || needsVaccinated;
+    final bool allAnswered = !anyMissing;
+
+    // Build a short description of what was prefilled for the info card
+    final List<String> prefilled = [];
+    if (!needsSpecies) prefilled.add(_species == 'dog' ? 'Dog' : 'Cat');
+    if (!needsSex) prefilled.add(_sex == 'male' ? 'Male' : 'Female');
+    if (!needsNeutered) prefilled.add(_neutered == 'yes' ? 'Neutered' : 'Not neutered');
+    if (!needsVaccinated) prefilled.add(_vaccinated == '1' ? 'Vaccinated' : 'Not vaccinated');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tell us more about the symptoms',
-          style: TextStyle(fontSize: 18),
+        TextButton.icon(
+          onPressed: () => setState(() => _currentStep = CheckerStep.symptoms),
+          icon: const Icon(Icons.arrow_back, size: 16),
+          label: const Text('Back to symptoms'),
+          style: TextButton.styleFrom(foregroundColor: Colors.pink.shade600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          anyMissing ? 'A few quick questions' : 'Pet details confirmed',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          anyMissing
+              ? 'Some details couldn\'t be found on your pet\'s profile. Please fill them in.'
+              : 'All details were loaded from your pet\'s profile.',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.shade300,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'How long has this been happening?',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              ...[
-                {'value': 'few-hours', 'label': 'Last few hours'},
-                {'value': '1-day', 'label': 'Since yesterday'},
-                {'value': '2-3-days', 'label': '2-3 days'},
-                {'value': 'week-plus', 'label': 'More than a week'},
-              ].map((option) {
-                final isSelected = _duration == option['value'];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _duration = option['value']!;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.pink.shade100 : Colors.white,
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.pink.shade600
-                              : Colors.grey.shade200,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
+
+        // ── Prefilled summary card ──────────────────────────────────────
+        if (prefilled.isNotEmpty)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              border: Border.all(color: Colors.green.shade200),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.check_circle_outline,
+                    color: Colors.green.shade600, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _petName.isNotEmpty
+                            ? 'Loaded from $_petName\'s profile'
+                            : 'Loaded from pet profile',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green.shade800,
+                            fontSize: 13),
                       ),
-                      child: Text(option['label']!),
-                    ),
+                      const SizedBox(height: 2),
+                      Text(
+                        prefilled.join(' · '),
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.green.shade700),
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
-              const SizedBox(height: 24),
-              Text(
-                'How would you rate the severity?',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              ...[
-                {
-                  'value': 'mild',
-                  'label': 'Mild - Noticeable but not concerning',
-                  'icon': '😊'
-                },
-                {
-                  'value': 'moderate',
-                  'label': 'Moderate - Somewhat concerning',
-                  'icon': '😟'
-                },
-                {
-                  'value': 'severe',
-                  'label': 'Severe - Very concerning',
-                  'icon': '😨'
-                },
-              ].map((option) {
-                final isSelected = _severity == option['value'];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _severity = option['value']!;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.pink.shade100 : Colors.white,
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.pink.shade600
-                              : Colors.grey.shade200,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(option['icon']!, style: const TextStyle(fontSize: 24)),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text(option['label']!)),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
-        if (_duration.isNotEmpty && _severity.isNotEmpty) ...[
+
+        // ── Species (only if not known) ──────────────────────────────────
+        if (needsSpecies) ...[
+          _SectionBox(
+            title: 'What species is your pet?',
+            child: Column(
+              children: [
+                _OptionTile(
+                    label: 'Dog',
+                    selected: _species == 'dog',
+                    onTap: () => setState(() => _species = 'dog')),
+                _OptionTile(
+                    label: 'Cat',
+                    selected: _species == 'cat',
+                    onTap: () => setState(() => _species = 'cat')),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
+        ],
+
+        // ── Sex (only if unknown / not set) ──────────────────────────────
+        if (needsSex) ...[
+          _SectionBox(
+            title: 'What is your pet\'s sex?',
+            child: Column(
+              children: [
+                _OptionTile(
+                    label: 'Male',
+                    selected: _sex == 'male',
+                    onTap: () => setState(() => _sex = 'male')),
+                _OptionTile(
+                    label: 'Female',
+                    selected: _sex == 'female',
+                    onTap: () => setState(() => _sex = 'female')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // ── Neutered (only if not known) ─────────────────────────────────
+        if (needsNeutered) ...[
+          _SectionBox(
+            title: 'Is your pet neutered / spayed?',
+            child: Column(
+              children: [
+                _OptionTile(
+                    label: 'Yes',
+                    selected: _neutered == 'yes',
+                    onTap: () => setState(() => _neutered = 'yes')),
+                _OptionTile(
+                    label: 'No',
+                    selected: _neutered == 'no',
+                    onTap: () => setState(() => _neutered = 'no')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // ── Vaccinated (only if not known) ───────────────────────────────
+        if (needsVaccinated) ...[
+          _SectionBox(
+            title: 'Up to date on vaccinations?',
+            child: Column(
+              children: [
+                _OptionTile(
+                    label: 'Yes',
+                    selected: _vaccinated == '1',
+                    onTap: () => setState(() => _vaccinated = '1')),
+                _OptionTile(
+                    label: 'No / not sure',
+                    selected: _vaccinated == '0',
+                    onTap: () => setState(() => _vaccinated = '0')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        const SizedBox(height: 8),
+
+        if (allAnswered)
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _loadingAssessment
-                  ? null
-                  : () async {
-                      setState(() {
-                        _loadingAssessment = true;
-                      });
-
-                      // Build payload for the symptom-checker endpoint
-                      final payload = {
-                        'species': 0,
-                        'breed': 0,
-                        'sex': 0,
-                        'neutered': 0,
-                        'age_years': 1.0,
-                        'weight_kg': 1.0,
-                        'num_previous_visits': 0,
-                        'prev_diagnosis_class': 0,
-                        'days_since_last_visit': 9999,
-                        'chronic_flag': 0,
-                        'symptoms': _selectedSymptoms,
-                        'severity': _severity,
-                        'duration_days': 0,
-                      };
-
-                      try {
-                        final res = await DiagnosisService().predictSymptomChecker(payload);
-                        // Expected shape: { status, predictions: [ {class_name, confidence,...} ], all_class_probabilities }
-                        final preds = <Map<String, dynamic>>[];
-                        if (res['predictions'] is List) {
-                          for (final p in res['predictions']) {
-                            if (p is Map) preds.add(Map<String, dynamic>.from(p));
-                          }
-                        }
-
-                        setState(() {
-                          _predictions = preds;
-                          _currentStep = CheckerStep.results;
-                        });
-                      } catch (e) {
-                        // show error
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Failed to get assessment.')),
-                        );
-                      } finally {
-                        setState(() {
-                          _loadingAssessment = false;
-                        });
-                      }
-                    },
+              onPressed: _loadingAssessment ? null : _runAssessment,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink.shade600,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               child: _loadingAssessment
-                  ? SizedBox(
+                  ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Text('Get Assessment'),
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : const Text('Get Assessment',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ),
-        ],
+        const SizedBox(height: 24),
       ],
     );
   }
 
+  Future<void> _runAssessment() async {
+    setState(() => _loadingAssessment = true);
+
+    // All 18 recognised symptom IDs — each becomes a 0/1 flag in the payload
+    const allSymptoms = [
+      'vomiting', 'diarrhea', 'dehydration', 'loss_appetite',
+      'fever', 'lethargy', 'itching', 'red_skin', 'hair_loss',
+      'skin_lesions', 'wounds', 'dark_urine', 'pale_gums',
+      'pale_eyelids', 'tick_exposure', 'pain_urinating',
+      'frequent_urination', 'blood_in_urine',
+    ];
+
+    final Map<String, dynamic> payload = {
+      'species': _species.isEmpty ? 'dog' : _species,
+      'breed': _petBreed,
+      'sex': _sex.isEmpty ? 'male' : _sex,
+      'neutered': (_neutered == 'yes' || _neutered == 'no') ? _neutered : 'no',
+      'age_years': _petAgeYears,
+      'weight_kg': _petWeightKg,
+      'vaccinated': _vaccinated == '1' ? 1 : 0,
+      'num_previous_visits': 0,
+      'prev_diagnosis_class': -1,
+      'days_since_last_visit': 0,
+      'chronic_flag': 0,
+    };
+
+    // Add a 1 for each selected symptom, 0 for the rest
+    for (final s in allSymptoms) {
+      payload[s] = _selectedSymptoms.contains(s) ? 1 : 0;
+    }
+
+    try {
+      final res = await DiagnosisService().predictSymptomCheckerV2(payload);
+      // Response shape: { predicted_class, confidence, top_3: [{class, probability}], probability_map }
+      final top3 = res['top_3'];
+      final preds = <Map<String, dynamic>>[];
+      if (top3 is List) {
+        for (final p in top3) {
+          if (p is Map) preds.add(Map<String, dynamic>.from(p));
+        }
+      }
+      setState(() {
+        _predictions = preds;
+        _currentStep = CheckerStep.results;
+      });
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to get assessment.')),
+      );
+    } finally {
+      setState(() => _loadingAssessment = false);
+    }
+  }
+
+  // ── Results (manual) ───────────────────────────────────────────────────────
   Widget _buildResults() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.pink.shade50, Colors.blue.shade50],
-            ),
+            color: Colors.pink.shade50,
             border: Border.all(color: Colors.pink.shade200),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.pink.shade600, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Assessment Complete',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Based on the symptoms you described, here are possible conditions ranked by likelihood. This is not a substitute for professional veterinary care.',
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+              Icon(Icons.verified_outlined, color: Colors.pink.shade600, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Assessment complete. Results are ranked by likelihood. Always consult a vet for a definitive diagnosis.',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         const Text(
           'Possible Diagnoses',
-          style: TextStyle(fontSize: 18),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
+        const SizedBox(height: 12),
+        if (_predictions.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Text('No predictions returned.',
+                  style: TextStyle(color: Colors.grey.shade500)),
+            ),
+          )
+        else
+          ..._predictions.take(3).map((p) {
+            final className = (p['class'] ?? 'Unknown') as String;
+            final confidence = ((p['probability'] ?? 0) as num).toDouble();
+            final info = diagnosisInfo.containsKey(className)
+                ? diagnosisInfo[className] as Map<String, dynamic>
+                : null;
+            final displayName = info?['common_name'] ?? _formatClassName(className);
+            return _DiagnosisCard(
+              rank: _predictions.indexOf(p) + 1,
+              conditionDisplay: displayName,
+              confidence: confidence,
+              info: info,
+              onBookVet: () => context.goNamed('VetHomeScreen'),
+            );
+          }).toList(),
         const SizedBox(height: 16),
-        if (_predictions.isEmpty) ...[
-          const Text('No predictions yet. Press "Get Assessment" to run the AI model.'),
-        ] else ...[
-          // Show richer details for the top-3 predictions
-          Column(
-            children: _predictions.take(3).map((p) {
-              final key = p['class_name'] ?? p['predicted_class_name'] ?? 'Unknown';
-              final confidence = ((p['confidence'] ?? 0) as num).toDouble();
-              final info = diagnosisInfo.containsKey(key) ? diagnosisInfo[key] as Map<String, dynamic> : null;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 4, offset: const Offset(0,2)),],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  info != null ? (info['common_name'] ?? key) : key,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                                ),
-                                const SizedBox(height: 6),
-                                LinearProgressIndicator(
-                                  value: confidence,
-                                  minHeight: 10,
-                                  backgroundColor: Colors.grey.shade200,
-                                  valueColor: AlwaysStoppedAnimation<Color>(_getConfidenceColor((confidence*100).toInt())),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text('${(confidence*100).toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.w800)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (info != null) ...[
-                        Text(info['description'] ?? '', style: TextStyle(color: Colors.grey.shade700)),
-                        const SizedBox(height: 8),
-                        Text('Common symptoms', style: TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          children: (info['common_symptoms'] as List<dynamic>?)
-                              ?.map((s) => Chip(label: Text(s.toString())))
-                              .toList() ?? [],
-                        ),
-                        const SizedBox(height: 8),
-                        Text('At-home / OTC options', style: TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        ...((info['otc_treatments'] as Map<String, dynamic>?) ?? {}).entries.map((entry) {
-                          final title = entry.key.replaceAll('_', ' ').splitMapJoin(RegExp(r'\b'), onMatch: (m) => m.group(0)!.toUpperCase(), onNonMatch: (n) => n);
-                          final items = (entry.value as List<dynamic>).map((e) => e.toString()).toList();
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade800)),
-                                const SizedBox(height: 4),
-                                Text(items.join(', '), style: TextStyle(color: Colors.grey.shade700)),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ] else ...[
-                        // Fallback minimal description
-                        const SizedBox(height: 6),
-                        Text('No additional details available for this condition.', style: TextStyle(color: Colors.grey.shade700)),
-                      ],
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.yellow.shade50,
-            border: Border.all(color: Colors.yellow.shade200),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.warning_amber, color: Colors.yellow.shade700, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Important Disclaimer',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'This assessment is AI-generated and should not replace professional veterinary advice. If symptoms worsen or you\'re concerned, please contact a veterinarian immediately.',
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-              ),
-            ],
-          ),
-        ),
+        _DisclaimerBox(),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -1043,8 +966,10 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
                 onPressed: _resetChecker,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.pink.shade600,
-                  side: BorderSide(color: Colors.pink.shade600, width: 2),
+                  side: BorderSide(color: Colors.pink.shade600),
                   padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text('New Assessment'),
               ),
@@ -1052,139 +977,92 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-
-                  context.goNamed('VetHomeScreen');
-                },
+                onPressed: () => context.goNamed('VetHomeScreen'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink.shade600,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text('Find a Vet'),
               ),
             ),
           ],
         ),
+        const SizedBox(height: 24),
       ],
     );
   }
 
+  // ── Photo results ──────────────────────────────────────────────────────────
   Widget _buildPhotoResults() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.pink.shade50, Colors.purple.shade50],
-            ),
-            border: Border.all(color: Colors.pink.shade200),
-            borderRadius: BorderRadius.circular(8),
+            color: Colors.purple.shade50,
+            border: Border.all(color: Colors.purple.shade200),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.camera_alt, color: Colors.pink.shade600, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'AI Photo Analysis Complete',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Our AI has analyzed the photo and identified potential skin conditions. This is not a substitute for professional veterinary care.',
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+              Icon(Icons.camera_alt_outlined,
+                  color: Colors.purple.shade600, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'AI photo analysis complete. Possible skin conditions are listed below. This is not a substitute for veterinary examination.',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        if (_uploadedPhoto != null)
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade300,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                  child: Image.file(
-                    _uploadedPhoto!,
-                    height: 192,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  color: Colors.grey.shade50,
-                  child: Center(
-                    child: Text(
-                      'Analyzed Image',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                    ),
-                  ),
-                ),
-              ],
+        if (_uploadedPhoto != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.file(
+              _uploadedPhoto!,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
             ),
           ),
-        const SizedBox(height: 24),
+          const SizedBox(height: 6),
+          Center(
+            child: Text('Analyzed image',
+                style:
+                    TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          ),
+          const SizedBox(height: 20),
+        ],
         const Text(
           'Possible Skin Conditions',
-          style: TextStyle(fontSize: 18),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
+        const SizedBox(height: 12),
+        ...SymptomData.mockSkinDiagnoses
+            .asMap()
+            .entries
+            .map((e) => _SkinDiagnosisCard(
+                  rank: e.key + 1,
+                  diagnosis: e.value,
+                  severityBg: _severityBg,
+                  severityBorder: _severityBorder,
+                  severityText: _severityText,
+                  confidenceColor: _confidenceColor,
+                  onBookVet: () => context.goNamed('VetHomeScreen'),
+                ))
+            .toList(),
         const SizedBox(height: 16),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: SymptomData.mockSkinDiagnoses.length,
-          itemBuilder: (context, index) {
-            final diagnosis = SymptomData.mockSkinDiagnoses[index];
-            return _buildSkinDiagnosisCard(diagnosis, index + 1);
-          },
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.yellow.shade50,
-            border: Border.all(color: Colors.yellow.shade200),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.warning_amber, color: Colors.yellow.shade700, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Important Disclaimer',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'This AI analysis is based on visual patterns and should not replace professional veterinary examination. Skin conditions can have similar appearances but different causes.',
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-              ),
-            ],
-          ),
+        _DisclaimerBox(
+          message:
+              'This AI analysis is based on visual patterns and should not replace a professional veterinary examination.',
         ),
         const SizedBox(height: 16),
         Row(
@@ -1194,8 +1072,10 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
                 onPressed: _resetChecker,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.pink.shade600,
-                  side: BorderSide(color: Colors.pink.shade600, width: 2),
+                  side: BorderSide(color: Colors.pink.shade600),
                   padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text('New Analysis'),
               ),
@@ -1203,174 +1083,421 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to vets page
-                  Navigator.pop(context);
-                },
+                onPressed: () => context.goNamed('VetHomeScreen'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink.shade600,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text('Find a Vet'),
               ),
             ),
           ],
         ),
+        const SizedBox(height: 24),
       ],
     );
   }
+}
 
-  Widget _buildDiagnosisCard(Diagnosis diagnosis, int rank) {
+// ═══════════════════════════════════════════════════════════════════════════════
+// Helper widgets
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _PathCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final String title;
+  final String description;
+  final String buttonLabel;
+  final Color? buttonColor;
+  final VoidCallback onTap;
+
+  const _PathCard({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.title,
+    required this.description,
+    required this.buttonLabel,
+    this.buttonColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final btnColor = buttonColor ?? Colors.pink.shade600;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.grey.shade200,
+              blurRadius: 6,
+              offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 15)),
+                const SizedBox(height: 4),
+                Text(description,
+                    style: TextStyle(
+                        color: Colors.grey.shade600, fontSize: 13)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: btnColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                    child: Text(buttonLabel,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhotoOptionTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color borderColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _PhotoOptionTile({
+    required this.icon,
+    required this.iconColor,
+    required this.borderColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: borderColor, width: 2),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 36, color: iconColor),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 15)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: TextStyle(
+                          color: Colors.grey.shade600, fontSize: 13)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: Colors.grey.shade400),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionBox extends StatelessWidget {
+  final String title;
+  final Widget child;
+  const _SectionBox({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.grey.shade200,
+              blurRadius: 4,
+              offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Colors.grey.shade800)),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _OptionTile extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _OptionTile(
+      {required this.label,
+      required this.selected,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? Colors.pink.shade50 : Colors.white,
+            border: Border.all(
+              color: selected ? Colors.pink.shade500 : Colors.grey.shade200,
+              width: selected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: TextStyle(
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            color: selected
+                                ? Colors.pink.shade700
+                                : Colors.grey.shade800)),
+                  ],
+                ),
+              ),
+              if (selected)
+                Icon(Icons.check_circle,
+                    color: Colors.pink.shade500, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DisclaimerBox extends StatelessWidget {
+  final String? message;
+  const _DisclaimerBox({this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.yellow.shade50,
+        border: Border.all(color: Colors.yellow.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded,
+              color: Colors.yellow.shade700, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message ??
+                  'This assessment is AI-generated and should not replace professional veterinary advice. If symptoms worsen, contact a veterinarian immediately.',
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DiagnosisCard extends StatelessWidget {
+  final int rank;
+  final String conditionDisplay;
+  final double confidence;
+  final Map<String, dynamic>? info;
+  final VoidCallback onBookVet;
+
+  const _DiagnosisCard({
+    required this.rank,
+    required this.conditionDisplay,
+    required this.confidence,
+    required this.info,
+    required this.onBookVet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (confidence * 100).toStringAsFixed(0);
+    Color confColor;
+    if (confidence >= 0.75) {
+      confColor = Colors.green.shade600;
+    } else if (confidence >= 0.4) {
+      confColor = Colors.orange.shade600;
+    } else {
+      confColor = Colors.red.shade600;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade300,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.grey.shade200,
+              blurRadius: 4,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: Colors.pink.shade100,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                '$rank',
-                                style: TextStyle(
-                                  color: Colors.pink.shade600,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              diagnosis.condition,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getSeverityColor(diagnosis.severity),
-                          border: Border.all(
-                            color: _getSeverityBorderColor(diagnosis.severity),
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${diagnosis.severity[0].toUpperCase()}${diagnosis.severity.substring(1)} Severity',
-                          style: TextStyle(
-                            color: _getSeverityTextColor(diagnosis.severity),
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                      color: Colors.pink.shade100, shape: BoxShape.circle),
+                  child: Center(
+                    child: Text('$rank',
+                        style: TextStyle(
                             fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
+                            fontWeight: FontWeight.w700,
+                            color: Colors.pink.shade700)),
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${diagnosis.confidence}%',
-                      style: TextStyle(
-                        color: _getConfidenceColor(diagnosis.confidence),
-                        fontSize: 28,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      'confidence',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(conditionDisplay,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 15)),
                 ),
+                Text('$pct%',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                        color: confColor)),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              diagnosis.description,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Recommended Action: ${diagnosis.action}',
-                style: const TextStyle(fontSize: 14),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: confidence,
+                minHeight: 5,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(confColor),
               ),
             ),
-            if (diagnosis.otcMedication != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
+            if (info != null) ...[
+              const SizedBox(height: 10),
+              Text(info!['description'] ?? '',
+                  style:
+                      TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+              if ((info!['common_symptoms'] as List?)?.isNotEmpty == true) ...[
+                const SizedBox(height: 10),
+                Text('Common symptoms',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: Colors.grey.shade800)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: (info!['common_symptoms'] as List)
+                      .map((s) => Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(20),
+                              border:
+                                  Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(s.toString(),
+                                style: const TextStyle(fontSize: 12)),
+                          ))
+                      .toList(),
                 ),
-                child: Text(
-                  'OTC Option: ${diagnosis.otcMedication}',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
+              ],
             ],
-            if (diagnosis.confidence < 60) ...[
+            if (confidence < 0.6) ...[
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Navigate to vets
-                    Navigator.pop(context);
-                  },
+                  onPressed: onBookVet,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.pink.shade600,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Book Vet Appointment', style: TextStyle(fontSize: 14)),
+                  child: const Text('Book Vet Appointment',
+                      style: TextStyle(fontSize: 13)),
                 ),
               ),
             ],
@@ -1379,84 +1506,86 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
       ),
     );
   }
+}
 
-  Widget _buildSkinDiagnosisCard(SkinDiagnosis diagnosis, int rank) {
+class _SkinDiagnosisCard extends StatelessWidget {
+  final int rank;
+  final SkinDiagnosis diagnosis;
+  final Color Function(String) severityBg;
+  final Color Function(String) severityBorder;
+  final Color Function(String) severityText;
+  final Color Function(int) confidenceColor;
+  final VoidCallback onBookVet;
+
+  const _SkinDiagnosisCard({
+    required this.rank,
+    required this.diagnosis,
+    required this.severityBg,
+    required this.severityBorder,
+    required this.severityText,
+    required this.confidenceColor,
+    required this.onBookVet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade300,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.grey.shade200,
+              blurRadius: 4,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                      color: Colors.purple.shade100,
+                      shape: BoxShape.circle),
+                  child: Center(
+                    child: Text('$rank',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.purple.shade700)),
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: Colors.pink.shade100,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                '$rank',
-                                style: TextStyle(
-                                  color: Colors.pink.shade600,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              diagnosis.condition,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
+                      Text(diagnosis.condition,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 15)),
+                      const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: _getSeverityColor(diagnosis.severity),
+                          color: severityBg(diagnosis.severity),
                           border: Border.all(
-                            color: _getSeverityBorderColor(diagnosis.severity),
-                          ),
+                              color: severityBorder(diagnosis.severity)),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${diagnosis.severity[0].toUpperCase()}${diagnosis.severity.substring(1)} Severity',
+                          '${diagnosis.severity[0].toUpperCase()}${diagnosis.severity.substring(1)} severity',
                           style: TextStyle(
-                            color: _getSeverityTextColor(diagnosis.severity),
-                            fontSize: 12,
-                          ),
+                              color: severityText(diagnosis.severity),
+                              fontSize: 11),
                         ),
                       ),
                     ],
@@ -1465,83 +1594,93 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      '${diagnosis.confidence}%',
-                      style: TextStyle(
-                        color: _getConfidenceColor(diagnosis.confidence),
-                        fontSize: 28,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      'match',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                      ),
-                    ),
+                    Text('${diagnosis.confidence}%',
+                        style: TextStyle(
+                            color: confidenceColor(diagnosis.confidence),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700)),
+                    Text('match',
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 12)),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              diagnosis.description,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.purple.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Common Causes:',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 4),
-                  ...diagnosis.commonCauses.map(
-                    (cause) => Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        '• $cause',
+            const SizedBox(height: 10),
+            Text(diagnosis.description,
+                style:
+                    TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+            if (diagnosis.commonCauses.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.purple.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Common causes',
                         style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Colors.purple.shade700)),
+                    const SizedBox(height: 4),
+                    ...diagnosis.commonCauses.map((c) => Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text('  $c',
+                              style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontSize: 13)),
+                        )),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
+            ],
+            const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                'Recommended Action: ${diagnosis.action}',
-                style: const TextStyle(fontSize: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.medical_services_outlined,
+                      size: 16, color: Colors.blue.shade600),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(diagnosis.action,
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade800)),
+                  ),
+                ],
               ),
             ),
             if (diagnosis.otcMedication != null) ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.green.shade50,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'OTC Option: ${diagnosis.otcMedication}',
-                  style: const TextStyle(fontSize: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.local_pharmacy_outlined,
+                        size: 16, color: Colors.green.shade600),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'OTC option: ${diagnosis.otcMedication}',
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade800),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -1550,16 +1689,16 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Navigate to vets
-                    Navigator.pop(context);
-                  },
+                  onPressed: onBookVet,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.pink.shade600,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Book Vet Appointment', style: TextStyle(fontSize: 14)),
+                  child: const Text('Book Vet Appointment',
+                      style: TextStyle(fontSize: 13)),
                 ),
               ),
             ],

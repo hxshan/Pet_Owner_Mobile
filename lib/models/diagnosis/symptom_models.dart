@@ -3,25 +3,21 @@ class Symptom {
   final String id;
   final String name;
   final String category;
-  final String icon;
 
   Symptom({
     required this.id,
     required this.name,
     required this.category,
-    required this.icon,
   });
 }
 
 class SymptomCategory {
   final String id;
   final String name;
-  final String icon;
 
   SymptomCategory({
     required this.id,
     required this.name,
-    required this.icon,
   });
 }
 
