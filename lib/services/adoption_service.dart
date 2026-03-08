@@ -76,11 +76,13 @@ class AdoptionService {
     String activityLevel = 'Moderate',
     String experienceLevel = 'First-time',
     required String description,
+    String? color, // ← optional color hard pre-filter
   }) async {
+    // Species is now optional — send empty string if not specified
     final String speciesValue =
         (preferredSpecies != null && preferredSpecies.isNotEmpty)
         ? preferredSpecies
-        : 'Dog';
+        : '';
 
     final body = {
       'modelPrefs': {
@@ -98,6 +100,7 @@ class AdoptionService {
         'experienceLevel': experienceLevel,
       },
       'description': description,
+      if (color != null && color.isNotEmpty) 'color': color, // ← NEW
       'modelVersion': 'v4',
     };
 
@@ -112,13 +115,10 @@ class AdoptionService {
         .map((e) => AdoptionPet.fromJson(e as Map<String, dynamic>))
         .toList();
 
-    final List<String> relaxed =
-        (data['relaxedFilters'] as List?)?.map((e) => e.toString()).toList() ?? [];
     final int total = (data['totalCandidates'] as int?) ?? pets.length;
 
     return RecommendationResult(
       pets: pets,
-      relaxedFilters: relaxed,
       totalCandidates: total,
     );
   }
@@ -249,19 +249,27 @@ Return this exact format (all fields optional, use null if not mentioned):
   "goodWithKids": true | false | null,
   "goodWithPets": true | false | null,
   "livingType": "Apartment" | "House" | "Condo" | "Farm" | "Other" | null,
-  "activityLevel": "Low" | "Moderate" | "High" | "Very High" | null,
+  "color": "Black" | "Brown" | "Golden" | "Yellow" | "Cream" | "Gray" | "White" | null,
   "detectedKeywords": ["word1", "word2"]
 }
 
 Extraction rules:
 - "calm", "quiet", "lazy", "relaxed", "low energy" → energyLevel: "Low"
 - "active", "playful", "energetic", "loves runs" → energyLevel: "High"
+- "very playful", "super energetic", "very active", "extremely active", "high energy", "needs lots of exercise" → energyLevel: "Very High"
 - "apartment", "flat", "small place" → livingType: "Apartment"
 - "house", "garden", "yard" → livingType: "House"
 - "kids", "children", "toddler", "baby" → goodWithKids: true
 - "other pets", "have a dog", "have a cat" → goodWithPets: true
 - "small", "tiny", "lap dog" → size: "Small"
 - "big", "large", "large breed" → size: "Large"
+- "black", "dark" → color: "Black"
+- "brown", "chocolate" → color: "Brown"
+- "golden", "gold", "orange-ish" → color: "Golden"
+- "yellow" → color: "Yellow"
+- "cream", "beige", "off-white" → color: "Cream"
+- "gray", "grey", "silver" → color: "Gray"
+- "white", "snow white" → color: "White"
 - detectedKeywords: short list of key words you detected
 Return ONLY the JSON object.''';
 
@@ -310,7 +318,7 @@ class ExtractedFilters {
   final bool? goodWithKids;
   final bool? goodWithPets;
   final String? livingType;
-  final String? activityLevel;
+  final String? color; // one of: Black | Brown | Golden | Yellow | Cream | Gray | White
   final List<String> detectedKeywords;
 
   const ExtractedFilters({
@@ -321,7 +329,7 @@ class ExtractedFilters {
     this.goodWithKids,
     this.goodWithPets,
     this.livingType,
-    this.activityLevel,
+    this.color,
     this.detectedKeywords = const [],
   });
 
@@ -336,7 +344,7 @@ class ExtractedFilters {
       goodWithKids: json['goodWithKids'] as bool?,
       goodWithPets: json['goodWithPets'] as bool?,
       livingType: json['livingType'] as String?,
-      activityLevel: json['activityLevel'] as String?,
+      color: json['color'] as String?,
       detectedKeywords: (json['detectedKeywords'] as List?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -354,7 +362,7 @@ class ExtractedFilters {
     if (goodWithKids == true) labels.add('Good With Kids');
     if (goodWithPets == true) labels.add('Pet-Friendly');
     if (livingType != null) labels.add(livingType!);
-    if (activityLevel != null) labels.add('$activityLevel Activity');
+    if (color != null) labels.add('$color Color');
     return labels;
   }
 
