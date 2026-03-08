@@ -152,12 +152,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final store = PetScope.of(context);
     final loadingPets = store.isLoading || !store.isLoaded;
     // Convert Pet models to raw maps for reuse in card builder
-    final myPets = store.pets.map((p) => {
-      'name': p.name,
-      'breed': p.breed,
-      'species': p.species,
-      'dob': p.dob,
-    }).toList();
+    final myPets = store.pets
+        .map(
+          (p) => {
+            'name': p.name,
+            'breed': p.breed,
+            'species': p.species,
+            'dob': p.dob,
+          },
+        )
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           myPets[i]['name'] ?? 'Pet',
                           myPets[i]['breed'] ?? myPets[i]['species'] ?? '',
                           _formatPetAge(myPets[i]),
-                          i == 0 ? Colors.amber[100]! : Colors.purple[100]!,
+                          i == 0 ? Colors.blue[300]! : Colors.purple[100]!,
                         ),
                       ),
                     if (myPets.length < 2) ...[
@@ -248,7 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: sw * 0.15,
@@ -378,7 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: AppColors.lightGray,
           borderRadius: BorderRadius.circular(sw * 0.04),
           border: Border.all(
-            color: AppColors.mainColor,
+            color: Colors.grey[300]!,
             width: 2,
             style: BorderStyle.solid,
           ),
@@ -390,7 +394,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               width: sw * 0.12,
               height: sw * 0.12,
               decoration: BoxDecoration(
-                color: AppColors.mainColor,
+                color: AppColors.darkPink,
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.add, color: Colors.white, size: sw * 0.07),
@@ -415,7 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: EdgeInsets.all(sw * 0.045),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.darkPink, AppColors.mainColor],
+          colors: [AppColors.darkPink, AppColors.darkPink],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -462,28 +466,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: TextStyle(fontSize: sw * 0.032, color: Colors.white70),
                 ),
                 SizedBox(height: sh * 0.015),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.darkPink,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: sw * 0.06,
-                      vertical: sh * 0.012,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(sw * 0.02),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Explore',
-                    style: TextStyle(
-                      fontSize: sw * 0.038,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                // ElevatedButton(
+                //   onPressed: () {},
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: Colors.white,
+                //     foregroundColor: AppColors.darkPink,
+                //     padding: EdgeInsets.symmetric(
+                //       horizontal: sw * 0.06,
+                //       vertical: sh * 0.012,
+                //     ),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(sw * 0.02),
+                //     ),
+                //     elevation: 0,
+                //   ),
+                //   child: Text(
+                //     'Explore',
+                //     style: TextStyle(
+                //       fontSize: sw * 0.038,
+                //       fontWeight: FontWeight.w600,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -544,7 +548,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               sh,
               Icons.pets,
               'Adoption',
-              AppColors.mainColor,
+              Colors.purple[400]!,
               'PetListingDashboard',
             ),
             _buildServiceItem(
@@ -552,7 +556,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               sh,
               Icons.shopping_bag,
               'Shop',
-              AppColors.mainColor,
+              Colors.blue[400]!,
               'EcommerceDashboardScreen',
             ),
             _buildServiceItem(
@@ -560,7 +564,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               sh,
               Icons.restaurant,
               'Nutrition',
-              Colors.orange,
+              Colors.green[400]!,
               'NutritionPlanScreen',
             ),
             _buildServiceItem(
@@ -599,9 +603,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             child: Icon(icon, size: sw * 0.08, color: color),
           ),
-          SizedBox(height: sh * 0.006), // Fixed: Reduced spacing
+          SizedBox(height: sh * 0.006),
           Flexible(
-            // Fixed: Wrapped text to prevent overflow
             child: Text(
               label,
               style: TextStyle(
