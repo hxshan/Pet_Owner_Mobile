@@ -26,4 +26,26 @@ class VaccinationService {
       return [];
     }
   }
+
+  /// Fetches vaccinations for a specific pet.
+  /// Calls GET /vaccination/pet/{petId} with the auth token.
+  Future<List<VaccinationModel>> fetchPetVaccinations(String petId) async {
+    try {
+      final response = await _dio.get(
+        '/vaccination/pet/$petId',
+        options: Options(extra: {'requiresAuth': true}),
+      );
+
+      final data = response.data;
+      if (data == null || data['data'] == null) return [];
+
+      final List raw = data['data'];
+      return raw
+          .map((e) => VaccinationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('Error fetching pet vaccinations: $e');
+      return [];
+    }
+  }
 }

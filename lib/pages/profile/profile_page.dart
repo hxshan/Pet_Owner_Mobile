@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/user_model.dart';
 import 'package:pet_owner_mobile/services/auth.dart';
 import 'package:pet_owner_mobile/services/profile_service.dart';
+import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -465,7 +466,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (context) {
+      builder: (dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(sw * 0.05),
@@ -523,7 +524,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             borderRadius: BorderRadius.circular(sw * 0.02),
                           ),
                         ),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(dialogContext),
                         child: Text(
                           "Cancel",
                           style: TextStyle(
@@ -552,8 +553,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 try {
                                   final authService = AuthService();
                                   await authService.logout();
-                                  Navigator.pop(context);
-                                  context.goNamed('LoginPage');
+                                  if (context.mounted) {
+                                    PetScope.of(context).clear();
+                                    // Dismiss the dialog using its own context,
+                                    // then replace the entire route stack with login
+                                    Navigator.of(dialogContext).pop();
+                                    context.go('/login');
+                                  }
                                 } catch (e) {
                                   setState(() => _isLoggingOut = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
