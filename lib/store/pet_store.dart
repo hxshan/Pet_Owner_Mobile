@@ -95,4 +95,15 @@ class PetStore extends ChangeNotifier {
     _petDetails.remove(petId);
     await refresh();
   }
+
+  /// Wipe all in-memory cached data.
+  /// Call this on logout so the next user starts with a clean slate.
+  void clear() {
+    _pets = [];
+    _loaded = false;
+    _loading = false;
+    _petDetails.clear();
+    _loadingDetails.clear();
+    notifyListeners();
+  }
 }

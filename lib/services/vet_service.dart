@@ -71,11 +71,11 @@ class VetService {
   }
 
   /// Fetches the upcoming appointments for the currently logged-in pet owner.
-  /// Calls GET /my/upcoming with the auth token.
+  /// Calls GET /appointments/my/upcoming with the auth token.
   Future<List<AppointmentModel>> fetchUpcomingAppointments() async {
     try {
       final response = await _dio.get(
-        '/my/upcoming',
+        '/appointments/my/upcoming',
         options: Options(extra: {'requiresAuth': true}),
       );
 

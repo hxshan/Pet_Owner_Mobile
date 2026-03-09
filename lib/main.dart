@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -14,8 +13,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // No permission prompt here
-  await PushService.instance.initSilent();
+  // Silently init push notifications — failures must not block startup
+  try {
+    await PushService.instance.initSilent();
+  } catch (_) {}
 
   runApp(const MyApp());
 

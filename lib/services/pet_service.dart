@@ -94,8 +94,6 @@ class PetService {
     required String gender,
     required String weight,
     required String color,
-    required String health,
-    required String lifeStatus,
     required bool neutered,
   }) async {
     final response = await _dio.put(
@@ -106,15 +104,8 @@ class PetService {
         'species': species,
         'dob': dob.toIso8601String(),
         'gender': gender,
-        'weightHistory': [
-          {
-            'weight': double.tryParse(weight) ?? 0,
-            'date': DateTime.now().toIso8601String(),
-          },
-        ],
+        'weight': double.tryParse(weight) ?? 0,
         'color': color,
-        'health': health,
-        'lifeStatus': lifeStatus,
         'neutered': neutered,
       },
       options: Options(

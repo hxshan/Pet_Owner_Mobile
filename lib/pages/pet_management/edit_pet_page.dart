@@ -27,15 +27,11 @@ class _EditPetScreenState extends State<EditPetScreen> {
   bool _submitting = false;
   String? _selectedSpecies;
   String? _selectedGender;
-  String? _selectedHealth;
-  String? _selectedLifeStatus;
   bool _neutered = false;
   DateTime? _selectedDOB;
 
   final List<String> _animals = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Hamster', 'Other'];
   final List<String> _genders = ['Male', 'Female', 'Unknown'];
-  final List<String> _healthStatus = ['Good', 'Fair', 'Poor', 'Critical'];
-  final List<String> _lifeStatuses = ['Alive', 'Deceased'];
 
   @override
   void initState() {
@@ -86,20 +82,6 @@ class _EditPetScreenState extends State<EditPetScreen> {
         orElse: () => 'Unknown',
       );
 
-      // Normalize health
-      final rawHealth = data['health'] as String? ?? '';
-      final matchedHealth = _healthStatus.firstWhere(
-        (h) => h.toLowerCase() == rawHealth.toLowerCase(),
-        orElse: () => '',
-      );
-
-      // Normalize lifeStatus
-      final rawLife = data['lifeStatus'] as String? ?? '';
-      final matchedLife = _lifeStatuses.firstWhere(
-        (l) => l.toLowerCase() == rawLife.toLowerCase(),
-        orElse: () => '',
-      );
-
       setState(() {
         _petNameController.text = data['name'] ?? '';
         _breedController.text = data['breed'] ?? '';
@@ -108,8 +90,6 @@ class _EditPetScreenState extends State<EditPetScreen> {
         _selectedDOB = dob;
         _selectedSpecies = matchedSpecies.isEmpty ? null : matchedSpecies;
         _selectedGender = matchedGender;
-        _selectedHealth = matchedHealth.isEmpty ? null : matchedHealth;
-        _selectedLifeStatus = matchedLife.isEmpty ? null : matchedLife;
         final neuteredVal = data['neutered'];
         _neutered = neuteredVal == true || neuteredVal == 'yes';
         _loading = false;
@@ -152,8 +132,6 @@ class _EditPetScreenState extends State<EditPetScreen> {
         gender: _selectedGender!,
         weight: _weightController.text.trim(),
         color: _colorController.text.trim(),
-        health: _selectedHealth!,
-        lifeStatus: _selectedLifeStatus!,
         neutered: _neutered,
       );
 
@@ -309,36 +287,6 @@ class _EditPetScreenState extends State<EditPetScreen> {
                           sh: sh,
                           validator: (v) =>
                               (v == null || v.trim().isEmpty) ? 'Please enter color' : null,
-                        ),
-
-                        SizedBox(height: sh * 0.02),
-
-                        // ── Overall Health ────────────────────────────────
-                        _buildLabel('Overall Health', sw * 0.035),
-                        _buildDropdown(
-                          value: _selectedHealth,
-                          items: _healthStatus,
-                          hintText: 'Select health status',
-                          onChanged: (v) => setState(() => _selectedHealth = v),
-                          sw: sw,
-                          sh: sh,
-                          validator: (v) =>
-                              (v == null || v.isEmpty) ? 'Please select health status' : null,
-                        ),
-
-                        SizedBox(height: sh * 0.02),
-
-                        // ── Life Status ───────────────────────────────────
-                        _buildLabel('Life Status', sw * 0.035),
-                        _buildDropdown(
-                          value: _selectedLifeStatus,
-                          items: _lifeStatuses,
-                          hintText: 'Select life status',
-                          onChanged: (v) => setState(() => _selectedLifeStatus = v),
-                          sw: sw,
-                          sh: sh,
-                          validator: (v) =>
-                              (v == null || v.isEmpty) ? 'Please select life status' : null,
                         ),
 
                         SizedBox(height: sh * 0.02),

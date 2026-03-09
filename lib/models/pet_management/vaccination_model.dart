@@ -53,8 +53,14 @@ class VaccinationModel {
 
     return VaccinationModel(
       id: (json['_id'] ?? json['id'] ?? '').toString(),
-      pet: VaccinationPet.fromJson(
-          json['pet'] as Map<String, dynamic>? ?? {}),
+      pet: json['pet'] is Map<String, dynamic>
+          ? VaccinationPet.fromJson(json['pet'] as Map<String, dynamic>)
+          : VaccinationPet(
+              id: json['pet']?.toString() ?? '',
+              name: '',
+              species: '',
+              breed: '',
+            ),
       vaccineName: json['vaccineName'] as String? ?? '',
       dose: json['dose'] as String? ?? '',
       route: json['route'] as String? ?? '',

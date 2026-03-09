@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:pet_owner_mobile/models/pet_management/vaccination_model.dart';
+import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
+import 'package:pet_owner_mobile/services/vaccination_service.dart';
+import 'package:pet_owner_mobile/services/vet_service.dart';
 import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Appointment_card.dart';
 import 'package:pet_owner_mobile/widgets/pet_management/Vaccination_card.dart';
-import 'package:pet_owner_mobile/widgets/pet_management/medical_report_card.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -22,12 +26,52 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
   late Future<Map<String, dynamic>> _petFuture;
   bool _didInit = false;
 
+  List<AppointmentModel> _appointments = [];
+  List<VaccinationModel> _vaccinations = [];
+  bool _appointmentsLoading = true;
+  bool _vaccinationsLoading = true;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_didInit) {
       _didInit = true;
       _petFuture = PetScope.of(context).getPetDetail(widget.petId);
+      _loadAppointments();
+      _loadVaccinations();
+    }
+  }
+
+  Future<void> _loadAppointments() async {
+    try {
+      final all = await VetService().fetchUpcomingAppointments();
+      final filtered = all
+          .where((a) => a.pet.id == widget.petId)
+          .take(3)
+          .toList();
+      if (mounted) {
+        setState(() {
+          _appointments = filtered;
+          _appointmentsLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _appointmentsLoading = false);
+    }
+  }
+
+  Future<void> _loadVaccinations() async {
+    try {
+      final all = await VaccinationService().fetchPetVaccinations(widget.petId);
+      final top3 = all.take(3).toList();
+      if (mounted) {
+        setState(() {
+          _vaccinations = top3;
+          _vaccinationsLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _vaccinationsLoading = false);
     }
   }
 
@@ -387,27 +431,38 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
 
                       SizedBox(height: sh * 0.015),
 
-                      appointmentCard(
-                        sw,
-                        sh,
-                        'Annual Checkup',
-                        'Dr. Sarah Johnson',
-                        '25/03/2025',
-                        '10:30 AM',
-                        Colors.blue,
-                      ),
-
-                      SizedBox(height: sh * 0.012),
-
-                      appointmentCard(
-                        sw,
-                        sh,
-                        'Dental Cleaning',
-                        'Dr. Mike Smith',
-                        '05/04/2025',
-                        '02:00 PM',
-                        Colors.orange,
-                      ),
+                      if (_appointmentsLoading)
+                        const Center(child: CircularProgressIndicator())
+                      else if (_appointments.isEmpty)
+                        _buildEmptyState(sw, sh, 'No upcoming appointments')
+                      else
+                        ..._appointments.asMap().entries.map((entry) {
+                          final i = entry.key;
+                          final a = entry.value;
+                          final dateStr = DateFormat('dd/MM/yyyy').format(a.startTime.toLocal());
+                          final timeStr = DateFormat('hh:mm a').format(a.startTime.toLocal());
+                          return Column(
+                            children: [
+                              appointmentCard(
+                                sw,
+                                sh,
+                                a.veterinarian.specialization.isNotEmpty
+                                    ? a.veterinarian.specialization
+                                    : 'Vet Appointment',
+                                'Dr. ${a.veterinarian.fullName}',
+                                dateStr,
+                                timeStr,
+                                AppColors.darkPink,
+                                status: a.status,
+                                confirmationStatus: a.confirmationStatus,
+                                petName: a.pet.name,
+                                clinicName: a.veterinarian.clinic.name,
+                              ),
+                              if (i < _appointments.length - 1)
+                                SizedBox(height: sh * 0.012),
+                            ],
+                          );
+                        }),
 
                       SizedBox(height: sh * 0.03),
 
@@ -418,67 +473,53 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
 
                       SizedBox(height: sh * 0.015),
 
-                      vaccinationCard(
-                        sw,
-                        sh,
-                        'Rabies Vaccine',
-                        '12/02/2025',
-                        'Next Due: 12/02/2026',
-                        true,
-                      ),
-
-                      SizedBox(height: sh * 0.012),
-
-                      vaccinationCard(
-                        sw,
-                        sh,
-                        'DHPP Vaccine',
-                        '15/01/2025',
-                        'Next Due: 15/01/2026',
-                        true,
-                      ),
-
-                      SizedBox(height: sh * 0.012),
-
-                      vaccinationCard(
-                        sw,
-                        sh,
-                        'Bordetella Vaccine',
-                        '20/12/2024',
-                        'Overdue: 20/12/2025',
-                        false,
-                      ),
+                      if (_vaccinationsLoading)
+                        const Center(child: CircularProgressIndicator())
+                      else if (_vaccinations.isEmpty)
+                        _buildEmptyState(sw, sh, 'No vaccinations recorded')
+                      else
+                        ..._vaccinations.asMap().entries.map((entry) {
+                          final i = entry.key;
+                          final v = entry.value;
+                          return Column(
+                            children: [
+                              VaccinationCard(vaccination: v),
+                              if (i < _vaccinations.length - 1)
+                                SizedBox(height: sh * 0.012),
+                            ],
+                          );
+                        }),
 
                       SizedBox(height: sh * 0.03),
 
-                      // Medical Reports Section
-                      _buildSectionHeader(sw, sh, 'Medical Reports', () {
-                        context.pushNamed('MedicalReportsScreen');
-                      }),
+                      // // Medical Reports Section
+                      // _buildSectionHeader(sw, sh, 'Medical Reports', () {
+                      //   context.pushNamed('MedicalReportsScreen');
+                      // }),
 
-                      SizedBox(height: sh * 0.015),
+                      // SizedBox(height: sh * 0.015),
 
-                      medicalReportCard(
-                        sw,
-                        sh,
-                        'Blood Test Results',
-                        '08/02/2025',
-                        'Dr. Sarah Johnson',
-                        Icons.description,
-                      ),
+                      // medicalReportCard(
+                      //   sw,
+                      //   sh,
+                      //   'Blood Test Results',
+                      //   '08/02/2025',
+                      //   'Dr. Sarah Johnson',
+                      //   Icons.description,
+                      // ),
 
-                      SizedBox(height: sh * 0.012),
+                      // SizedBox(height: sh * 0.012),
 
-                      medicalReportCard(
-                        sw,
-                        sh,
-                        'X-Ray Report',
-                        '22/01/2025',
-                        'Dr. Mike Smith',
-                        Icons.assessment,
-                      ),
+                      // medicalReportCard(
+                      //   sw,
+                      //   sh,
+                      //   'X-Ray Report',
+                      //   '22/01/2025',
+                      //   'Dr. Mike Smith',
+                      //   Icons.assessment,
+                      // ),
 
-                      SizedBox(height: sh * 0.03),
+                      // SizedBox(height: sh * 0.03),
                     ],
                   ),
                 ),
@@ -524,6 +565,21 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyState(double sw, double sh, String message) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: sh * 0.015),
+      child: Center(
+        child: Text(
+          message,
+          style: TextStyle(
+            fontSize: sw * 0.035,
+            color: Colors.black45,
+          ),
+        ),
+      ),
     );
   }
 
