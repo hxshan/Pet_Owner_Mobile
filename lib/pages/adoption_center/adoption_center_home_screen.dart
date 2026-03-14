@@ -60,6 +60,14 @@ class _AdoptionCenterHomeScreenState extends State<AdoptionCenterHomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      IconButton(
+                        onPressed: () => context.pop(),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        iconSize: 22,
+                      ),
+                      SizedBox(height: sh * 0.008),
                       Text(
                         'Adoption Centers',
                         style: TextStyle(

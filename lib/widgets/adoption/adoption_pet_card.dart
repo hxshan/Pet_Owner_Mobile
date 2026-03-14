@@ -35,177 +35,171 @@ class _PetCardState extends State<PetCard> {
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
+        height: 115.h,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.3),
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8.r,
-              offset: Offset(0, 2.h),
+              color: Colors.grey.withOpacity(0.3),
+              offset: Offset(0, 5.h),
+              blurRadius: 0,
+              spreadRadius: 0,
             ),
           ],
         ),
         child: Row(
           children: [
-            // Pet Image
-            ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12.r),
-                bottomLeft: Radius.circular(12.r),
+            // Pet Image — with margin and inner border radius (old-style)
+            Container(
+              width: 100.w,
+              height: 130.h,
+              margin: EdgeInsets.only(
+                right: 10.w,
+                top: 5.h,
+                bottom: 5.h,
+                left: 5.w,
               ),
-              child: widget.pet.primaryImage.isNotEmpty
-                  ? Image.network(
-                      widget.pet.primaryImage,
-                      width: 100.w,
-                      height: 120.h,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 100.w,
-                          height: 120.h,
-                          color: AppColors.lightGray,
-                          child: Icon(
-                            Icons.pets,
-                            size: 40.sp,
-                            color: AppColors.mainColor,
-                          ),
-                        );
-                      },
-                    )
-                  : Container(
-                      width: 100.w,
-                      height: 120.h,
-                      color: AppColors.lightGray,
-                      child: Icon(
-                        Icons.pets,
-                        size: 40.sp,
-                        color: AppColors.mainColor,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(5.r),
+                child: widget.pet.primaryImage.isNotEmpty
+                    ? Image.network(
+                        widget.pet.primaryImage,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: AppColors.lightGray,
+                            child: Icon(
+                              Icons.pets,
+                              size: 40.sp,
+                              color: AppColors.mainColor,
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        color: AppColors.lightGray,
+                        child: Icon(
+                          Icons.pets,
+                          size: 40.sp,
+                          color: AppColors.mainColor,
+                        ),
                       ),
-                    ),
+              ),
             ),
 
             // Pet Details
             Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(12.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Pet Name
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Pet Name — 18sp, w500 (old style)
+                  Text(
+                    widget.pet.name,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  // Age
+                  if (widget.pet.age != null)
                     Text(
-                      widget.pet.name,
+                      '${widget.pet.age} yrs old',
                       style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 4.h),
-
-                    // Age
-                    Text(
-                      widget.pet.age != null ? '${widget.pet.age} yrs old' : '',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.black54,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black,
                       ),
                     ),
-                    SizedBox(height: 4.h),
 
-                    // Breed
-                    Text(
-                      widget.pet.breed,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.black54,
+                  // Breed
+                  Text(
+                    widget.pet.breed,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  SizedBox(height: 8.h),
+
+                  // Location — pink color (old style)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 16.sp,
+                        color: AppColors.darkPink,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 8.h),
-
-                    // Location with icon
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 14.sp,
-                          color: AppColors.darkPink,
-                        ),
-                        SizedBox(width: 4.w),
-                        Expanded(
-                          child: Text(
-                            widget.pet.locationLabel,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Colors.black54,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 6.h),
-
-                    // Adoption Fee
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.attach_money,
-                          size: 14.sp,
-                          color: widget.pet.adoptionFee == 0
-                              ? Colors.green
-                              : AppColors.darkPink,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          widget.pet.adoptionFee == 0
-                              ? 'Free'
-                              : '\$${widget.pet.adoptionFee.toStringAsFixed(0)}',
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          widget.pet.locationLabel,
                           style: TextStyle(
-                            fontSize: 13.sp,
-                            color: widget.pet.adoptionFee == 0
-                                ? Colors.green
-                                : Colors.black87,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.darkPink,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
-            // Favorite Button
-            Padding(
-              padding: EdgeInsets.only(right: 12.w),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isFavorite = !_isFavorite;
-                  });
-                  widget.onFavoriteToggle?.call(_isFavorite);
-                },
-                child: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: _isFavorite
-                        ? AppColors.mainColor.withOpacity(0.2)
-                        : AppColors.lightGray,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: _isFavorite ? AppColors.darkPink : Colors.grey,
-                    size: 20.sp,
+            // Right side: adoption fee + favorite button
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Favorite button (top-right)
+                Padding(
+                  padding: EdgeInsets.only(right: 8.w, top: 8.h),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => _isFavorite = !_isFavorite);
+                      widget.onFavoriteToggle?.call(_isFavorite);
+                    },
+                    child: Icon(
+                      _isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: _isFavorite ? AppColors.darkPink : Colors.grey,
+                      size: 20.sp,
+                    ),
                   ),
                 ),
-              ),
+
+                // Adoption fee (bottom-right) — pink, old-style
+                Padding(
+                  padding: EdgeInsets.only(right: 8.w, bottom: 8.h),
+                  child: Text(
+                    widget.pet.adoptionFee == 0
+                        ? 'Free'
+                        : '\$${widget.pet.adoptionFee.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.darkPink,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

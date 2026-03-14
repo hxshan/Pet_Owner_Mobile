@@ -10,6 +10,7 @@ class AdoptionPet {
   final bool? goodWithKids;
   final bool? goodWithPets;
   final String? description;
+  final String? color;
   final List<String> photos;
   final double adoptionFee;
   final String? adoptionCenterName;
@@ -28,6 +29,7 @@ class AdoptionPet {
     this.goodWithKids,
     this.goodWithPets,
     this.description,
+    this.color,
     this.photos = const [],
     this.adoptionFee = 0,
     this.adoptionCenterName,
@@ -53,6 +55,7 @@ class AdoptionPet {
     bool? goodWithKids,
     bool? goodWithPets,
     String? description,
+    String? color,
     List<String>? photos,
     double? adoptionFee,
     String? adoptionCenterName,
@@ -71,6 +74,7 @@ class AdoptionPet {
       goodWithKids: goodWithKids ?? this.goodWithKids,
       goodWithPets: goodWithPets ?? this.goodWithPets,
       description: description ?? this.description,
+      color: color ?? this.color,
       photos: photos ?? this.photos,
       adoptionFee: adoptionFee ?? this.adoptionFee,
       adoptionCenterName: adoptionCenterName ?? this.adoptionCenterName,
@@ -92,6 +96,7 @@ class AdoptionPet {
       'goodWithKids': goodWithKids,
       'goodWithPets': goodWithPets,
       'description': description,
+      'color': color,
       'photos': photos,
       'adoptionFee': adoptionFee,
       'adoptionCenterName': adoptionCenterName,
@@ -139,6 +144,7 @@ class AdoptionPet {
       goodWithKids: json['goodWithKids'] as bool?,
       goodWithPets: json['goodWithPets'] as bool?,
       description: json['description'] as String?,
+      color: json['color'] as String?,
       photos: photoList,
       adoptionFee: fee,
       adoptionCenterName: centerName,
@@ -151,12 +157,10 @@ class AdoptionPet {
 /// Holds the result from the recommendation endpoint
 class RecommendationResult {
   final List<AdoptionPet> pets;
-  final List<String> relaxedFilters;
   final int totalCandidates;
 
   const RecommendationResult({
     required this.pets,
-    required this.relaxedFilters,
     required this.totalCandidates,
   });
 }

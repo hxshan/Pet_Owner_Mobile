@@ -480,7 +480,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                                   extra: pet,
                                 );
                               },
-                              icon: Icon(Icons.favorite, size: sw * 0.05),
+                            
                               label: Text(
                                 'Apply for Adoption',
                                 style: TextStyle(
