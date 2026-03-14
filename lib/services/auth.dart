@@ -60,25 +60,25 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    // Best-effort: unregister FCM token from backend.
+    // If the token is expired or the call fails for any reason, we still
+    // complete the local logout — never block the user from logging out.
     try {
-      // Unregister this device token from backend
       final fcmToken = await PushService.instance.getStoredToken();
       if (fcmToken != null) {
         await PushService.instance.unregisterTokenFromBackend(fcmToken);
       }
-
-      // Clear in-memory and persisted profile cache before wiping storage so
-      // the in-memory cache does not remain after logout.
-      try {
-        await ProfileService().clearCachedProfile();
-      } catch (_) {}
-
-      await _storage.deleteAll();
-
-      print('User logged out successfully.');
     } catch (e) {
-      print('Logout failed: $e');
-      throw Exception('Failed to logout');
+      print('FCM unregister skipped (token likely expired): $e');
     }
+
+    // Always clear local data regardless of the backend call above.
+    try {
+      await ProfileService().clearCachedProfile();
+    } catch (_) {}
+
+    await _storage.deleteAll();
+
+    print('User logged out successfully.');
   }
 }

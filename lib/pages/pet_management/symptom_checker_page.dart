@@ -32,7 +32,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
   Timer? _phaseTimer;
   List<Map<String, dynamic>> _cnnPredictions = [];  // top_k from CNN API
 
-  // Pet context � prefilled from API, user fills in anything missing
+  // Pet context  prefilled from API, user fills in anything missing
   bool _petLoading = false;
   String _petName = '';
   String _petBreed = 'Unknown';
@@ -112,12 +112,12 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
   }
 
   static const _loadingPhases = [
-    'Looking at the image�',
-    'Identifying patterns�',
-    'Analysing skin condition�',
-    'Cross-referencing database�',
-    'Thinking�',
-    'Almost there�',
+    'Looking at the image',
+    'Identifying patterns',
+    'Analysing skin condition',
+    'Cross-referencing database',
+    'Thinking',
+    'Almost there',
   ];
 
   void _startPhaseAnimation() {
@@ -749,7 +749,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           const Center(child: CircularProgressIndicator()),
           const SizedBox(height: 16),
           Center(
-            child: Text('Loading pet details�',
+            child: Text('Loading pet details',
                 style: TextStyle(color: Colors.grey.shade600)),
           ),
         ],
@@ -819,7 +819,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        prefilled.join(' � '),
+                        prefilled.join('  '),
                         style: TextStyle(
                             fontSize: 13, color: Colors.green.shade700),
                       ),
@@ -942,7 +942,7 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
   Future<void> _runAssessment() async {
     setState(() => _loadingAssessment = true);
 
-    // All 18 recognised symptom IDs � each becomes a 0/1 flag in the payload
+    // All 18 recognised symptom IDs  each becomes a 0/1 flag in the payload
     const allSymptoms = [
       'vomiting', 'diarrhea', 'dehydration', 'loss_appetite',
       'fever', 'lethargy', 'itching', 'red_skin', 'hair_loss',
@@ -995,9 +995,15 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
 
   // -- Results (manual) -------------------------------------------------------
   Widget _buildResults() {
+    final confidentPreds = _predictions
+        .where((p) => ((p['probability'] ?? 0) as num).toDouble() >= 0.5)
+        .toList();
+    final bool hasConfident = confidentPreds.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // -- Header banner --------------------------------------------------
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -1019,12 +1025,33 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+
+        // -- Book vet button (always at the top) ----------------------------
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => context.goNamed('VetHomeScreen'),
+            icon: const Icon(Icons.calendar_month_outlined, size: 18),
+            label: const Text('Book Vet Appointment',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.darkPink,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
         const SizedBox(height: 20),
+
         const Text(
           'Possible Diagnoses',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
+
         if (_predictions.isEmpty)
           Center(
             child: Padding(
@@ -1033,55 +1060,81 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
                   style: TextStyle(color: Colors.grey.shade500)),
             ),
           )
-        else
-          ..._predictions.take(3).map((p) {
+        else if (!hasConfident) ...[
+          // -- Low confidence error state ------------------------------------
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              border: Border.all(color: Colors.orange.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.warning_amber_rounded,
+                    color: Colors.orange.shade700, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Symptoms could not be diagnosed with confidence',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: Colors.orange.shade800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'The symptoms provided did not match any condition with sufficient confidence. An immediate vet visit is recommended for a proper examination.',
+                        style: TextStyle(
+                            color: Colors.grey.shade700, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else
+          ...confidentPreds.asMap().entries.map((entry) {
+            final i = entry.key;
+            final p = entry.value;
             final className = (p['class'] ?? 'Unknown') as String;
-            final confidence = ((p['probability'] ?? 0) as num).toDouble();
+            final confidence =
+                ((p['probability'] ?? 0) as num).toDouble();
             final info = diagnosisInfo.containsKey(className)
                 ? diagnosisInfo[className] as Map<String, dynamic>
                 : null;
-            final displayName = info?['common_name'] ?? _formatClassName(className);
+            final displayName =
+                info?['common_name'] ?? _formatClassName(className);
             return _DiagnosisCard(
-              rank: _predictions.indexOf(p) + 1,
+              rank: i + 1,
               conditionDisplay: displayName,
               confidence: confidence,
               info: info,
-              onBookVet: () => context.goNamed('VetHomeScreen'),
             );
           }).toList(),
+
         const SizedBox(height: 16),
         _DisclaimerBox(),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _resetChecker,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.darkPink,
-                  side: BorderSide(color: AppColors.darkPink),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('New Assessment'),
-              ),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _resetChecker,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.darkPink,
+              side: BorderSide(color: AppColors.darkPink),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => context.goNamed('VetHomeScreen'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.darkPink,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('Find a Vet'),
-              ),
-            ),
-          ],
+            child: const Text('New Assessment'),
+          ),
         ),
         const SizedBox(height: 24),
       ],
@@ -1090,6 +1143,11 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
 
   // -- Photo results ----------------------------------------------------------
   Widget _buildPhotoResults() {
+    final confidentPreds = _cnnPredictions
+        .where((p) => ((p['prob'] ?? 0) as num).toDouble() >= 0.5)
+        .toList();
+    final bool hasConfident = confidentPreds.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1117,6 +1175,25 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
           ),
         ),
         const SizedBox(height: 16),
+
+        // -- Book vet button (always at the top) ----------------------------
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => context.goNamed('VetHomeScreen'),
+            icon: const Icon(Icons.calendar_month_outlined, size: 18),
+            label: const Text('Book Vet Appointment',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.darkPink,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
 
         // -- Analyzed photo thumbnail ---------------------------------------
         if (_uploadedPhoto != null) ...[
@@ -1157,19 +1234,58 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               ),
             ),
           )
-        else
-          ..._cnnPredictions.asMap().entries.map((entry) {
+        else if (!hasConfident) ...[
+          // -- Low confidence error state ------------------------------------
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              border: Border.all(color: Colors.orange.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.warning_amber_rounded,
+                    color: Colors.orange.shade700, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Symptoms could not be diagnosed with confidence',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: Colors.orange.shade800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'The photo provided did not match any condition with sufficient confidence. An immediate vet visit is recommended for a proper examination.',
+                        style: TextStyle(
+                            color: Colors.grey.shade700, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else
+          ...confidentPreds.asMap().entries.map((entry) {
             final rank = entry.key + 1;
             final p = entry.value;
             final rawClass = (p['class'] ?? 'Unknown') as String;
             final prob = ((p['prob'] ?? 0) as num).toDouble();
-            final info = cnnSkinConditionInfo[rawClass] ?? cnnFallbackInfo(rawClass);
+            final info =
+                cnnSkinConditionInfo[rawClass] ?? cnnFallbackInfo(rawClass);
             return _CnnResultCard(
               rank: rank,
               rawClass: rawClass,
               info: info,
               confidence: prob,
-              onBookVet: () => context.goNamed('VetHomeScreen'),
             );
           }).toList(),
 
@@ -1179,36 +1295,19 @@ class _SymptomCheckerPageState extends State<SymptomCheckerPage> {
               'This AI analysis is based on visual patterns and should not replace a professional veterinary examination.',
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _resetChecker,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.darkPink,
-                  side: BorderSide(color: AppColors.darkPink),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('New Analysis'),
-              ),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _resetChecker,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.darkPink,
+              side: BorderSide(color: AppColors.darkPink),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => context.goNamed('VetHomeScreen'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.darkPink,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('Find a Vet'),
-              ),
-            ),
-          ],
+            child: const Text('New Analysis'),
+          ),
         ),
         const SizedBox(height: 24),
       ],
@@ -1487,14 +1586,12 @@ class _DiagnosisCard extends StatelessWidget {
   final String conditionDisplay;
   final double confidence;
   final Map<String, dynamic>? info;
-  final VoidCallback onBookVet;
 
   const _DiagnosisCard({
     required this.rank,
     required this.conditionDisplay,
     required this.confidence,
     required this.info,
-    required this.onBookVet,
   });
 
   @override
@@ -1597,24 +1694,6 @@ class _DiagnosisCard extends StatelessWidget {
                 ),
               ],
             ],
-            if (confidence < 0.6) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onBookVet,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkPink,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Book Vet Appointment',
-                      style: TextStyle(fontSize: 13)),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -1627,15 +1706,13 @@ class _CnnResultCard extends StatelessWidget {
   final int rank;
   final String rawClass;
   final Map<String, dynamic> info;
-  final double confidence; // 0.0 � 1.0
-  final VoidCallback onBookVet;
+  final double confidence; // 0.0 – 1.0
 
   const _CnnResultCard({
     required this.rank,
     required this.rawClass,
     required this.info,
     required this.confidence,
-    required this.onBookVet,
   });
 
   Color get _severityAccent {
@@ -1882,25 +1959,6 @@ class _CnnResultCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-              ),
-            ],
-            // -- Book vet CTA for lower confidence --------------------------
-            if (confidence < 0.6) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onBookVet,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkPink,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Book Vet Appointment',
-                      style: TextStyle(fontSize: 13)),
                 ),
               ),
             ],
