@@ -18,6 +18,14 @@
         android:label="PawConnect"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- Disable Impeller on Android — the OpenGLES backend causes a black
+             screen on x86_64 emulators and some physical devices. Skia is used
+             instead and has no such issue. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pet_owner_mobile/core/dio_client.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -50,17 +52,43 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> validateAndNavigate() async {
-     await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 2));
 
-     final token = await SecureStorage.getToken();
+    final token = await SecureStorage.getToken();
 
-     if(!mounted) return;
+    if (!mounted) return;
 
-     if (token != null && token.isNotEmpty) {
-       context.goNamed('DashboardScreen');
-     } else {
-       context.goNamed('WelcomePage');
-     }
+    if (token == null || token.isEmpty) {
+      context.goNamed('WelcomePage');
+      return;
+    }
+
+    // Verify the token is still valid. Cap the check at 5 s so a slow or
+    // unreachable backend never leaves the user staring at a black screen.
+    try {
+      await DioClient().dio
+          .get(
+            '/user/pet-owner/profile',
+            options: Options(
+              extra: {'requiresAuth': true},
+              sendTimeout: const Duration(seconds: 5),
+              receiveTimeout: const Duration(seconds: 5),
+            ),
+          )
+          .timeout(const Duration(seconds: 6));
+      if (!mounted) return;
+      context.goNamed('DashboardScreen');
+    } catch (e) {
+      if (!mounted) return;
+      final is401 = e is DioException && e.response?.statusCode == 401;
+      if (is401) {
+        await SecureStorage.clear();
+        context.goNamed('WelcomePage');
+      } else {
+        // Offline / timeout — token may still be valid; let the user in.
+        context.goNamed('DashboardScreen');
+      }
+    }
   }
 
   @override
