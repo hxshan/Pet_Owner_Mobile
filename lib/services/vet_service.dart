@@ -55,6 +55,20 @@ class VetService {
       } catch (_) {}
     }
 
+    // Parse lat/lng from MongoDB GeoJSON: coordinates = [lng, lat]
+    double? lat, lng;
+    final loc = clinic['location'];
+    if (loc != null && loc['coordinates'] is List) {
+      final coords = loc['coordinates'] as List;
+      if (coords.length == 2) {
+        lng = (coords[0] as num?)?.toDouble();
+        lat = (coords[1] as num?)?.toDouble();
+      }
+    }
+    // Fallback to top-level lat/lng (some geo-search responses)
+    lat ??= (v['lat'] as num?)?.toDouble();
+    lng ??= (v['lng'] as num?)?.toDouble();
+
     return VetModel(
       id: id.toString(),
       name: name.isNotEmpty ? name : (clinic['name'] ?? 'Unknown'),
@@ -63,10 +77,12 @@ class VetService {
       rating: 4.5,
       reviewCount: 0,
       address: address,
-  distance: distanceStr,
+      distance: distanceStr,
       openStatus: '',
       phone: phone ?? '',
       isOpen: true,
+      lat: lat,
+      lng: lng,
     );
   }
 

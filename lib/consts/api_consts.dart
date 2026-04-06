@@ -4,3 +4,10 @@
 // const String diagnosisBackendUrl = '';
 // const String backendUrl = 'http://192.168.1.17:5000/api/v1';
 // const String backendUrl = '';
+// const String backendUrl = 'http://10.0.2.2:5000/api/v1';
+// const String diagnosisBackendUrl = 'http://10.0.2.2:8000/api/v1';
+const String backendUrl = 'https://petbackend-production.up.railway.app/api/v1';
+// const String backendUrl = 'http://localhost:5000/api/v1';
+const String diagnosisBackendUrl = 'https://petdiagnosisservice-production.up.railway.app/api/v1';
+const openRouterApiKey = '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';
+const openRouterModel = 'gpt4o-mini';

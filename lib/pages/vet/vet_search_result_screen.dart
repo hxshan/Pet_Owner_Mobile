@@ -84,13 +84,13 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
     final double topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Header
+          // ── Header banner ──────────────────────────────────────────────
           Container(
             width: double.infinity,
-            color: AppColors.darkPink,
+            color: AppColors.mainColor.withOpacity(0.18),
             padding: EdgeInsets.only(
               top: topPadding + sh * 0.015,
               left: sw * 0.04,
@@ -105,14 +105,13 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
                     width: sw * 0.09,
                     height: sw * 0.09,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(sw * 0.025),
-                    ),
-                    child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
                       color: Colors.white,
-                      size: sw * 0.042,
+                      borderRadius: BorderRadius.circular(sw * 0.025),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 6, offset: const Offset(0, 2)),
+                      ],
                     ),
+                    child: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.darkPink, size: sw * 0.042),
                   ),
                 ),
                 SizedBox(width: sw * 0.034),
@@ -123,7 +122,7 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
                       Text(
                         'Vets near you',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.black87,
                           fontSize: sw * 0.048,
                           fontWeight: FontWeight.bold,
                           height: 1.2,
@@ -132,19 +131,12 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
                       SizedBox(height: sh * 0.003),
                       Row(
                         children: [
-                          Icon(
-                            Icons.location_on_outlined,
-                            color: Colors.white70,
-                            size: sw * 0.034,
-                          ),
+                          Icon(Icons.location_on_outlined, color: Colors.blue.shade600, size: sw * 0.034),
                           SizedBox(width: sw * 0.01),
                           Flexible(
-                                child: Text(
-                                  _displayLocation ?? widget.location,
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: sw * 0.033,
-                              ),
+                            child: Text(
+                              _displayLocation ?? widget.location,
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: sw * 0.033),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -167,12 +159,26 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
                 horizontal: sw * 0.04,
                 vertical: sh * 0.012,
               ),
-              child: Text(
-                '${_results.length} veterinarians found',
-                style: TextStyle(
-                  fontSize: sw * 0.034,
-                  color: const Color(0xFF666666),
-                ),
+              child: Row(
+                children: [
+                  Container(
+                    width: sw * 0.022,
+                    height: sw * 0.022,
+                    decoration: BoxDecoration(
+                      color: Colors.teal.shade600,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  SizedBox(width: sw * 0.02),
+                  Text(
+                    '${_results.length} veterinarians found',
+                    style: TextStyle(
+                      fontSize: sw * 0.034,
+                      color: const Color(0xFF444444),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
 
