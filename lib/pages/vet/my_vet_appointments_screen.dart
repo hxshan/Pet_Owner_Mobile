@@ -51,13 +51,13 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
     final double topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Header
+          // ── Header banner ──────────────────────────────────────────────
           Container(
             width: double.infinity,
-            color: AppColors.darkPink,
+            color: AppColors.mainColor.withOpacity(0.18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -70,12 +70,12 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                   ),
                   child: Row(
                     children: [
-                      CustomBackButton(showPadding: false, backgroundColor: Colors.white, iconColor: AppColors.darkPink,),
+                      CustomBackButton(showPadding: false, backgroundColor: Colors.white, iconColor: AppColors.darkPink),
                       SizedBox(width: sw * 0.035),
                       Text(
                         'My Appointments',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.black87,
                           fontSize: sw * 0.05,
                           fontWeight: FontWeight.bold,
                         ),
@@ -87,11 +87,11 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                 // TabBar
                 TabBar(
                   controller: _tabController,
-                  indicatorColor: Colors.white,
+                  indicatorColor: AppColors.darkPink,
                   indicatorWeight: 3,
                   indicatorSize: TabBarIndicatorSize.label,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white60,
+                  labelColor: AppColors.darkPink,
+                  unselectedLabelColor: Colors.grey.shade500,
                   labelStyle: TextStyle(
                     fontSize: sw * 0.038,
                     fontWeight: FontWeight.w600,
@@ -114,7 +114,7 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                                 vertical: sh * 0.002,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.darkPink,
                                 borderRadius: BorderRadius.circular(sw * 0.02),
                               ),
                               child: Text(
@@ -122,7 +122,7 @@ class _MyVetAppointmentsScreenState extends State<MyVetAppointmentsScreen>
                                 style: TextStyle(
                                   fontSize: sw * 0.026,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.darkPink,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -357,12 +357,12 @@ class _AppointmentCard extends StatelessWidget {
                   width: sw * 0.14,
                   height: sw * 0.14,
                   decoration: BoxDecoration(
-                    color: AppColors.mainColor.withOpacity(0.35),
+                    color: Colors.blue.shade600.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(sw * 0.03),
                   ),
                   child: Icon(
                     Icons.local_hospital_outlined,
-                    color: AppColors.darkPink,
+                    color: Colors.blue.shade600,
                     size: sw * 0.065,
                   ),
                 ),
@@ -404,8 +404,8 @@ class _AppointmentCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isUpcoming
-                        ? AppColors.mainColor.withOpacity(0.3)
-                        : const Color(0xFFF0F0F0),
+                        ? Colors.blue.shade600.withOpacity(0.1)
+                        : Colors.green.shade600.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(sw * 0.02),
                   ),
                   child: Text(
@@ -414,8 +414,8 @@ class _AppointmentCard extends StatelessWidget {
                       fontSize: sw * 0.028,
                       fontWeight: FontWeight.w600,
                       color: isUpcoming
-                          ? AppColors.darkPink
-                          : const Color(0xFF888888),
+                          ? Colors.blue.shade700
+                          : Colors.green.shade700,
                     ),
                   ),
                 ),
@@ -446,6 +446,7 @@ class _AppointmentCard extends StatelessWidget {
                         '${_weekdayShort(date.weekday)}, ${date.day} ${_monthShort(date.month)}',
                     sw: sw,
                     sh: sh,
+                    iconColor: Colors.blue.shade600,
                   ),
                 SizedBox(width: sw * 0.025),
                 _InfoPill(
@@ -453,6 +454,7 @@ class _AppointmentCard extends StatelessWidget {
                   label: time,
                   sw: sw,
                   sh: sh,
+                  iconColor: Colors.teal.shade600,
                 ),
               ],
             ),
@@ -808,29 +810,32 @@ class _InfoPill extends StatelessWidget {
   final IconData icon;
   final String label;
   final double sw, sh;
+  final Color? iconColor;
 
   const _InfoPill({
     required this.icon,
     required this.label,
     required this.sw,
     required this.sh,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = iconColor ?? AppColors.darkPink;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: sw * 0.03,
         vertical: sh * 0.007,
       ),
       decoration: BoxDecoration(
-        color: AppColors.lightGray,
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(sw * 0.02),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppColors.darkPink, size: sw * 0.036),
+          Icon(icon, color: color, size: sw * 0.036),
           SizedBox(width: sw * 0.015),
           Text(
             label,

@@ -65,14 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.mainColor.withOpacity(0.3),
-                    AppColors.mainColor.withOpacity(0.1),
-                  ],
-                ),
+                color: AppColors.mainColor.withOpacity(0.12),
               ),
               child: SafeArea(
                 child: Padding(
@@ -105,36 +98,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             height: sw * 0.28,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white,
+                              color: AppColors.mainColor.withOpacity(0.15),
                               border: Border.all(
-                                color: AppColors.mainColor,
+                                color: AppColors.darkPink,
                                 width: 3,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 4),
+                                  color: AppColors.darkPink.withOpacity(0.2),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
                             child: Icon(
                               Icons.person,
                               size: sw * 0.15,
-                              color: AppColors.mainColor,
+                              color: AppColors.darkPink,
                             ),
                           ),
                           Positioned(
                             bottom: 0,
                             right: 0,
                             child: GestureDetector(
-                              onTap: () {
-                                // Change profile picture
-                              },
+                              onTap: () {},
                               child: Container(
                                 padding: EdgeInsets.all(sw * 0.02),
                                 decoration: BoxDecoration(
-                                  color: AppColors.darkPink,
+                                  color: Colors.black87,
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: Colors.white,
@@ -160,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: TextStyle(
                           fontSize: sw * 0.06,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: Colors.black87,
                         ),
                       ),
 
@@ -171,22 +162,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         userEmail,
                         style: TextStyle(
                           fontSize: sw * 0.035,
-                          color: Colors.grey.shade600,
+                          color: Colors.grey.shade500,
                         ),
                       ),
 
-                      SizedBox(height: sh * 0.02),
+                      SizedBox(height: sh * 0.025),
 
-                      // Stats Row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildStatItem(sw, sh, _activePets.toString(), 'Pets'),
-                          _buildDivider(sh),
-                          _buildStatItem(sw, sh, _totalAppointments.toString(), 'Appointments'),
-                          _buildDivider(sh),
-                          _buildStatItem(sw, sh, '28', 'Records'),
-                        ],
+                      // Stats Row — neutral card background
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: sh * 0.018,
+                          horizontal: sw * 0.04,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(sw * 0.04),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.darkPink.withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildStatItem(sw, sh, _activePets.toString(), 'Pets'),
+                            _buildDivider(sh),
+                            _buildStatItem(sw, sh, _totalAppointments.toString(), 'Appointments'),
+                            _buildDivider(sh),
+                            _buildStatItem(sw, sh, '28', 'Records'),
+                          ],
+                        ),
                       ),
 
                       SizedBox(height: sh * 0.02),
@@ -361,7 +369,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         SizedBox(height: sh * 0.005),
         Text(
           label,
-          style: TextStyle(fontSize: sw * 0.032, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: sw * 0.032, color: Colors.grey.shade500),
         ),
       ],
     );
@@ -385,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: TextStyle(
             fontSize: sw * 0.04,
             fontWeight: FontWeight.bold,
-            color: Colors.grey.shade700,
+            color: AppColors.darkPink,
           ),
         ),
       ),
@@ -422,7 +430,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: EdgeInsets.all(sw * 0.025),
               decoration: BoxDecoration(
-                color: AppColors.mainColor.withOpacity(0.2),
+                color: AppColors.darkPink.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(sw * 0.02),
               ),
               child: Icon(icon, color: AppColors.darkPink, size: sw * 0.055),

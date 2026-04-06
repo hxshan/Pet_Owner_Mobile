@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
-import 'package:pet_owner_mobile/theme/button_styles.dart';
 import 'package:pet_owner_mobile/widgets/pet_card_widget.dart';
 import 'package:pet_owner_mobile/widgets/pet_updates_card_widget.dart';
 
@@ -29,6 +28,7 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
     final store = PetScope.of(context);
     final isLoading = store.isLoading || !store.isLoaded;
     final pets = store.pets.length > 2 ? store.pets.sublist(0, 2) : store.pets;
+    final hasMore = store.pets.length > 2;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -42,7 +42,7 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with title and button
+                // Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -51,9 +51,10 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                       style: TextStyle(
                         fontSize: sw * 0.06,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Colors.black87,
                       ),
                     ),
+                    // "New Pet" — outlined style, black border, no pink fill
                     GestureDetector(
                       onTap: () async {
                         await context.pushNamed('AddPetScreen');
@@ -62,17 +63,18 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                       child: Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: sw * 0.04,
-                          vertical: sh * 0.012,
+                          vertical: sh * 0.01,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.mainColor,
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black87, width: 1.2),
                           borderRadius: BorderRadius.circular(sw * 0.02),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.add,
-                              color: Colors.white,
+                              color: Colors.black87,
                               size: sw * 0.045,
                             ),
                             SizedBox(width: sw * 0.01),
@@ -80,8 +82,8 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                               'New Pet',
                               style: TextStyle(
                                 fontSize: sw * 0.032,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -97,7 +99,15 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                 if (isLoading)
                   const Center(child: CircularProgressIndicator())
                 else if (store.pets.isEmpty)
-                  const Center(child: Text('No pets found'))
+                  Center(
+                    child: Text(
+                      'No pets yet. Add your first pet!',
+                      style: TextStyle(
+                        fontSize: sw * 0.038,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  )
                 else
                   ListView.separated(
                     shrinkWrap: true,
@@ -115,21 +125,23 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                     },
                   ),
 
-                SizedBox(height: sh * 0.02),
-
-                // View All Button
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context.pushNamed('ViewAllPetsScreen');
-                    },
-                    style: AppButtonStyles.blackButton(context),
-                    child: Text(
-                      'View All',
-                      style: TextStyle(fontSize: sw * 0.032),
+                // "View All" only shown when there are more than 2 pets
+                if (hasMore) ...[
+                  SizedBox(height: sh * 0.02),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => context.pushNamed('ViewAllPetsScreen'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.darkPink,
+                        textStyle: TextStyle(
+                          fontSize: sw * 0.035,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      child: const Text('View All Pets'),
                     ),
                   ),
-                ),
+                ],
 
                 SizedBox(height: sh * 0.03),
 
@@ -137,19 +149,20 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                 Text(
                   'Important Updates',
                   style: TextStyle(
-                    fontSize: sw * 0.06,
+                    fontSize: sw * 0.055,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Colors.black87,
                   ),
                 ),
 
                 SizedBox(height: sh * 0.02),
 
-                // Missed Due Date Card
+                // Missed Due Date Card — red to signal urgency, matches
+                // the dashboard's red 'Vet Care' service accent
                 UpdateCard(
                   sw: sw,
                   sh: sh,
-                  backgroundColor: AppColors.errorMessage.withOpacity(0.1),
+                  backgroundColor: AppColors.errorMessage.withOpacity(0.08),
                   borderColor: AppColors.errorMessage,
                   title: 'DUE DATE MISSED',
                   date: '12/02/2025',
@@ -159,16 +172,17 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
 
                 SizedBox(height: sh * 0.02),
 
-                // Due Date Nearing Card
+                // Due Date Nearing Card — blue matches the dashboard's
+                // reminder cards and 'Shop' service icon accent
                 UpdateCard(
                   sw: sw,
                   sh: sh,
                   backgroundColor: const Color(0xFFE3F2FD),
-                  borderColor: const Color(0xFF2196F3),
+                  borderColor: Color(0xFF2196F3),
                   title: 'Due Date Nearing',
                   date: '15/02/2025',
                   description: 'Vaccination for Suddu Putha is due in 3 days',
-                  titleColor: const Color(0xFF2196F3),
+                  titleColor: Color(0xFF1565C0),
                 ),
 
                 SizedBox(height: sh * 0.03),
