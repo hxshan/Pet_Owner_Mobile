@@ -6,6 +6,7 @@ class User {
   final String? phone;
   final String? address;
   final List roles;
+  final String? profileImageUrl;
 
   final String? nicNumber;
   final bool? isNicVerified;
@@ -20,6 +21,7 @@ class User {
     this.email,
     this.phone,
     this.address,
+    this.profileImageUrl,
     this.nicNumber,
     this.isNicVerified,
     this.numberOfActivePets,
@@ -34,6 +36,7 @@ class User {
       email: json['email'],
       phone: json['phone'],
       address: json['address'],
+      profileImageUrl: json['profileImageUrl'] ?? json['profileImage'],
       roles: (json['roles'] as List?) ?? [],
       nicNumber: json['nicNumber'],
       isNicVerified: json['isNicVerified'],
@@ -48,6 +51,7 @@ class User {
     String? email,
     String? phone,
     String? address,
+    String? profileImageUrl,
     int? numberOfActivePets,
     int? numberOfAppointments,
   }) {
@@ -58,11 +62,12 @@ class User {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       address: address ?? this.address,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       roles: roles,
       nicNumber: nicNumber,
       isNicVerified: isNicVerified,
-      numberOfActivePets: numberOfActivePets,
-      numberOfAppointments: numberOfAppointments,
+      numberOfActivePets: numberOfActivePets ?? this.numberOfActivePets,
+      numberOfAppointments: numberOfAppointments ?? this.numberOfAppointments,
     );
   }
 }

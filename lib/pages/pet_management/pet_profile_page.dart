@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:pet_owner_mobile/models/pet_management/vaccination_model.dart';
 import 'package:pet_owner_mobile/models/vet/appointment_model.dart';
+import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/services/vaccination_service.dart';
 import 'package:pet_owner_mobile/services/vet_service.dart';
 import 'package:pet_owner_mobile/store/pet_scope.dart';
@@ -31,12 +35,24 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
   bool _appointmentsLoading = true;
   bool _vaccinationsLoading = true;
 
+  String? _profileImageUrl;
+  bool _isUploadingImage = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_didInit) {
       _didInit = true;
-      _petFuture = PetScope.of(context).getPetDetail(widget.petId);
+      _petFuture = PetScope.of(context).getPetDetail(widget.petId).then((pet) {
+        if (mounted) {
+          setState(() {
+            _profileImageUrl =
+                pet['profileImageUrl']?.toString() ??
+                pet['profileImage']?.toString();
+          });
+        }
+        return pet;
+      });
       _loadAppointments();
       _loadVaccinations();
     }
@@ -72,6 +88,40 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
       }
     } catch (_) {
       if (mounted) setState(() => _vaccinationsLoading = false);
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final XFile? picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1024,
+    );
+    if (picked == null) return;
+
+    setState(() => _isUploadingImage = true);
+    try {
+      final newUrl = await PetService().uploadPetProfileImage(
+        petId: widget.petId,
+        imageFile: File(picked.path),
+      );
+      // Also invalidate the pet detail cache so future loads get fresh data
+      PetScope.of(context).invalidatePetDetail(widget.petId);
+      setState(() {
+        _profileImageUrl = newUrl.isNotEmpty ? newUrl : _profileImageUrl;
+        _isUploadingImage = false;
+      });
+    } catch (e) {
+      setState(() => _isUploadingImage = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload image: $e'),
+            backgroundColor: AppColors.darkPink,
+          ),
+        );
+      }
     }
   }
 
@@ -284,29 +334,93 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                           SizedBox(height: sh * 0.02),
 
                           // Pet Avatar
-                          Container(
-                            width: sw * 0.28,
-                            height: sw * 0.28,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
-                              border: Border.all(
-                                color: AppColors.mainColor,
-                                width: 3,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 4),
+                          Stack(
+                            children: [
+                              Container(
+                                width: sw * 0.28,
+                                height: sw * 0.28,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                  border: Border.all(
+                                    color: AppColors.mainColor,
+                                    width: 3,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.pets,
-                              size: sw * 0.15,
-                              color: AppColors.mainColor,
-                            ),
+                                child: ClipOval(
+                                  child: _profileImageUrl != null &&
+                                          _profileImageUrl!.isNotEmpty
+                                      ? Image.network(
+                                          _profileImageUrl!,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder:
+                                              (_, child, progress) {
+                                            if (progress == null) return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: AppColors.mainColor,
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (_, __, ___) => Icon(
+                                            Icons.pets,
+                                            size: sw * 0.15,
+                                            color: AppColors.mainColor,
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.pets,
+                                          size: sw * 0.15,
+                                          color: AppColors.mainColor,
+                                        ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: _isUploadingImage
+                                      ? null
+                                      : _pickAndUploadImage,
+                                  child: Container(
+                                    padding: EdgeInsets.all(sw * 0.02),
+                                    decoration: BoxDecoration(
+                                      color: _isUploadingImage
+                                          ? Colors.grey
+                                          : Colors.black87,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: _isUploadingImage
+                                        ? SizedBox(
+                                            width: sw * 0.04,
+                                            height: sw * 0.04,
+                                            child:
+                                                const CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Icon(
+                                            Icons.camera_alt,
+                                            color: Colors.white,
+                                            size: sw * 0.04,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
 
                           SizedBox(height: sh * 0.015),
