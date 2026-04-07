@@ -131,8 +131,28 @@ class PetCard extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(sw * 0.03),
                 ),
-                child: Center(
-                  child: Icon(Icons.pets, size: sw * 0.1, color: Colors.white),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(sw * 0.03),
+                  child: pet.profileImageUrl != null &&
+                          pet.profileImageUrl!.isNotEmpty
+                      ? Image.network(
+                          pet.profileImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Icon(
+                              Icons.pets,
+                              size: sw * 0.1,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Icon(
+                            Icons.pets,
+                            size: sw * 0.1,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
 

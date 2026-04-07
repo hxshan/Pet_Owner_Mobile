@@ -173,14 +173,7 @@ class _EditProfilePageState extends State<EditProfileScreen> {
                             width: double.infinity,
                             padding: EdgeInsets.all(sw * 0.05),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.mainColor.withOpacity(0.5),
-                                  AppColors.darkPink.withOpacity(0.35),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: AppColors.lightGray,
                               borderRadius: BorderRadius.circular(sw * 0.04),
                             ),
                             child: Row(
@@ -195,7 +188,7 @@ class _EditProfilePageState extends State<EditProfileScreen> {
                                   ),
                                   child: Icon(
                                     Icons.person_outline_rounded,
-                                    color: AppColors.darkPink,
+                                    color: Colors.black54,
                                     size: sw * 0.08,
                                   ),
                                 ),
@@ -218,7 +211,7 @@ class _EditProfilePageState extends State<EditProfileScreen> {
                                         'Update your personal details below',
                                         style: TextStyle(
                                           fontSize: sw * 0.032,
-                                          color: Colors.black54,
+                                          color: Colors.black45,
                                         ),
                                       ),
                                     ],

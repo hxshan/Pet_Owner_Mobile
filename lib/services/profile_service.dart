@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -155,6 +156,45 @@ class ProfileService {
     }
 
     return 'Request failed${status != null ? " ($status)" : ""}: ${e.message}';
+  }
+
+  /// POST Upload / replace profile image
+  /// Sends the image as multipart/form-data to POST /user/profile-image.
+  /// On success, clears the cache so the next call to [getPetOwnerProfile]
+  /// returns fresh data including the new [profileImageUrl].
+  Future<String> uploadProfileImage(File imageFile) async {
+    try {
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.path.split(Platform.pathSeparator).last,
+        ),
+      });
+
+      final response = await _dio.post(
+        '/user/profile-image',
+        data: formData,
+        options: Options(
+          extra: {'requiresAuth': true},
+          contentType: 'multipart/form-data',
+        ),
+      );
+
+      // Clear cache so profile refreshes with new image URL
+      _cachedUser = null;
+      await _storage.delete(key: _cacheKey);
+
+      // Return the signed URL from the response if available
+      final data = response.data;
+      if (data is Map) {
+        return (data['profileImageUrl'] ?? data['profileImage'] ?? '').toString();
+      }
+      return '';
+    } on DioException catch (e) {
+      throw Exception(_readableDioError(e));
+    } catch (e) {
+      throw Exception('Failed to upload profile image: $e');
+    }
   }
 
   /// Clear cached profile both in-memory and persisted

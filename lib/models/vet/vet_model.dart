@@ -10,6 +10,8 @@ class VetModel {
   final String openStatus;
   final String phone;
   final bool isOpen;
+  final double? lat;
+  final double? lng;
 
   const VetModel({
     required this.id,
@@ -23,5 +25,7 @@ class VetModel {
     required this.openStatus,
     required this.phone,
     required this.isOpen,
+    this.lat,
+    this.lng,
   });
 }

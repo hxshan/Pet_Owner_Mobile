@@ -30,7 +30,6 @@ import 'package:pet_owner_mobile/pages/notification_page.dart';
 import 'package:pet_owner_mobile/pages/nutrition/meal_plan_details_page%20.dart';
 import 'package:pet_owner_mobile/pages/nutrition/nutrition_plan_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/add_pet_page.dart';
-import 'package:pet_owner_mobile/pages/pet_management/chat_screen.dart';
 import 'package:pet_owner_mobile/pages/pet_management/medical_reports_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/my_pets_page.dart';
 import 'package:pet_owner_mobile/pages/pet_management/pet_profile_page.dart';
@@ -61,66 +60,77 @@ import 'package:pet_owner_mobile/pages/vet/vet_search_result_screen.dart';
 import 'package:pet_owner_mobile/pages/welcome_page.dart';
 import 'package:pet_owner_mobile/widgets/navbar.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final _ecommerceNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
   debugLogDiagnostics: true,
-  navigatorKey: _rootNavigatorKey,
+  navigatorKey: rootNavigatorKey,
   routes: [
-    // Pages without NavBar
+    // Auth / onboarding pages — use NoTransitionPage so GoRouter never
+    // shows a black frame while animating between these routes.
     GoRoute(
       path: '/splash',
       name: 'splash',
-      builder: (context, state) => const SplashScreen(),
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: SplashScreen()),
     ),
     GoRoute(
       path: '/welcome',
       name: 'WelcomePage',
-      builder: (context, state) => const WelcomePage(),
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: WelcomePage()),
     ),
     GoRoute(
       path: '/getstarted',
       name: 'GetStartedPage',
-      builder: (context, state) => const GetStartedPage(),
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: GetStartedPage()),
     ),
     GoRoute(
       path: '/register',
       name: 'PersonalInfoPage',
-      builder: (context, state) => const PersonalInfoPage(),
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: PersonalInfoPage()),
     ),
     GoRoute(
       path: '/accountinfo',
       name: 'AccountInfoPage',
-      builder: (context, state) => const AccountInfoPage(),
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: AccountInfoPage()),
     ),
     GoRoute(
       path: '/login',
       name: 'LoginPage',
-      builder: (context, state) => const LoginPage(),
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: LoginPage()),
     ),
     GoRoute(
       path: '/animalinfo',
       name: 'AnimalInfoPage',
-      builder: (context, state) => const AnimalInfoPage(),
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: AnimalInfoPage()),
     ),
 
     // Pages with NavBar
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
-      builder: (context, state, child) => NavBarShell(child: child),
+      pageBuilder: (context, state, child) =>
+          NoTransitionPage(child: NavBarShell(child: child)),
       routes: [
         GoRoute(
           path: '/dashboard',
           name: 'DashboardScreen',
-          builder: (context, state) => const DashboardScreen(),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: DashboardScreen()),
         ),
         GoRoute(
           path: '/shop',
           name: 'shop',
-          builder: (context, state) => const PlaceholderPage(title: 'Shop'),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: PlaceholderPage(title: 'Shop')),
         ),
 
         GoRoute(
@@ -195,11 +205,6 @@ final GoRouter appRouter = GoRouter(
                 final petId = state.pathParameters['petId']!;
                 return SymptomCheckerPage(petId: petId);
               },
-            ),
-            GoRoute(
-              path: '/aichat',
-              name: 'ChatScreen',
-              builder: (context, state) => ChatScreen(),
             ),
             GoRoute(
               path: '/viewallpets',

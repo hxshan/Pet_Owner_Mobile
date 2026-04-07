@@ -33,11 +33,20 @@ class DioClient {
 
           handler.next(options);
         },
-        onError: (DioException e, handler) {
+        onError: (DioException e, handler) async {
+          // On 401, wipe the stored token so the next app launch routes
+          // correctly to the login screen via splash validation.
+          // Navigation is intentionally NOT done here — the interceptor has
+          // no reliable widget context, and firing go_router from the HTTP
+          // layer causes double-navigation races (black screen on startup).
+          if (e.response?.statusCode == 401) {
+            await SecureStorage.clear();
+          }
+
           final message =
               e.response?.data is Map && e.response?.data['message'] != null
-              ? e.response?.data['message']
-              : 'Something went wrong';
+                  ? e.response?.data['message']
+                  : 'Something went wrong';
 
           handler.reject(
             DioException(

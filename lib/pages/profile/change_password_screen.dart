@@ -138,14 +138,7 @@ class _ChangePasswordPageState extends State<ChangePasswordScreen> {
                       width: double.infinity,
                       padding: EdgeInsets.all(sw * 0.05),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.mainColor.withOpacity(0.5),
-                            AppColors.darkPink.withOpacity(0.35),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        color: AppColors.mainColor.withOpacity(0.18),
                         borderRadius: BorderRadius.circular(sw * 0.04),
                       ),
                       child: Row(
@@ -177,7 +170,7 @@ class _ChangePasswordPageState extends State<ChangePasswordScreen> {
                                   'Choose a strong password to keep your account safe',
                                   style: TextStyle(
                                       fontSize: sw * 0.032,
-                                      color: Colors.black54),
+                                      color: Colors.black45),
                                 ),
                               ],
                             ),
@@ -261,10 +254,10 @@ class _ChangePasswordPageState extends State<ChangePasswordScreen> {
                       width: double.infinity,
                       padding: EdgeInsets.all(sw * 0.04),
                       decoration: BoxDecoration(
-                        color: AppColors.mainColor.withOpacity(0.18),
+                        color: AppColors.mainColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(sw * 0.03),
                         border: Border.all(
-                            color: AppColors.mainColor.withOpacity(0.5)),
+                            color: AppColors.mainColor.withOpacity(0.4)),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/vet/vet_model.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class VetDetailScreen extends StatelessWidget {
   final VetModel vet;
@@ -16,7 +17,7 @@ class VetDetailScreen extends StatelessWidget {
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Scrollable content
@@ -59,73 +60,6 @@ class VetDetailScreen extends StatelessWidget {
                 ),
 
                 SizedBox(height: sh * 0.014),
-
-                // Gallery
-                _SectionCard(
-                  sw: sw,
-                  sh: sh,
-                  title: 'Gallery',
-                  child: SizedBox(
-                    height: sh * 0.155,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _mockGallery.length,
-                      separatorBuilder: (_, __) => SizedBox(width: sw * 0.03),
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () =>
-                              _showGalleryViewer(context, index, sw, sh),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(sw * 0.03),
-                            child: Container(
-                              width: sh * 0.155,
-                              height: sh * 0.155,
-                              color: AppColors.mainColor.withOpacity(
-                                0.25 + index * 0.08,
-                              ),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  // TODO: replace with real Image.network(url)
-                                  Icon(
-                                    _mockGallery[index].icon,
-                                    color: AppColors.darkPink.withOpacity(0.4),
-                                    size: sw * 0.12,
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: sh * 0.006,
-                                        horizontal: sw * 0.02,
-                                      ),
-                                      color: Colors.black26,
-                                      child: Text(
-                                        _mockGallery[index].label,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: sw * 0.026,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: sh * 0.014),
-
                 // Services
                 _SectionCard(
                   sw: sw,
@@ -187,59 +121,14 @@ class VetDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Map placeholder
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(sw * 0.03),
-                        child: Container(
-                          width: double.infinity,
-                          height: sh * 0.2,
-                          color: AppColors.mainColor.withOpacity(0.18),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Icon(
-                                Icons.map_outlined,
-                                size: sw * 0.2,
-                                color: AppColors.darkPink.withOpacity(0.12),
-                              ),
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.location_pin,
-                                    color: AppColors.darkPink,
-                                    size: sw * 0.1,
-                                  ),
-                                  SizedBox(height: sh * 0.006),
-                                  Text(
-                                    'Map Preview',
-                                    style: TextStyle(
-                                      color: AppColors.darkPink,
-                                      fontSize: sw * 0.034,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Replace with flutter_map or google_maps_flutter',
-                                    style: TextStyle(
-                                      color: AppColors.darkPink.withOpacity(
-                                        0.6,
-                                      ),
-                                      fontSize: sw * 0.026,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      // Tappable map preview — opens Google Maps
+                      _MapPreview(vet: vet, sw: sw, sh: sh),
                       SizedBox(height: sh * 0.014),
                       Row(
                         children: [
                           Icon(
                             Icons.location_on_outlined,
-                            color: AppColors.darkPink,
+                            color: Colors.blue.shade600,
                             size: sw * 0.042,
                           ),
                           SizedBox(width: sw * 0.02),
@@ -254,16 +143,14 @@ class VetDetailScreen extends StatelessWidget {
                             ),
                           ),
                           GestureDetector(
-                            onTap: () {
-                              // TODO: launch maps with vet coordinates
-                            },
+                            onTap: () => _MapPreview.openMaps(vet),
                             child: Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: sw * 0.032,
                                 vertical: sh * 0.009,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.mainColor.withOpacity(0.3),
+                                color: Colors.blue.shade600.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(sw * 0.02),
                               ),
                               child: Row(
@@ -271,14 +158,14 @@ class VetDetailScreen extends StatelessWidget {
                                 children: [
                                   Icon(
                                     Icons.directions_outlined,
-                                    color: AppColors.darkPink,
+                                    color: Colors.blue.shade600,
                                     size: sw * 0.036,
                                   ),
                                   SizedBox(width: sw * 0.012),
                                   Text(
                                     'Directions',
                                     style: TextStyle(
-                                      color: AppColors.darkPink,
+                                      color: Colors.blue.shade600,
                                       fontSize: sw * 0.032,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -350,20 +237,6 @@ class VetDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showGalleryViewer(
-    BuildContext context,
-    int initialIndex,
-    double sw,
-    double sh,
-  ) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black87,
-      builder: (_) =>
-          _GalleryViewer(initialIndex: initialIndex, sw: sw, sh: sh),
     );
   }
 }
@@ -506,7 +379,7 @@ class _HeroHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: AppColors.darkPink,
+      color: AppColors.mainColor.withOpacity(0.18),
       padding: EdgeInsets.only(
         top: topPadding + sh * 0.015,
         left: sw * 0.04,
@@ -523,12 +396,15 @@ class _HeroHeader extends StatelessWidget {
               width: sw * 0.09,
               height: sw * 0.09,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(sw * 0.025),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 6, offset: const Offset(0, 2)),
+                ],
               ),
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
+                color: AppColors.darkPink,
                 size: sw * 0.042,
               ),
             ),
@@ -542,10 +418,10 @@ class _HeroHeader extends StatelessWidget {
                 width: sw * 0.22,
                 height: sw * 0.22,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: AppColors.mainColor.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(sw * 0.04),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.5),
+                    color: AppColors.darkPink.withOpacity(0.3),
                     width: 2,
                   ),
                 ),
@@ -556,7 +432,7 @@ class _HeroHeader extends StatelessWidget {
                       )
                     : Icon(
                         Icons.local_hospital_outlined,
-                        color: Colors.white,
+                        color: AppColors.darkPink,
                         size: sw * 0.1,
                       ),
               ),
@@ -568,7 +444,7 @@ class _HeroHeader extends StatelessWidget {
                     Text(
                       vet.name,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.black87,
                         fontSize: sw * 0.052,
                         fontWeight: FontWeight.bold,
                         height: 1.2,
@@ -578,7 +454,7 @@ class _HeroHeader extends StatelessWidget {
                     Text(
                       vet.specialization,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.grey.shade600,
                         fontSize: sw * 0.034,
                       ),
                     ),
@@ -615,7 +491,7 @@ class _HeroHeader extends StatelessWidget {
                         Text(
                           '${vet.rating.toStringAsFixed(1)} (${vet.reviewCount})',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.black87,
                             fontSize: sw * 0.032,
                             fontWeight: FontWeight.w600,
                           ),
@@ -640,15 +516,31 @@ class _ContactRow extends StatelessWidget {
 
   const _ContactRow({required this.vet, required this.sw, required this.sh});
 
+  Future<void> _call() async {
+    final uri = Uri.parse('tel:${vet.phone}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _message() async {
+    final uri = Uri.parse('sms:${vet.phone}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (vet.phone.isEmpty) return const SizedBox.shrink();
     return Row(
       children: [
         Expanded(
           child: _ContactChip(
             icon: Icons.phone_outlined,
             label: 'Call',
-            onTap: () {}, // TODO: url_launcher tel:
+            color: Colors.blue.shade600,
+            onTap: _call,
             sw: sw,
             sh: sh,
           ),
@@ -658,17 +550,8 @@ class _ContactRow extends StatelessWidget {
           child: _ContactChip(
             icon: Icons.chat_bubble_outline_rounded,
             label: 'Message',
-            onTap: () {}, // TODO: url_launcher sms:
-            sw: sw,
-            sh: sh,
-          ),
-        ),
-        SizedBox(width: sw * 0.03),
-        Expanded(
-          child: _ContactChip(
-            icon: Icons.share_outlined,
-            label: 'Share',
-            onTap: () {}, // TODO: Share.share()
+            color: Colors.teal.shade600,
+            onTap: _message,
             sw: sw,
             sh: sh,
           ),
@@ -683,6 +566,7 @@ class _ContactChip extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final double sw, sh;
+  final Color? color;
 
   const _ContactChip({
     required this.icon,
@@ -690,20 +574,22 @@ class _ContactChip extends StatelessWidget {
     required this.onTap,
     required this.sw,
     required this.sh,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final chipColor = color ?? AppColors.darkPink;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(vertical: sh * 0.014),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: chipColor.withOpacity(0.08),
           borderRadius: BorderRadius.circular(sw * 0.03),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -711,7 +597,7 @@ class _ContactChip extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, color: AppColors.darkPink, size: sw * 0.055),
+            Icon(icon, color: chipColor, size: sw * 0.055),
             SizedBox(height: sh * 0.005),
             Text(
               label,
@@ -724,6 +610,138 @@ class _ContactChip extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// Map preview widget — tapping opens Google Maps
+class _MapPreview extends StatelessWidget {
+  final VetModel vet;
+  final double sw, sh;
+
+  const _MapPreview({required this.vet, required this.sw, required this.sh});
+
+  static Future<void> openMaps(VetModel vet) async {
+    late Uri uri;
+    if (vet.lat != null && vet.lng != null) {
+      uri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=${vet.lat},${vet.lng}',
+      );
+    } else {
+      uri = Uri.parse(
+        'https://maps.google.com/?q=${Uri.encodeComponent(vet.address)}',
+      );
+    }
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCoords = vet.lat != null && vet.lng != null;
+    // Static map tile via OpenStreetMap (no API key required)
+    final staticMapUrl = hasCoords
+        ? 'https://static-maps.yandex.ru/1.x/?lang=en_US&ll=${vet.lng},${vet.lat}&z=15&size=600,200&l=map&pt=${vet.lng},${vet.lat},pm2rdm'
+        : null;
+
+    return GestureDetector(
+      onTap: () => openMaps(vet),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(sw * 0.03),
+        child: Container(
+          width: double.infinity,
+          height: sh * 0.2,
+          color: Colors.blue.shade50,
+          child: staticMapUrl != null
+              ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      staticMapUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _mapFallback(sw, sh),
+                    ),
+                    // Tap overlay hint
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: sh * 0.008),
+                        color: Colors.black.withOpacity(0.35),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.open_in_new_rounded,
+                              color: Colors.white,
+                              size: sw * 0.035,
+                            ),
+                            SizedBox(width: sw * 0.015),
+                            Text(
+                              'Open in Maps',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: sw * 0.03,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : _mapFallback(sw, sh),
+        ),
+      ),
+    );
+  }
+
+  Widget _mapFallback(double sw, double sh) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Icon(
+          Icons.map_outlined,
+          size: sw * 0.2,
+          color: Colors.blue.shade100,
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.location_pin,
+              color: Colors.blue.shade600,
+              size: sw * 0.1,
+            ),
+            SizedBox(height: sh * 0.006),
+            Text(
+              'Tap to Open in Maps',
+              style: TextStyle(
+                color: Colors.blue.shade700,
+                fontSize: sw * 0.034,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: sh * 0.004),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
+              child: Text(
+                vet.address,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.blue.shade500,
+                  fontSize: sw * 0.028,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -849,7 +867,7 @@ class _HoursRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: sw * 0.035,
                   fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
-                  color: isToday ? AppColors.darkPink : const Color(0xFF444444),
+                  color: isToday ? Colors.teal.shade700 : const Color(0xFF444444),
                 ),
               ),
               if (isToday) ...[
@@ -860,14 +878,14 @@ class _HoursRow extends StatelessWidget {
                     vertical: sh * 0.002,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.mainColor.withOpacity(0.4),
+                    color: Colors.teal.shade600.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(sw * 0.02),
                   ),
                   child: Text(
                     'Today',
                     style: TextStyle(
                       fontSize: sw * 0.026,
-                      color: AppColors.darkPink,
+                      color: Colors.teal.shade700,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -880,7 +898,7 @@ class _HoursRow extends StatelessWidget {
             style: TextStyle(
               fontSize: sw * 0.035,
               fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,
-              color: isToday ? AppColors.darkPink : const Color(0xFF666666),
+              color: isToday ? Colors.teal.shade700 : const Color(0xFF666666),
             ),
           ),
         ],

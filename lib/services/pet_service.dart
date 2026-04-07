@@ -115,4 +115,33 @@ class PetService {
     );
     return response.data;
   }
+
+  /// PUT /pet/:petId/profile-image — upload a pet profile image.
+  /// Returns the new [profileImageUrl] from the response, or empty string.
+  Future<String> uploadPetProfileImage({
+    required String petId,
+    required File imageFile,
+  }) async {
+    final formData = FormData.fromMap({
+      'image': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: imageFile.path.split(Platform.pathSeparator).last,
+      ),
+    });
+
+    final response = await _dio.put(
+      '/pet/$petId/profile-image',
+      data: formData,
+      options: Options(
+        extra: {'requiresAuth': true},
+        contentType: 'multipart/form-data',
+      ),
+    );
+
+    final data = response.data;
+    if (data is Map) {
+      return (data['profileImageUrl'] ?? data['profileImage'] ?? '').toString();
+    }
+    return '';
+  }
 }

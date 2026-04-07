@@ -38,14 +38,7 @@ class HelpSupportScreen extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.all(sw * 0.05),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.mainColor.withOpacity(0.5),
-                    AppColors.darkPink.withOpacity(0.35),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: AppColors.mainColor.withOpacity(0.18),
                 borderRadius: BorderRadius.circular(sw * 0.04),
               ),
               child: Row(

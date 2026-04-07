@@ -7,6 +7,7 @@ class Pet {
   final String dob;
   final String? lifeStatus;
   final String? overallHealth;
+  final String? profileImageUrl;
 
   Pet({
     required this.id,
@@ -15,19 +16,22 @@ class Pet {
     required this.breed,
     required this.gender,
     required this.dob,
-    this.lifeStatus, this.overallHealth,
+    this.lifeStatus,
+    this.overallHealth,
+    this.profileImageUrl,
   });
 
   factory Pet.fromJson(Map<String, dynamic> json) {
     return Pet(
-      id: json['_id'],
+      id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? 'Unnamed',
       species: json['species'] ?? 'Unknown',
       breed: json['breed'] ?? '-',
       gender: json['gender'] ?? 'Unknown',
-      dob: json['dob'],
+      dob: json['dob'] ?? '',
       lifeStatus: json['lifeStatus'],
       overallHealth: json['health'],
+      profileImageUrl: json['profileImageUrl'] ?? json['profileImage'],
     );
   }
 }

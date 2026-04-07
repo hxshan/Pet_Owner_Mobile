@@ -263,14 +263,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                   padding: EdgeInsets.symmetric(
                       horizontal: sw * 0.06, vertical: sh * 0.022),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.darkPink,
-                        AppColors.darkPink.withOpacity(0.82),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: AppColors.mainColor.withOpacity(0.18),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(sw * 0.05),
                       topRight: Radius.circular(sw * 0.05),
@@ -281,11 +274,11 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                       Container(
                         padding: EdgeInsets.all(sw * 0.025),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.event_available_outlined,
-                            color: Colors.white, size: sw * 0.055),
+                            color: Colors.teal.shade600, size: sw * 0.055),
                       ),
                       SizedBox(width: sw * 0.035),
                       Column(
@@ -294,7 +287,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                           Text(
                             'Confirm Booking',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Colors.black87,
                               fontSize: sw * 0.046,
                               fontWeight: FontWeight.bold,
                             ),
@@ -302,7 +295,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                           Text(
                             'Review your appointment details',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.grey.shade600,
                               fontSize: sw * 0.03,
                             ),
                           ),
@@ -322,6 +315,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                         icon: Icons.local_hospital_outlined,
                         label: 'Veterinarian',
                         value: widget.vet.name,
+                        iconColor: Colors.blue.shade600,
                         sw: sw,
                         sh: sh,
                       ),
@@ -331,6 +325,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                         label: 'Date',
                         value:
                             '${_weekdayShort(_selectedDate.weekday)}, ${_selectedDate.day} ${_monthShort(_selectedDate.month)} ${_selectedDate.year}',
+                        iconColor: Colors.blue.shade600,
                         sw: sw,
                         sh: sh,
                       ),
@@ -339,6 +334,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                         icon: Icons.access_time_outlined,
                         label: 'Time',
                         value: _selectedTime!,
+                        iconColor: Colors.teal.shade600,
                         sw: sw,
                         sh: sh,
                       ),
@@ -347,6 +343,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                         icon: Icons.pets,
                         label: 'Pet',
                         value: petName,
+                        iconColor: AppColors.darkPink,
                         sw: sw,
                         sh: sh,
                       ),
@@ -355,6 +352,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                         icon: Icons.location_on_outlined,
                         label: 'Location',
                         value: widget.vet.address,
+                        iconColor: Colors.orange.shade700,
                         sw: sw,
                         sh: sh,
                         isMultiLine: true,
@@ -519,7 +517,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -527,10 +525,10 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
+                // ── Header banner ──────────────────────────────────────────────
                 Container(
                   width: double.infinity,
-                  color: AppColors.darkPink,
+                  color: AppColors.mainColor.withOpacity(0.18),
                   padding: EdgeInsets.only(
                     top: topPadding + sh * 0.015,
                     left: sw * 0.04,
@@ -552,7 +550,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                       Text(
                         'Book Appointment',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.black87,
                           fontSize: sw * 0.056,
                           fontWeight: FontWeight.bold,
                           height: 1.15,
@@ -565,7 +563,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                         children: [
                           Icon(
                             Icons.local_hospital_outlined,
-                            color: Colors.white70,
+                            color: Colors.blue.shade600,
                             size: sw * 0.036,
                           ),
                           SizedBox(width: sw * 0.015),
@@ -573,7 +571,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                             child: Text(
                               widget.vet.name,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.88),
+                                color: Colors.grey.shade700,
                                 fontSize: sw * 0.034,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -588,7 +586,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                         children: [
                           Icon(
                             Icons.location_on_outlined,
-                            color: Colors.white60,
+                            color: Colors.grey.shade500,
                             size: sw * 0.032,
                           ),
                           SizedBox(width: sw * 0.015),
@@ -596,7 +594,7 @@ class _VetBookingScreenState extends State<VetBookingScreen> {
                             child: Text(
                               widget.vet.address,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.65),
+                                color: Colors.grey.shade500,
                                 fontSize: sw * 0.031,
                               ),
                               maxLines: 1,
@@ -1069,6 +1067,7 @@ class _ConfirmRow extends StatelessWidget {
   final String value;
   final double sw, sh;
   final bool isMultiLine;
+  final Color? iconColor;
 
   const _ConfirmRow({
     required this.icon,
@@ -1077,10 +1076,12 @@ class _ConfirmRow extends StatelessWidget {
     required this.sw,
     required this.sh,
     this.isMultiLine = false,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = iconColor ?? AppColors.darkPink;
     return Padding(
       padding: EdgeInsets.symmetric(vertical: sh * 0.009),
       child: Row(
@@ -1091,11 +1092,10 @@ class _ConfirmRow extends StatelessWidget {
             width: sw * 0.085,
             height: sw * 0.085,
             decoration: BoxDecoration(
-              color: AppColors.mainColor.withOpacity(0.2),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(sw * 0.02),
             ),
-            child:
-                Icon(icon, color: AppColors.darkPink, size: sw * 0.04),
+            child: Icon(icon, color: color, size: sw * 0.04),
           ),
           SizedBox(width: sw * 0.035),
           Expanded(
