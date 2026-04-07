@@ -3,6 +3,7 @@ enum NotificationType {
   vaccination,
   health,
   reminder,
+  dietUpdate,
   general,
   unknown,
 }
@@ -26,11 +27,35 @@ NotificationType notificationTypeFromApi(String? v) {
     case 'MEDICATION_REMINDER':
       return NotificationType.reminder;
 
+    case 'DIET_PLAN_UPDATE':
+      return NotificationType.dietUpdate;
+
     case 'GENERAL':
       return NotificationType.general;
 
     default:
       return NotificationType.unknown;
+  }
+}
+
+
+class NotificationChange {
+  final String field;
+  final String oldValue;
+  final String newValue;
+
+  NotificationChange({
+    required this.field,
+    required this.oldValue,
+    required this.newValue,
+  });
+
+  factory NotificationChange.fromJson(Map<String, dynamic> json) {
+    return NotificationChange(
+      field: json['field'] ?? '',
+      oldValue: json['oldValue'] ?? '',
+      newValue: json['newValue'] ?? '',
+    );
   }
 }
 
@@ -42,6 +67,10 @@ class AppNotification {
   final DateTime createdAt;
   final bool isRead;
 
+ 
+  final String severity;
+  final List<NotificationChange> changes;
+
   AppNotification({
     required this.id,
     required this.type,
@@ -49,13 +78,13 @@ class AppNotification {
     required this.message,
     required this.createdAt,
     required this.isRead,
+    required this.severity,
+    required this.changes,
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
-    // Backend sample: { _id, type, message, createdAt, isRead, ... }
     final type = notificationTypeFromApi(json['type']?.toString());
 
-    // If backend doesn't store title, we can generate a nice one by type
     String autoTitle(NotificationType t) {
       switch (t) {
         case NotificationType.appointment:
@@ -66,6 +95,8 @@ class AppNotification {
           return 'Health Alert';
         case NotificationType.reminder:
           return 'Reminder';
+        case NotificationType.dietUpdate:
+          return 'Diet Plan Review Alert';
         case NotificationType.general:
           return 'Notification';
         default:
@@ -83,6 +114,12 @@ class AppNotification {
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
       isRead: json['isRead'] == true,
+
+      
+      severity: (json['severity'] ?? 'low').toString(),
+      changes: (json['changes'] as List? ?? [])
+          .map((e) => NotificationChange.fromJson(e))
+          .toList(),
     );
   }
 }

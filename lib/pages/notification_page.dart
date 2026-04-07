@@ -55,19 +55,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _markAllAsRead() async {
     try {
       await NotificationService.instance.markAllRead();
+
       setState(() {
-        notifications = notifications
-            .map(
-              (n) => AppNotification(
-                id: n.id,
-                type: n.type,
-                title: n.title,
-                message: n.message,
-                createdAt: n.createdAt,
-                isRead: true,
-              ),
-            )
-            .toList();
+        notifications = notifications.map((n) {
+          return AppNotification(
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            message: n.message,
+            createdAt: n.createdAt,
+            isRead: true,
+            severity: n.severity,
+            changes: n.changes,
+          );
+        }).toList();
       });
     } catch (e) {
       _showSnack(e.toString());
@@ -75,25 +76,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _markOneRead(AppNotification n) async {
+    setState(() {
+      notifications = notifications.map((x) {
+        if (x.id == n.id) {
+          return AppNotification(
+            id: x.id,
+            type: x.type,
+            title: x.title,
+            message: x.message,
+            createdAt: x.createdAt,
+            isRead: true,
+            severity: x.severity,
+            changes: x.changes,
+          );
+        }
+        return x;
+      }).toList();
+    });
+
     try {
       await NotificationService.instance.markRead(n.id);
-      setState(() {
-        notifications = notifications.map((x) {
-          if (x.id == n.id) {
-            return AppNotification(
-              id: x.id,
-              type: x.type,
-              title: x.title,
-              message: x.message,
-              createdAt: x.createdAt,
-              isRead: true,
-            );
-          }
-          return x;
-        }).toList();
-      });
     } catch (e) {
-      _showSnack(e.toString());
+      _showSnack("Failed to mark as read");
     }
   }
 
@@ -198,11 +202,31 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         message: n.message,
                         time: NotificationService.instance.timeAgo(n.createdAt),
                         isRead: n.isRead,
+
+                        severity: n.severity,
+                        changes: n.changes,
+
                         onTap: () => _markOneRead(n),
-                        onDismiss: () {
+                        onDismiss: () async {
+                        
+                          final removed = n;
+
                           setState(() {
                             notifications.removeWhere((x) => x.id == n.id);
                           });
+
+                          
+                          try {
+                            await NotificationService.instance
+                                .deleteNotification(n.id);
+                          } catch (e) {
+                            
+                            setState(() {
+                              notifications.insert(0, removed);
+                            });
+
+                            _showSnack("Failed to delete notification");
+                          }
                         },
                       );
                     },
