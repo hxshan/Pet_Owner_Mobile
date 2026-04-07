@@ -41,6 +41,12 @@ class NotificationService {
       options: Options(extra: {'requiresAuth': true}),
     );
   }
+  Future<void> deleteNotification(String id) async {
+  await _dio.delete(
+    '/notifications/$id',
+    options: Options(extra: {'requiresAuth': true}),
+  );
+}
 
   /// Optional: friendly “time ago” helper for UI (if you still want the string)
   String timeAgo(DateTime dt) {

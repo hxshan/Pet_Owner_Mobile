@@ -10,6 +10,9 @@ class NotificationCard extends StatelessWidget {
   final String message;
   final String time;
   final bool isRead;
+  final String severity;
+  final List<NotificationChange> changes;
+
   final VoidCallback? onTap;
   final VoidCallback? onDismiss;
 
@@ -21,25 +24,21 @@ class NotificationCard extends StatelessWidget {
     required this.title,
     required this.message,
     required this.time,
+    required this.severity,
+    required this.changes,
     this.isRead = false,
     this.onTap,
     this.onDismiss,
   }) : super(key: key);
 
-  Color _getTypeColor() {
-    switch (type) {
-      case NotificationType.appointment:
-        return Colors.blue;
-      case NotificationType.vaccination:
-        return Colors.green;
-      case NotificationType.reminder:
+  Color _getSeverityColor() {
+    switch (severity) {
+      case 'high':
+        return Colors.red;
+      case 'medium':
         return Colors.orange;
-      case NotificationType.health:
-        return AppColors.errorMessage;
-      case NotificationType.general:
-        return Colors.grey;
-      case NotificationType.unknown:
-        return Colors.grey;
+      default:
+        return Colors.green;
     }
   }
 
@@ -53,26 +52,22 @@ class NotificationCard extends StatelessWidget {
         return Icons.notifications_active;
       case NotificationType.health:
         return Icons.favorite;
-      case NotificationType.general:
-        return Icons.info;
-      case NotificationType.unknown:
+      case NotificationType.dietUpdate:
+        return Icons.monitor_weight;
+      default:
         return Icons.info;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final typeColor = _getTypeColor();
-    final typeIcon = _getTypeIcon();
+    final color = _getSeverityColor();
+    final icon = _getTypeIcon();
 
     return Dismissible(
       key: Key(title + time),
       direction: DismissDirection.endToStart,
-      onDismissed: (direction) {
-        if (onDismiss != null) {
-          onDismiss!();
-        }
-      },
+      onDismissed: (_) => onDismiss?.call(),
       background: Container(
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: sw * 0.05),
@@ -88,40 +83,34 @@ class NotificationCard extends StatelessWidget {
           margin: EdgeInsets.only(bottom: sh * 0.015),
           padding: EdgeInsets.all(sw * 0.04),
           decoration: BoxDecoration(
-            color: isRead ? Colors.white : typeColor.withOpacity(0.05),
+            color: isRead ? Colors.white : color.withOpacity(0.05),
             borderRadius: BorderRadius.circular(sw * 0.03),
             border: Border.all(
-              color: isRead ? Colors.grey.shade300 : typeColor.withOpacity(0.3),
+              color: isRead ? Colors.grey.shade300 : color.withOpacity(0.4),
               width: 1.5,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icon Section
+              // ICON
               Container(
                 padding: EdgeInsets.all(sw * 0.03),
                 decoration: BoxDecoration(
-                  color: typeColor.withOpacity(0.2),
+                  color: color.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(sw * 0.02),
                 ),
-                child: Icon(typeIcon, color: typeColor, size: sw * 0.055),
+                child: Icon(icon, color: color, size: sw * 0.055),
               ),
 
               SizedBox(width: sw * 0.035),
 
-              // Content Section
+              // CONTENT
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // TITLE
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -131,16 +120,15 @@ class NotificationCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: sw * 0.04,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
                             ),
                           ),
                         ),
                         if (!isRead)
                           Container(
-                            width: sw * 0.022,
-                            height: sw * 0.022,
+                            width: sw * 0.02,
+                            height: sw * 0.02,
                             decoration: BoxDecoration(
-                              color: typeColor,
+                              color: color,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -149,32 +137,46 @@ class NotificationCard extends StatelessWidget {
 
                     SizedBox(height: sh * 0.006),
 
+                    // MESSAGE
                     Text(
                       message,
                       style: TextStyle(
                         fontSize: sw * 0.033,
                         color: Colors.grey.shade700,
-                        height: 1.3,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
 
-                    SizedBox(height: sh * 0.008),
+                    // CHANGES DISPLAY
+                    if (changes.isNotEmpty) ...[
+                      SizedBox(height: sh * 0.008),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: changes.map((c) {
+                          return Text(
+                            "${c.field}: ${c.oldValue} → ${c.newValue}",
+                            style: TextStyle(
+                              fontSize: sw * 0.03,
+                              color: color,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
 
+                    SizedBox(height: sh * 0.01),
+
+                    // TIME
                     Row(
                       children: [
-                        Icon(
-                          Icons.access_time,
-                          size: sw * 0.032,
-                          color: Colors.grey.shade500,
-                        ),
+                        Icon(Icons.access_time,
+                            size: sw * 0.03, color: Colors.grey),
                         SizedBox(width: sw * 0.01),
                         Text(
                           time,
                           style: TextStyle(
                             fontSize: sw * 0.028,
-                            color: Colors.grey.shade500,
+                            color: Colors.grey,
                           ),
                         ),
                       ],
