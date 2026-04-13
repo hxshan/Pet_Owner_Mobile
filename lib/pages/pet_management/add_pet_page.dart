@@ -1,8 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
-import 'dart:io';
 import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
@@ -17,21 +15,16 @@ class AddPetScreen extends StatefulWidget {
 class _AddPetScreenState extends State<AddPetScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Form controllers
   final _petNameController = TextEditingController();
   final _breedController = TextEditingController();
   final _ageController = TextEditingController();
   final _weightController = TextEditingController();
   final _colorController = TextEditingController();
 
-  final ImagePicker _imagePicker = ImagePicker();
-
-  // Form state
   String? _selectedAnimal;
   String? _selectedHealth;
   String? _selectedLifeStatus;
-  DateTime? _selectedDOB;
-  File? _selectedImage;
+  bool _isLoading = false;
 
   final List<String> _animals = [
     'Dog',
@@ -54,124 +47,71 @@ class _AddPetScreenState extends State<AddPetScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedDOB) {
-      setState(() {
-        _selectedDOB = picked;
-      });
-    }
-  }
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  // Image picker
-  Future<void> _pickImage(ImageSource source) async {
+    setState(() => _isLoading = true);
+
     try {
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: source,
-        imageQuality: 80,
-      );
-      if (pickedFile != null) {
-        setState(() {
-          _selectedImage = File(pickedFile.path);
-        });
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
-    }
-  }
+      final petService = PetService();
 
-  void _showImagePickerDialog(BuildContext context) {
-    final sw = MediaQuery.of(context).size.width;
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(sw * 0.05)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.all(sw * 0.05),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      final response = await petService.createPet(
+        name: _petNameController.text.trim(),
+        breed: _breedController.text.trim(),
+        animalType: _selectedAnimal!,
+        age: _ageController.text.trim(),
+        weight: _weightController.text.trim(),
+        color: _colorController.text.trim(),
+        health: _selectedHealth!,
+        lifeStatus: _selectedLifeStatus!,
+      );
+
+      if (!mounted) return;
+
+      final message =
+          response.containsKey('message') ? response['message'] : 'Pet added successfully!';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
             children: [
-              Text(
-                'Select Image Source',
-                style: TextStyle(
-                  fontSize: sw * 0.045,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: sw * 0.05),
-              ListTile(
-                leading: Icon(Icons.camera_alt, color: AppColors.darkPink),
-                title: Text('Camera'),
-                onTap: () => _pickImage(ImageSource.camera),
-              ),
-              ListTile(
-                leading: Icon(Icons.image, color: AppColors.darkPink),
-                title: Text('Gallery'),
-                onTap: () => _pickImage(ImageSource.gallery),
-              ),
-              SizedBox(height: sw * 0.02),
+              const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Text(message),
             ],
           ),
-        );
-      },
-    );
-  }
+          backgroundColor: Colors.green.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
 
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        final petService = PetService();
+      PetScope.of(context).refresh();
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) Navigator.pop(context);
+      });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final message = (e.response?.data is Map && e.response!.data.containsKey('message'))
+          ? e.response!.data['message']
+          : (e.message ?? 'Failed to add pet');
 
-        final response = await petService.createPet(
-          name: _petNameController.text,
-          breed: _breedController.text,
-          animalType: _selectedAnimal!,
-          dob: _selectedDOB!,
-          age: _ageController.text,
-          weight: _weightController.text,
-          color: _colorController.text,
-          health: _selectedHealth!,
-          lifeStatus: _selectedLifeStatus!,
-          image: _selectedImage,
-        );
-
-        if (!mounted) return;
-
-        String message = 'Pet added successfully!';
-        if (response.containsKey('message')) {
-          message = response['message'];
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.green),
-        );
-
-        PetScope.of(context).refresh();
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) Navigator.pop(context);
-        });
-      } on DioException catch (e) {
-        String message = 'Failed to add pet';
-        if (e.response?.data is Map &&
-            e.response!.data.containsKey('message')) {
-          message = e.response!.data['message'];
-        } else if (e.message != null) {
-          message = e.message!;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -186,364 +126,363 @@ class _AddPetScreenState extends State<AddPetScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: CustomBackButton(),
+        leading: const CustomBackButton(),
         title: Text(
           'Add New Pet',
           style: TextStyle(
-            fontSize: sw * 0.06,
-            fontWeight: FontWeight.bold,
+            fontSize: sw * 0.052,
+            fontWeight: FontWeight.w700,
             color: Colors.black,
+            letterSpacing: -0.3,
           ),
         ),
         centerTitle: false,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: sw * 0.05,
-              vertical: sh * 0.02,
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Pet Avatar Upload Section
-                  Center(
-                    child: GestureDetector(
-                      onTap: () => _showImagePickerDialog(context),
-                      child: Container(
-                        width: sw * 0.35,
-                        height: sw * 0.35,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: AppColors.mainColor,
-                            width: sw * 0.008,
-                          ),
-                          borderRadius: BorderRadius.circular(sw * 0.25),
-                          color: AppColors.lightGray,
-                        ),
-                        child: _selectedImage != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(sw * 0.25),
-                                child: Image.file(
-                                  _selectedImage!,
-                                  fit: BoxFit.cover,
+        child: Column(
+          children: [
+            // Divider below appbar
+            Container(height: 1, color: const Color(0xFFF0F0F0)),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: sw * 0.05,
+                  vertical: sh * 0.025,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Basic Information ──────────────────────────────
+                      _buildSectionHeader('Basic Information', sw),
+                      SizedBox(height: sh * 0.015),
+
+                      _buildFieldLabel('Pet Name', sw),
+                      _buildTextField(
+                        controller: _petNameController,
+                        hintText: 'e.g. Buddy',
+                        prefixIcon: Icons.pets,
+                        sw: sw,
+                        sh: sh,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Please enter a pet name' : null,
+                      ),
+
+                      SizedBox(height: sh * 0.018),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Animal Type', sw),
+                                _buildDropdown(
+                                  value: _selectedAnimal,
+                                  items: _animals,
+                                  hintText: 'Select type',
+                                  prefixIcon: Icons.category_outlined,
+                                  onChanged: (v) => setState(() => _selectedAnimal = v),
+                                  sw: sw,
+                                  sh: sh,
+                                  validator: (v) =>
+                                      (v == null || v.isEmpty) ? 'Required' : null,
                                 ),
-                              )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_a_photo,
-                                    size: sw * 0.12,
-                                    color: AppColors.darkPink,
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: sw * 0.03),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Breed', sw),
+                                _buildTextField(
+                                  controller: _breedController,
+                                  hintText: 'e.g. Labrador',
+                                  prefixIcon: Icons.info_outline,
+                                  sw: sw,
+                                  sh: sh,
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: sh * 0.018),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Age (years)', sw),
+                                _buildTextField(
+                                  controller: _ageController,
+                                  hintText: 'e.g. 3',
+                                  prefixIcon: Icons.cake_outlined,
+                                  keyboardType: TextInputType.number,
+                                  sw: sw,
+                                  sh: sh,
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: sw * 0.03),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Weight (kg)', sw),
+                                _buildTextField(
+                                  controller: _weightController,
+                                  hintText: 'e.g. 12.5',
+                                  prefixIcon: Icons.monitor_weight_outlined,
+                                  keyboardType: const TextInputType.numberWithOptions(
+                                    decimal: true,
                                   ),
-                                  SizedBox(height: sh * 0.01),
-                                  Text(
-                                    'Add Photo',
-                                    style: TextStyle(
-                                      fontSize: sw * 0.035,
-                                      color: AppColors.darkPink,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                  sw: sw,
+                                  sh: sh,
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: sh * 0.018),
+
+                      _buildFieldLabel('Color / Appearance', sw),
+                      _buildTextField(
+                        controller: _colorController,
+                        hintText: 'e.g. Golden with white patches',
+                        prefixIcon: Icons.palette_outlined,
+                        sw: sw,
+                        sh: sh,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Please describe appearance' : null,
+                      ),
+
+                      SizedBox(height: sh * 0.028),
+
+                      // ── Health & Status ────────────────────────────────
+                      _buildSectionHeader('Health & Status', sw),
+                      SizedBox(height: sh * 0.015),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Overall Health', sw),
+                                _buildDropdown(
+                                  value: _selectedHealth,
+                                  items: _healthStatus,
+                                  hintText: 'Select',
+                                  prefixIcon: Icons.favorite_border,
+                                  onChanged: (v) => setState(() => _selectedHealth = v),
+                                  sw: sw,
+                                  sh: sh,
+                                  validator: (v) =>
+                                      (v == null || v.isEmpty) ? 'Required' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: sw * 0.03),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Life Status', sw),
+                                _buildDropdown(
+                                  value: _selectedLifeStatus,
+                                  items: _lifeStatus,
+                                  hintText: 'Select',
+                                  prefixIcon: Icons.monitor_heart_outlined,
+                                  onChanged: (v) => setState(() => _selectedLifeStatus = v),
+                                  sw: sw,
+                                  sh: sh,
+                                  validator: (v) =>
+                                      (v == null || v.isEmpty) ? 'Required' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: sh * 0.04),
+
+                      // ── Action Buttons ─────────────────────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        height: sh * 0.062,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _submitForm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.darkPink,
+                            disabledBackgroundColor: AppColors.mainColor,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(sw * 0.03),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
                                   ),
-                                ],
-                              ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: sh * 0.03),
-
-                  // Pet Name Field
-                  _buildLabel('Pet Name', sw * 0.035),
-                  _buildTextField(
-                    controller: _petNameController,
-                    hintText: 'Enter pet name',
-                    sw: sw,
-                    sh: sh,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter pet name';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Animal Type Dropdown
-                  _buildLabel('Animal Type', sw * 0.035),
-                  _buildDropdown(
-                    value: _selectedAnimal,
-                    items: _animals,
-                    hintText: 'Select animal type',
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedAnimal = value;
-                      });
-                    },
-                    sw: sw,
-                    sh: sh,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select animal type';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Breed Field
-                  _buildLabel('Breed', sw * 0.035),
-                  _buildTextField(
-                    controller: _breedController,
-                    hintText: 'Enter breed',
-                    sw: sw,
-                    sh: sh,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter breed';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Date of Birth
-                  _buildLabel('Date of Birth', sw * 0.035),
-                  _buildDateField(
-                    sw: sw,
-                    sh: sh,
-                    selectedDate: _selectedDOB,
-                    onTap: () => _selectDate(context),
-                    validator: (value) {
-                      if (_selectedDOB == null) {
-                        return 'Please select date of birth';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Age Field
-                  _buildLabel('Age (years)', sw * 0.035),
-                  _buildTextField(
-                    controller: _ageController,
-                    hintText: 'Enter age',
-                    sw: sw,
-                    sh: sh,
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter age';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Weight Field
-                  _buildLabel('Weight (kg)', sw * 0.035),
-                  _buildTextField(
-                    controller: _weightController,
-                    hintText: 'Enter weight',
-                    sw: sw,
-                    sh: sh,
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter weight';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Color/Appearance Field
-                  _buildLabel('Color/Appearance', sw * 0.035),
-                  _buildTextField(
-                    controller: _colorController,
-                    hintText: 'Enter color or appearance',
-                    sw: sw,
-                    sh: sh,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter color or appearance';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Overall Health Dropdown
-                  _buildLabel('Overall Health', sw * 0.035),
-                  _buildDropdown(
-                    value: _selectedHealth,
-                    items: _healthStatus,
-                    hintText: 'Select health status',
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedHealth = value;
-                      });
-                    },
-                    sw: sw,
-                    sh: sh,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select health status';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Life Status Dropdown
-                  _buildLabel('Life Status', sw * 0.035),
-                  _buildDropdown(
-                    value: _selectedLifeStatus,
-                    items: _lifeStatus,
-                    hintText: 'Select life status',
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedLifeStatus = value;
-                      });
-                    },
-                    sw: sw,
-                    sh: sh,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select life status';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: sh * 0.04),
-
-                  // Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: sh * 0.06,
-                    child: ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.darkPink,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(sw * 0.02),
+                                )
+                              : Text(
+                                  'Add Pet',
+                                  style: TextStyle(
+                                    fontSize: sw * 0.038,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
                         ),
                       ),
-                      child: Text(
-                        'Add Pet',
-                        style: TextStyle(
-                          fontSize: sw * 0.032,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+
+                      SizedBox(height: sh * 0.015),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: sh * 0.062,
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFDDDDDD), width: 1.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(sw * 0.03),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: sw * 0.038,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+
+                      SizedBox(height: sh * 0.03),
+                    ],
                   ),
-
-                  SizedBox(height: sh * 0.02),
-
-                  // Cancel Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: sh * 0.06,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.black, width: 1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(sw * 0.02),
-                        ),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: sw * 0.032,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: sh * 0.03),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  // Lable
-  Widget _buildLabel(String label, double fontSize) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontSize: fontSize,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
+  Widget _buildSectionHeader(String title, double sw) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: sw * 0.045,
+          decoration: BoxDecoration(
+            color: AppColors.darkPink,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        SizedBox(width: sw * 0.025),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: sw * 0.04,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+            letterSpacing: 0.1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFieldLabel(String label, double sw) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: sw * 0.02),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: sw * 0.033,
+          fontWeight: FontWeight.w600,
+          color: Colors.black54,
+          letterSpacing: 0.1,
+        ),
       ),
     );
   }
 
-  // Text field component
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
+    required IconData prefixIcon,
     required double sw,
     required double sh,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
-    return Padding(
-      padding: EdgeInsets.only(top: sh * 0.01),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        validator: validator,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey[400]),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: sw * 0.04,
-            vertical: sh * 0.018,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: Color(0xFFE0E0E0)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: AppColors.darkPink, width: 2),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: Color(0xFFE0E0E0)),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: AppColors.errorMessage),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: AppColors.errorMessage, width: 2),
-          ),
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      validator: validator,
+      style: TextStyle(fontSize: sw * 0.035, color: Colors.black87),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: sw * 0.033),
+        prefixIcon: Icon(prefixIcon, color: AppColors.darkPink, size: sw * 0.048),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: sw * 0.04,
+          vertical: sh * 0.018,
         ),
-        style: TextStyle(fontSize: sw * 0.032),
+        filled: true,
+        fillColor: const Color(0xFFFAFAFA),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: BorderSide(color: AppColors.darkPink, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: BorderSide(color: AppColors.errorMessage, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: BorderSide(color: AppColors.errorMessage, width: 1.5),
+        ),
+        errorStyle: TextStyle(fontSize: sw * 0.028),
       ),
     );
   }
@@ -552,126 +491,57 @@ class _AddPetScreenState extends State<AddPetScreen> {
     required String? value,
     required List<String> items,
     required String hintText,
+    required IconData prefixIcon,
     required Function(String?) onChanged,
     required double sw,
     required double sh,
     String? Function(String?)? validator,
   }) {
-    return Padding(
-      padding: EdgeInsets.only(top: sh * 0.01),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        items: items
-            .map(
-              (item) => DropdownMenuItem(
-                value: item,
-                child: Text(item, style: TextStyle(fontSize: sw * 0.032)),
-              ),
-            )
-            .toList(),
-        onChanged: onChanged,
-        validator: validator,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey[400]),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: sw * 0.04,
-            vertical: sh * 0.018,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: Color(0xFFE0E0E0)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: AppColors.darkPink, width: 2),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: Color(0xFFE0E0E0)),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: AppColors.errorMessage),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(sw * 0.02),
-            borderSide: BorderSide(color: AppColors.errorMessage, width: 2),
-          ),
+    return DropdownButtonFormField<String>(
+      value: value,
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey[500], size: sw * 0.05),
+      items: items
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(item, style: TextStyle(fontSize: sw * 0.034, color: Colors.black87)),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: validator,
+      style: TextStyle(fontSize: sw * 0.034, color: Colors.black87),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: sw * 0.033),
+        prefixIcon: Icon(prefixIcon, color: AppColors.darkPink, size: sw * 0.048),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: sw * 0.04,
+          vertical: sh * 0.018,
         ),
-      ),
-    );
-  }
-
-  Widget _buildDateField({
-    required double sw,
-    required double sh,
-    required DateTime? selectedDate,
-    required VoidCallback onTap,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(top: sh * 0.01),
-      child: GestureDetector(
-        onTap: onTap,
-        child: FormField<String>(
-          validator: validator,
-          builder: (FormFieldState<String> state) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: sw * 0.04,
-                    vertical: sh * 0.018,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: state.hasError
-                          ? AppColors.errorMessage
-                          : Color(0xFFE0E0E0),
-                      width: state.hasError ? 1 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(sw * 0.02),
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        selectedDate != null
-                            ? '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
-                            : 'Select date',
-                        style: TextStyle(
-                          fontSize: sw * 0.032,
-                          color: selectedDate != null
-                              ? Colors.black
-                              : Colors.grey[400],
-                        ),
-                      ),
-                      Icon(
-                        Icons.calendar_today,
-                        color: AppColors.darkPink,
-                        size: sw * 0.05,
-                      ),
-                    ],
-                  ),
-                ),
-                if (state.hasError)
-                  Padding(
-                    padding: EdgeInsets.only(top: sh * 0.008),
-                    child: Text(
-                      state.errorText ?? '',
-                      style: TextStyle(
-                        color: AppColors.errorMessage,
-                        fontSize: sw * 0.028,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
+        filled: true,
+        fillColor: const Color(0xFFFAFAFA),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: BorderSide(color: AppColors.darkPink, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: BorderSide(color: AppColors.errorMessage, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(sw * 0.025),
+          borderSide: BorderSide(color: AppColors.errorMessage, width: 1.5),
+        ),
+        errorStyle: TextStyle(fontSize: sw * 0.028),
       ),
     );
   }

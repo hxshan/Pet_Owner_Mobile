@@ -10,23 +10,15 @@ class VetHomeScreen extends StatefulWidget {
 }
 
 class _VetHomeScreenState extends State<VetHomeScreen> {
-  final TextEditingController _locationController = TextEditingController();
+  // Radius options in km
+  static const List<int> _radiusOptions = [5, 10, 25, 50, 100];
+  int _selectedRadiusKm = 10;
 
-  void _onSearch() {
-    final query = _locationController.text.trim();
-    if (query.isEmpty) return;
-
-    context.pushNamed('VetSearchResultScreen', extra: query);
-  }
-
-  void _onUseCurrentLocation() {
-    context.pushNamed('VetSearchResultScreen', extra: 'Current Location');
-  }
-
-  @override
-  void dispose() {
-    _locationController.dispose();
-    super.dispose();
+  void _onFindVets() {
+    context.pushNamed('VetSearchResultScreen', extra: {
+      'radiusMeters': _selectedRadiusKm * 1000,
+      'radiusKm': _selectedRadiusKm,
+    });
   }
 
   @override
@@ -67,7 +59,7 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'VetFinder',
+                        'Vet Finder',
                         style: TextStyle(
                           color: Colors.black87,
                           fontSize: sw * 0.056,
@@ -114,60 +106,143 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Enter your location',
-                      style: TextStyle(
-                        fontSize: sw * 0.036,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF333333),
+                    // Location indicator (read-only)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: sw * 0.04,
+                        vertical: sh * 0.018,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAFAFA),
+                        borderRadius: BorderRadius.circular(sw * 0.026),
+                        border: Border.all(color: const Color(0xFFE8E8E8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.near_me_rounded,
+                              color: AppColors.darkPink, size: sw * 0.048),
+                          SizedBox(width: sw * 0.03),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Using your current location',
+                                  style: TextStyle(
+                                    fontSize: sw * 0.034,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF222222),
+                                  ),
+                                ),
+                                SizedBox(height: sh * 0.003),
+                                Text(
+                                  'GPS will be used to find nearby vets',
+                                  style: TextStyle(
+                                    fontSize: sw * 0.029,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: sh * 0.012),
-                    TextField(
-                      controller: _locationController,
-                      onSubmitted: (_) => _onSearch(),
-                      style: TextStyle(
-                        fontSize: sw * 0.036,
-                        color: const Color(0xFF333333),
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'City, ZIP code, or address',
-                        hintStyle: TextStyle(
-                          color: const Color(0xFFAAAAAA),
-                          fontSize: sw * 0.036,
+
+                    SizedBox(height: sh * 0.022),
+
+                    // Radius label
+                    Row(
+                      children: [
+                        Icon(Icons.radar_rounded,
+                            color: AppColors.darkPink, size: sw * 0.042),
+                        SizedBox(width: sw * 0.02),
+                        Text(
+                          'Search radius',
+                          style: TextStyle(
+                            fontSize: sw * 0.036,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF333333),
+                          ),
                         ),
-                        prefixIcon: Icon(
-                          Icons.location_on_outlined,
-                          color: const Color(0xFFAAAAAA),
-                          size: sw * 0.052,
+                        const Spacer(),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: sw * 0.03,
+                            vertical: sh * 0.005,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.darkPink.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(sw * 0.02),
+                          ),
+                          child: Text(
+                            '$_selectedRadiusKm km',
+                            style: TextStyle(
+                              fontSize: sw * 0.034,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.darkPink,
+                            ),
+                          ),
                         ),
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: sh * 0.018,
-                          horizontal: sw * 0.04,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(sw * 0.026),
-                          borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(sw * 0.026),
-                          borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(sw * 0.026),
-                          borderSide: const BorderSide(color: AppColors.darkPink, width: 1.5),
-                        ),
-                      ),
+                      ],
                     ),
-                    SizedBox(height: sh * 0.018),
+
+                    SizedBox(height: sh * 0.014),
+
+                    // Radius chips
+                    Wrap(
+                      spacing: sw * 0.025,
+                      runSpacing: sh * 0.01,
+                      children: _radiusOptions.map((km) {
+                        final isSelected = km == _selectedRadiusKm;
+                        return GestureDetector(
+                          onTap: () => setState(() => _selectedRadiusKm = km),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: sw * 0.045,
+                              vertical: sh * 0.011,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.darkPink
+                                  : const Color(0xFFF5F5F5),
+                              borderRadius: BorderRadius.circular(sw * 0.06),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.darkPink
+                                    : const Color(0xFFE0E0E0),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              '$km km',
+                              style: TextStyle(
+                                fontSize: sw * 0.034,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? Colors.white
+                                    : const Color(0xFF666666),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
+                    SizedBox(height: sh * 0.024),
+
+                    // Find button
                     SizedBox(
                       width: double.infinity,
                       height: sh * 0.062,
                       child: ElevatedButton.icon(
-                        onPressed: _onSearch,
-                        icon: Icon(Icons.search_rounded, color: Colors.white, size: sw * 0.052),
+                        onPressed: _onFindVets,
+                        icon: Icon(Icons.search_rounded,
+                            color: Colors.white, size: sw * 0.052),
                         label: Text(
-                          'Search for Vets',
+                          'Find Vets Near Me',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: sw * 0.04,
@@ -180,31 +255,6 @@ class _VetHomeScreenState extends State<VetHomeScreen> {
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(sw * 0.026),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: sh * 0.014),
-                    SizedBox(
-                      width: double.infinity,
-                      height: sh * 0.062,
-                      child: OutlinedButton.icon(
-                        onPressed: _onUseCurrentLocation,
-                        icon: Icon(Icons.near_me_outlined, color: AppColors.darkPink, size: sw * 0.052),
-                        label: Text(
-                          'Use Current Location',
-                          style: TextStyle(
-                            color: AppColors.darkPink,
-                            fontSize: sw * 0.04,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.1,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.darkPink,
-                          side: const BorderSide(color: AppColors.darkPink, width: 1.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(sw * 0.026),
                           ),

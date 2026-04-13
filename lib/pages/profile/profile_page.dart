@@ -105,21 +105,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Back button
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Icon(
-                            Icons.arrow_back_ios,
-                            size: sw * 0.05,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: sh * 0.02),
-
                       // Profile Avatar
                       Stack(
                         children: [

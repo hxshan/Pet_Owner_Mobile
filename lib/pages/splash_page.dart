@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/core/dio_client.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
@@ -59,7 +60,19 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (token == null || token.isEmpty) {
-      context.goNamed('WelcomePage');
+      // Check whether the user has ever launched the app before.
+      // dependency is needed.
+      const storage = FlutterSecureStorage();
+      final launched = await storage.read(key: '_has_launched');
+      await storage.write(key: '_has_launched', value: 'true');
+
+      if (launched == null) {
+        // Very first launch — show Welcome, it will auto-navigate.
+        context.goNamed('WelcomePage');
+      } else {
+        // Returning visitor with no token — go straight to Get Started.
+        context.goNamed('GetStartedPage');
+      }
       return;
     }
 

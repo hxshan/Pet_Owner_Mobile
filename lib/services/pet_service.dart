@@ -10,7 +10,7 @@ class PetService {
     required String name,
     required String breed,
     required String animalType,
-    required DateTime dob,
+    DateTime? dob,
     required String age,
     required String weight,
     required String color,
@@ -24,7 +24,7 @@ class PetService {
         'name': name,
         'breed': breed,
         'species': animalType,
-        'dob': dob.toIso8601String(),
+        if (dob != null) 'dob': dob.toIso8601String(),
         'age': age,
         'weightHistory': [
           {

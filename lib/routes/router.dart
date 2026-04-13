@@ -446,9 +446,13 @@ final GoRouter appRouter = GoRouter(
               path: 'search',
               name: 'VetSearchResultScreen',
               builder: (context, state) {
-                final location = (state.extra as String?) ?? '';
-
-                return VetSearchResultsScreen(location: location);
+                final extra = state.extra as Map<String, dynamic>? ?? {};
+                final radiusMeters = extra['radiusMeters'] as int? ?? 10000;
+                final radiusKm = extra['radiusKm'] as int? ?? 10;
+                return VetSearchResultsScreen(
+                  radiusMeters: radiusMeters,
+                  radiusKm: radiusKm,
+                );
               },
             ),
             GoRoute(

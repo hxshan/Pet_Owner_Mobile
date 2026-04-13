@@ -3,8 +3,22 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({Key? key}) : super(key: key);
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-advance to Get Started after 2.5 seconds — no tap needed.
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) context.goNamed('GetStartedPage');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -204,34 +218,16 @@ class WelcomePage extends StatelessWidget {
 
                   const Spacer(),
 
-                  // Bottom right paw icon
-                  GestureDetector(
-                    onTap: () => context.pushNamed('GetStartedPage'),
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          right: sw * 0.06,
-                          bottom: sh * 0.03,
-                        ),
-                        child: Container(
-                          padding: EdgeInsets.all(sw * 0.025),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.pets,
-                            size: sw * 0.065,
-                            color: Colors.black,
-                          ),
+                  // Auto-advance indicator
+                  Padding(
+                    padding: EdgeInsets.only(bottom: sh * 0.05),
+                    child: SizedBox(
+                      width: sw * 0.12,
+                      height: sw * 0.12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          const Color(0xFFFF7BA5).withOpacity(0.7),
                         ),
                       ),
                     ),
