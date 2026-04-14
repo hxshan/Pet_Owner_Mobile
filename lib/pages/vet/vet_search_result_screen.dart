@@ -7,9 +7,14 @@ import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/vet/vet_search_card.dart';
 
 class VetSearchResultsScreen extends StatefulWidget {
-  final String location;
+  final int radiusMeters;
+  final int radiusKm;
 
-  const VetSearchResultsScreen({super.key, required this.location});
+  const VetSearchResultsScreen({
+    super.key,
+    required this.radiusMeters,
+    required this.radiusKm,
+  });
 
   @override
   State<VetSearchResultsScreen> createState() => _VetSearchResultsScreenState();
@@ -19,7 +24,7 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
   bool _isLoading = true;
   List<VetModel> _results = [];
   String? _error;
-  String? _displayLocation;
+  String? _coordsLabel;
 
   @override
   void initState() {
@@ -34,44 +39,40 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
     });
     try {
       final service = VetService();
-      // If caller passed the sentinel 'Current Location', acquire device GPS
-      List<VetModel> results;
-  if (widget.location == 'Current Location') {
-        // Check permissions and get current position
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
-        if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
-          throw Exception('Location permission denied. Please enable location permissions and try again.');
-        }
 
-        final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-        results = await service.searchVets(page: 1, limit: 20, lat: pos.latitude, lng: pos.longitude);
-        // Update header to show coordinates instead of the sentinel
-        _displayLocation = '${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}';
-      } else {
-        // Try to detect if location is provided as 'lat,lng' (from other screens)
-        final parts = widget.location.split(',');
-        if (parts.length == 2) {
-          final lat = double.tryParse(parts[0].trim());
-          final lng = double.tryParse(parts[1].trim());
-          if (lat != null && lng != null) {
-            results = await service.searchVets(page: 1, limit: 20, lat: lat, lng: lng);
-          } else {
-            results = await service.searchVets(q: widget.location, page: 1, limit: 20);
-          }
-        } else {
-          results = await service.searchVets(q: widget.location, page: 1, limit: 20);
-        }
+      // Always use device GPS
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
       }
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        throw Exception(
+            'Location permission denied. Please enable location in settings and try again.');
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best);
+
+      final results = await service.searchVets(
+        page: 1,
+        limit: 20,
+        lat: pos.latitude,
+        lng: pos.longitude,
+        radius: widget.radiusMeters,
+      );
+
       setState(() {
         _results = results;
+        _coordsLabel =
+            '${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}';
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _error = e is Exception ? e.toString().replaceFirst('Exception: ', '') : 'Failed to load vets. Please try again.';
+        _error = e is Exception
+            ? e.toString().replaceFirst('Exception: ', '')
+            : 'Failed to load vets. Please try again.';
         _isLoading = false;
       });
     }
@@ -131,16 +132,32 @@ class _VetSearchResultsScreenState extends State<VetSearchResultsScreen> {
                       SizedBox(height: sh * 0.003),
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined, color: Colors.blue.shade600, size: sw * 0.034),
+                          Icon(Icons.radar_rounded, color: AppColors.darkPink, size: sw * 0.034),
                           SizedBox(width: sw * 0.01),
-                          Flexible(
-                            child: Text(
-                              _displayLocation ?? widget.location,
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: sw * 0.033),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            'Within ${widget.radiusKm} km',
+                            style: TextStyle(
+                              color: AppColors.darkPink,
+                              fontSize: sw * 0.033,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
+                          if (_coordsLabel != null) ...[
+                            Text(
+                              '  ·  ',
+                              style: TextStyle(color: Colors.grey.shade400, fontSize: sw * 0.033),
+                            ),
+                            Icon(Icons.location_on_outlined, color: Colors.grey.shade500, size: sw * 0.03),
+                            SizedBox(width: sw * 0.005),
+                            Flexible(
+                              child: Text(
+                                _coordsLabel!,
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: sw * 0.03),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],

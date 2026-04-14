@@ -159,6 +159,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'breed': p.breed,
             'species': p.species,
             'dob': p.dob,
+            'profileImageUrl': p.profileImageUrl,
           },
         )
         .toList();
@@ -201,7 +202,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? _buildNoPetsCard(sw, sh)
               : ListView(
                   scrollDirection: Axis.horizontal,
-                  children: [
+                      children: [
                     for (
                       var i = 0;
                       i < (myPets.length > 2 ? 2 : myPets.length);
@@ -216,6 +217,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           myPets[i]['breed'] ?? myPets[i]['species'] ?? '',
                           _formatPetAge(myPets[i]),
                           i == 0 ? Colors.blue[300]! : Colors.purple[100]!,
+                          myPets[i]['profileImageUrl'],
                         ),
                       ),
                     if (myPets.length < 2) ...[
@@ -236,6 +238,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String breed,
     String age,
     Color bgColor,
+    String? profileImageUrl,
   ) {
     return Container(
       width: sw * 0.42,
@@ -257,11 +260,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             width: sw * 0.15,
             height: sw * 0.15,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.pets, size: sw * 0.08, color: Colors.grey[400]),
+            child: ClipOval(
+              child: profileImageUrl != null && profileImageUrl.isNotEmpty
+                  ? Image.network(
+                      profileImageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.pets,
+                        size: sw * 0.08,
+                        color: Colors.grey[400],
+                      ),
+                    )
+                  : Icon(Icons.pets, size: sw * 0.08, color: Colors.grey[400]),
+            ),
           ),
           SizedBox(height: sh * 0.015),
           Text(
@@ -706,6 +721,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Icon(Icons.chevron_right, size: sw * 0.06, color: Colors.black38),
         ],
       ),
-    );
+    );  
   }
 }
