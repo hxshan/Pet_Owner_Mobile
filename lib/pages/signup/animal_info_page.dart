@@ -292,7 +292,7 @@ class _AnimalInfoPageState extends State<AnimalInfoPage> {
                   SizedBox(height: sh * 0.04),
                   // Dog Icon
                   Image.asset(
-                    'assets/dog_img.png',
+                    'assets/logo.png',
                     width: sw * 0.25,
                     height: sw * 0.25,
                     errorBuilder: (context, error, stackTrace) {

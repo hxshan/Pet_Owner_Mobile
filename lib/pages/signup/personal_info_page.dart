@@ -18,7 +18,6 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
 
-  // Error messages
   String? firstNameError;
   String? lastNameError;
   String? nicError;
@@ -35,17 +34,14 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
     super.dispose();
   }
 
-  // Submit form
   void validateAndSubmit() {
     setState(() {
-      // Reset all errors
       firstNameError = null;
       lastNameError = null;
       nicError = null;
       phoneError = null;
       addressError = null;
 
-      // Validate each field
       if (firstNameController.text.isEmpty) {
         firstNameError = 'First name is required';
       }
@@ -63,26 +59,11 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
       }
     });
 
-    // Check if all fields are valid
     if (firstNameError == null &&
         lastNameError == null &&
         nicError == null &&
         phoneError == null &&
         addressError == null) {
-      // For now, just print values
-      print('First Name: ${firstNameController.text}');
-      print('Last Name: ${lastNameController.text}');
-      print('NIC: ${nicController.text}');
-      print('Phone: ${phoneController.text}');
-      print('Address: ${addressController.text}');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('All fields are valid!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
       final personalInfo = SignupDraft(
         firstName: firstNameController.text,
         lastName: lastNameController.text,
@@ -104,175 +85,200 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
     final sh = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FB),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header Section with Pink Background
+            //  Header 
             Container(
               width: sw,
-              decoration: const BoxDecoration(color: AppColors.mainColor),
-              padding: EdgeInsets.only(top: sh * 0.02),
+              decoration: const BoxDecoration(
+                color: AppColors.mainColor,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+              ),
+              padding: EdgeInsets.only(
+                top: sh * 0.06,
+                bottom: sh * 0.035,
+              ),
               child: Column(
                 children: [
-                  SizedBox(height: sh * 0.04),
-                  // Dog Icon
-                  Image.asset(
-                    'assets/dog_img.png',
-                    width: sw * 0.25,
-                    height: sw * 0.25,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(
+                  // Dog Icon with soft shadow card
+                  Container(
+                    padding: EdgeInsets.all(sw * 0.035),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      width: sw * 0.18,
+                      height: sw * 0.18,
+                      errorBuilder: (context, error, stackTrace) => Icon(
                         Icons.pets,
-                        size: sw * 0.25,
+                        size: sw * 0.18,
                         color: Colors.blue[800],
-                      );
-                    },
+                      ),
+                    ),
                   ),
-                  SizedBox(height: sh * 0.015),
-                  // Title
+                  SizedBox(height: sh * 0.012),
                   Text(
                     'PawConnect',
                     style: TextStyle(
-                      fontSize: sw * 0.065,
-                      fontWeight: FontWeight.bold,
+                      fontSize: sw * 0.062,
+                      fontWeight: FontWeight.w800,
                       color: Colors.black,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  SizedBox(height: sh * 0.005),
-                  // Subtitle
+                  SizedBox(height: sh * 0.004),
                   Text(
                     'Join a community of pet lovers!',
                     style: TextStyle(
-                      fontSize: sw * 0.038,
-                      color: Colors.black87,
+                      fontSize: sw * 0.036,
+                      color: Colors.black.withOpacity(0.55),
+                      letterSpacing: 0.1,
                     ),
                   ),
-                  SizedBox(height: sh * 0.02),
-                  // Dots Indicator
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(6, (index) {
-                      return Container(
-                        margin: EdgeInsets.symmetric(horizontal: sw * 0.01),
-                        width: sw * 0.022,
-                        height: sw * 0.022,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: index == 0 ? Colors.blue[700] : Colors.white,
-                          border: Border.all(
-                            color: index == 0
-                                ? Colors.blue[700]!
-                                : Colors.black26,
-                            width: 1,
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                  SizedBox(height: sh * 0.03),
+
                 ],
               ),
             ),
 
-            // Form Section
+            //  Form 
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
+              padding: EdgeInsets.symmetric(
+                horizontal: sw * 0.06,
+                vertical: sh * 0.03,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Section header
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: sw * 0.05,
+                        decoration: BoxDecoration(
+                          color: Colors.blue[700],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      SizedBox(width: sw * 0.025),
+                      Text(
+                        'Personal Info',
+                        style: TextStyle(
+                          fontSize: sw * 0.048,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+
+
                   SizedBox(height: sh * 0.03),
-                  // Personal Info Header
-                  Container(
-                    padding: EdgeInsets.only(bottom: sh * 0.0001),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.black, width: 2),
+
+                  // Name row (First + Last side by side)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _buildLabeledField(
+                          label: 'First Name',
+                          hint: 'Kamal',
+                          sw: sw,
+                          sh: sh,
+                          controller: firstNameController,
+                          errorText: firstNameError,
+                          icon: Icons.person_outline,
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      'Personal Info',
-                      style: TextStyle(
-                        fontSize: sw * 0.045,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                      SizedBox(width: sw * 0.03),
+                      Expanded(
+                        child: _buildLabeledField(
+                          label: 'Last Name',
+                          hint: 'Perera',
+                          sw: sw,
+                          sh: sh,
+                          controller: lastNameController,
+                          errorText: lastNameError,
+                          icon: Icons.person_outline,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
 
-                  SizedBox(height: sh * 0.025),
+                  SizedBox(height: sh * 0.005),
 
-                  // First Name Field
-                  _buildTextField(
-                    context,
-                    'First Name',
-                    sw,
-                    sh,
-                    firstNameController,
-                    firstNameError,
+                  _buildLabeledField(
+                    label: 'NIC Number',
+                    hint: '200012345678',
+                    sw: sw,
+                    sh: sh,
+                    controller: nicController,
+                    errorText: nicError,
+                    icon: Icons.badge_outlined,
                   ),
-                  SizedBox(height: sh * 0.02),
 
-                  // Last Name Field
-                  _buildTextField(
-                    context,
-                    'Last Name',
-                    sw,
-                    sh,
-                    lastNameController,
-                    lastNameError,
-                  ),
-                  SizedBox(height: sh * 0.02),
+                  SizedBox(height: sh * 0.005),
 
-                  // NIC Number Field
-                  _buildTextField(
-                    context,
-                    'NIC Number (National Id Number)',
-                    sw,
-                    sh,
-                    nicController,
-                    nicError,
-                  ),
-                  SizedBox(height: sh * 0.02),
-
-                  // Phone Number Field
-                  _buildTextField(
-                    context,
-                    'Phone Number',
-                    sw,
-                    sh,
-                    phoneController,
-                    phoneError,
+                  _buildLabeledField(
+                    label: 'Phone Number',
+                    hint: '07X XXX XXXX',
+                    sw: sw,
+                    sh: sh,
+                    controller: phoneController,
+                    errorText: phoneError,
+                    icon: Icons.phone_outlined,
                     isNumber: true,
                   ),
-                  SizedBox(height: sh * 0.02),
 
-                  // Home Address Field
-                  _buildTextField(
-                    context,
-                    'Home Address',
-                    sw,
-                    sh,
-                    addressController,
-                    addressError,
+                  SizedBox(height: sh * 0.005),
+
+                  _buildLabeledField(
+                    label: 'Home Address',
+                    hint: 'No. 12, Main Street, Colombo',
+                    sw: sw,
+                    sh: sh,
+                    controller: addressController,
+                    errorText: addressError,
+                    icon: Icons.home_outlined,
                   ),
-                  SizedBox(height: sh * 0.04),
 
-                  // Get Started Button
+                  SizedBox(height: sh * 0.045),
+
+                  // Next button
                   SizedBox(
                     width: sw,
                     child: ElevatedButton(
                       onPressed: validateAndSubmit,
                       style: AppButtonStyles.blackButton(context),
-                      child: Text(
-                        'Next',
-                        style: TextStyle(
-                          fontSize: sw * 0.06,
-                          fontWeight: FontWeight.w600,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: sh * 0.002),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Next',
+                              style: TextStyle(
+                                fontSize: sw * 0.048,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: sw * 0.02),
+                            Icon(Icons.arrow_forward_rounded,
+                                size: sw * 0.05),
+                          ],
                         ),
                       ),
                     ),
                   ),
+
                   SizedBox(height: sh * 0.03),
                 ],
               ),
@@ -283,77 +289,116 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
     );
   }
 
-  Widget _buildTextField(
-    BuildContext context,
-    String hint,
-    double sw,
-    double sh,
-    TextEditingController controller,
-    String? errorText, {
+  Widget _buildLabeledField({
+    required String label,
+    required String hint,
+    required double sw,
+    required double sh,
+    required TextEditingController controller,
+    required String? errorText,
+    required IconData icon,
     bool isNumber = false,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: controller,
-          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-          style: TextStyle(fontSize: sw * 0.04),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: sw * 0.04),
-            filled: true,
-            fillColor: Colors.grey[50],
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: sw * 0.04,
-              vertical: sh * 0.018,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: errorText != null
-                    ? AppColors.errorMessage
-                    : Colors.grey[300]!,
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: errorText != null
-                    ? AppColors.errorMessage
-                    : Colors.grey[300]!,
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: errorText != null
-                    ? AppColors.errorMessage
-                    : AppColors.mainColor,
-                width: 1.5,
+    final hasError = errorText != null;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: sh * 0.018),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label
+          Padding(
+            padding: EdgeInsets.only(bottom: sh * 0.006, left: sw * 0.005),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: sw * 0.036,
+                fontWeight: FontWeight.w600,
+                color: hasError ? AppColors.errorMessage : Colors.black87,
+                letterSpacing: 0.1,
               ),
             ),
           ),
-        ),
-        // Error message
-        SizedBox(
-          height: sh * 0.025,
-          child: errorText != null
-              ? Padding(
-                  padding: EdgeInsets.only(top: sh * 0.005, left: sw * 0.01),
-                  child: Text(
+          // Input
+          TextField(
+            controller: controller,
+            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+            style: TextStyle(
+              fontSize: sw * 0.038,
+              color: Colors.black87,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: Colors.grey[350],
+                fontSize: sw * 0.036,
+              ),
+              prefixIcon: Icon(
+                icon,
+                size: sw * 0.048,
+                color: hasError
+                    ? AppColors.errorMessage.withOpacity(0.7)
+                    : Colors.grey[400],
+              ),
+              filled: true,
+              fillColor: hasError
+                  ? AppColors.errorMessage.withOpacity(0.04)
+                  : Colors.white,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: sw * 0.04,
+                vertical: sh * 0.018,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasError ? AppColors.errorMessage : Colors.grey[200]!,
+                  width: 1.5,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasError ? AppColors.errorMessage : Colors.grey[200]!,
+                  width: 1.5,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasError ? AppColors.errorMessage : Colors.blue[600]!,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+          // Error message
+          if (hasError)
+            Padding(
+              padding: EdgeInsets.only(top: sh * 0.005, left: sw * 0.02),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: sw * 0.033,
+                    color: AppColors.errorMessage,
+                  ),
+                  SizedBox(width: sw * 0.01),
+                  Text(
                     errorText,
                     style: TextStyle(
                       color: AppColors.errorMessage,
-                      fontSize: sw * 0.032,
+                      fontSize: sw * 0.03,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                )
-              : null,
-        ),
-      ],
+                ],
+              ),
+            )
+          else
+            SizedBox(height: sh * 0.005),
+        ],
+      ),
     );
   }
 }
