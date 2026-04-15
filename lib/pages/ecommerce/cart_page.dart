@@ -170,8 +170,8 @@ class _CartScreenState extends State<CartScreen> {
                           'name': p.name,
                           'price': p.price,
                           'quantity': item.qty,
-                          'imageUrl': (p.images.isNotEmpty
-                              ? p.images.first
+                          'imageUrl': (p.imageUrls.isNotEmpty
+                              ? p.imageUrls.first
                               : null),
                           'image': Icons.shopping_bag_outlined,
                           'color': AppColors.darkPink,

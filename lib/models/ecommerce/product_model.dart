@@ -6,7 +6,7 @@ class Product {
   final String? category;
   final String? description;
 
-  final List<String> images;
+  final List<String> imageUrls;
 
   final double? rating;
   final int? reviewCount;
@@ -20,7 +20,7 @@ class Product {
     required this.price,
     this.category,
     this.description,
-    required this.images,
+    required this.imageUrls,
     this.rating,
     this.reviewCount,
     this.storeName,
@@ -30,9 +30,9 @@ class Product {
   factory Product.fromJson(Map<String, dynamic> json) {
     final store = json['store'];
 
-    // images could be ["url1","url2"] OR "url"
-    final rawImages = json['images'] ?? json['image'] ?? json['imageUrl'];
-    final List<String> images = rawImages is List
+    // prefer pre-signed imageUrls, fall back to legacy images/image/imageUrl
+    final rawImages = json['imageUrls'] ?? json['images'] ?? json['image'] ?? json['imageUrl'];
+    final List<String> imageUrls = rawImages is List
         ? rawImages.map((e) => e.toString()).toList()
         : (rawImages != null ? [rawImages.toString()] : []);
 
@@ -42,7 +42,7 @@ class Product {
       price: (json['price'] is num) ? (json['price'] as num).toDouble() : 0.0,
       category: json['category']?.toString(),
       description: json['description']?.toString(),
-      images: images,
+      imageUrls: imageUrls,
       rating: (json['rating'] is num) ? (json['rating'] as num).toDouble() : null,
       reviewCount: (json['reviewCount'] is num) ? (json['reviewCount'] as num).toInt() : null,
       storeName: (store is Map) ? store['name']?.toString() : null,
