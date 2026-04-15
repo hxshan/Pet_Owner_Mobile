@@ -123,7 +123,7 @@ class PetService {
     required File imageFile,
   }) async {
     final formData = FormData.fromMap({
-      'image': await MultipartFile.fromFile(
+      'profileImage': await MultipartFile.fromFile(
         imageFile.path,
         filename: imageFile.path.split(Platform.pathSeparator).last,
       ),

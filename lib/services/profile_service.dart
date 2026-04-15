@@ -158,20 +158,20 @@ class ProfileService {
     return 'Request failed${status != null ? " ($status)" : ""}: ${e.message}';
   }
 
-  /// POST Upload / replace profile image
-  /// Sends the image as multipart/form-data to POST /user/profile-image.
+  /// PATCH Upload / replace profile image
+  /// Sends the image as multipart/form-data to PATCH /user/profile-image.
   /// On success, clears the cache so the next call to [getPetOwnerProfile]
   /// returns fresh data including the new [profileImageUrl].
   Future<String> uploadProfileImage(File imageFile) async {
     try {
       final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
+        'profileImage': await MultipartFile.fromFile(
           imageFile.path,
           filename: imageFile.path.split(Platform.pathSeparator).last,
         ),
       });
 
-      final response = await _dio.post(
+      final response = await _dio.patch(
         '/user/profile-image',
         data: formData,
         options: Options(
