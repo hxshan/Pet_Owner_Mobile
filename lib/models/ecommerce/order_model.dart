@@ -68,7 +68,7 @@ class Order {
 class OrderItem {
   final String product; 
   final String name;
-  final String image;
+  final String imageUrl;
   final int price;
   final int qty;
   final String store;
@@ -76,7 +76,7 @@ class OrderItem {
   OrderItem({
     required this.product,
     required this.name,
-    required this.image,
+    required this.imageUrl,
     required this.price,
     required this.qty,
     required this.store,
@@ -88,10 +88,16 @@ class OrderItem {
         ? (productField["_id"] ?? productField["id"]).toString()
         : (productField ?? "").toString();
 
+    // prefer imageUrls list, then imageUrl, then legacy image
+    final rawImgs = json["imageUrls"];
+    final String imageUrl = (rawImgs is List && rawImgs.isNotEmpty)
+        ? rawImgs.first.toString()
+        : (json["imageUrl"] ?? json["image"] ?? "").toString();
+
     return OrderItem(
       product: productId,
       name: (json["name"] ?? "").toString(),
-      image: (json["image"] ?? "").toString(),
+      imageUrl: imageUrl,
       price: Order._toInt(json["price"]),
       qty: Order._toInt(json["qty"]),
       store: (json["store"] ?? "").toString(),

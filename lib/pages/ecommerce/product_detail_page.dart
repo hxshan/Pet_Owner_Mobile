@@ -163,7 +163,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
   // ── Image gallery ─────────────────────────────────────────────────────────
 
   Widget _buildImageGallery(double sw, double sh, Product product) {
-    final images = product.images.isNotEmpty ? product.images : [''];
+    final images = product.imageUrls.isNotEmpty ? product.imageUrls : [''];
 
     return Column(
       children: [

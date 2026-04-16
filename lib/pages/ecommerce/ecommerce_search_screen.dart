@@ -266,7 +266,7 @@ class _EcommerceSearchScreenState extends State<EcommerceSearchScreen> {
                 name: p.name,
                 price: 'LKR ${p.price.toStringAsFixed(2)}',
                 rating: p.rating ?? 4.5,
-                imageUrl: p.images.isNotEmpty ? p.images[0] : '',
+                imageUrl: p.imageUrls.isNotEmpty ? p.imageUrls[0] : '',
                 color: AppColors.darkPink.withOpacity(0.15),
                 sw: sw,
                 sh: sh,

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pet_owner_mobile/core/dio_client.dart';
@@ -328,5 +330,109 @@ class EcommerceService {
     }
 
     return Review.fromJson(Map<String, dynamic>.from(data['review'] as Map));
+  }
+
+  // ── Store / Seller product management ─────────────────────────────────────
+
+  /// POST /store/products — create a new product.
+  /// Sends all fields as multipart/form-data.
+  /// [imageFiles] — up to 6 image files; sent under the field name `images`.
+  Future<Product> createProduct({
+    required String name,
+    required double price,
+    required String category,
+    String description = '',
+    List<File> imageFiles = const [],
+  }) async {
+    final formData = FormData();
+
+    formData.fields
+      ..add(MapEntry('name', name))
+      ..add(MapEntry('price', price.toString()))
+      ..add(MapEntry('category', category));
+
+    if (description.isNotEmpty) {
+      formData.fields.add(MapEntry('description', description));
+    }
+
+    for (final file in imageFiles.take(6)) {
+      formData.files.add(
+        MapEntry(
+          'images',
+          await MultipartFile.fromFile(
+            file.path,
+            filename: file.path.split(Platform.pathSeparator).last,
+          ),
+        ),
+      );
+    }
+
+    final res = await _dio.post(
+      '/store/products',
+      data: formData,
+      options: Options(
+        contentType: 'multipart/form-data',
+        extra: {'requiresAuth': true},
+      ),
+    );
+
+    final data = res.data;
+    if (data is! Map) throw Exception('Unexpected createProduct response');
+    final productJson = data['product'] ?? data;
+    return Product.fromJson(Map<String, dynamic>.from(productJson as Map));
+  }
+
+  /// PATCH /store/products/:id — update an existing product.
+  /// [existingImageKeys] — raw S3 keys from [Product.images] you want to keep.
+  ///   Pass these as a JSON-stringified array in the field `existingImages`.
+  /// [newImageFiles] — new image files to upload under the field name `images`.
+  /// Total of kept + new images must not exceed 6.
+  Future<Product> updateProduct({
+    required String productId,
+    String? name,
+    double? price,
+    String? category,
+    String? description,
+    List<String> existingImageKeys = const [],
+    List<File> newImageFiles = const [],
+  }) async {
+    final formData = FormData();
+
+    if (name != null) formData.fields.add(MapEntry('name', name));
+    if (price != null) formData.fields.add(MapEntry('price', price.toString()));
+    if (category != null) formData.fields.add(MapEntry('category', category));
+    if (description != null) formData.fields.add(MapEntry('description', description));
+
+    // Tell the API which existing S3 keys to retain
+    if (existingImageKeys.isNotEmpty) {
+      formData.fields.add(MapEntry('existingImages', jsonEncode(existingImageKeys)));
+    }
+
+    final remaining = 6 - existingImageKeys.length;
+    for (final file in newImageFiles.take(remaining.clamp(0, 6))) {
+      formData.files.add(
+        MapEntry(
+          'images',
+          await MultipartFile.fromFile(
+            file.path,
+            filename: file.path.split(Platform.pathSeparator).last,
+          ),
+        ),
+      );
+    }
+
+    final res = await _dio.patch(
+      '/store/products/$productId',
+      data: formData,
+      options: Options(
+        contentType: 'multipart/form-data',
+        extra: {'requiresAuth': true},
+      ),
+    );
+
+    final data = res.data;
+    if (data is! Map) throw Exception('Unexpected updateProduct response');
+    final productJson = data['product'] ?? data;
+    return Product.fromJson(Map<String, dynamic>.from(productJson as Map));
   }
 }

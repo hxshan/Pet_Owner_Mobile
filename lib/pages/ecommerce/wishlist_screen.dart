@@ -101,7 +101,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
     double sh,
     dynamic store, // WishlistStore
   ) {
-    final imageUrl = product.images.isNotEmpty ? product.images.first : null;
+    final imageUrl = product.imageUrls.isNotEmpty ? product.imageUrls.first : null;
 
     return Container(
       decoration: BoxDecoration(
