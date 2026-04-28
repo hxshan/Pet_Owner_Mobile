@@ -205,17 +205,109 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
   }
 
   Future<void> deletePet() async {
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(sw * 0.05),
+        ),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(sw * 0.06),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(sw * 0.04),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child:
+                    Icon(Icons.delete_outline, color: Colors.red, size: sw * 0.08),
+              ),
+              SizedBox(height: sh * 0.02),
+              Text(
+                'Delete Pet',
+                style: TextStyle(
+                    fontSize: sw * 0.055, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: sh * 0.012),
+              Text(
+                'Are you sure you want to delete this pet? This action cannot be undone.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: sw * 0.035, color: Colors.grey.shade700),
+              ),
+              SizedBox(height: sh * 0.03),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding:
+                            EdgeInsets.symmetric(vertical: sh * 0.016),
+                        side: BorderSide(color: Colors.grey.shade400),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(sw * 0.02),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                      child: Text('Cancel',
+                          style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  SizedBox(width: sw * 0.03),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding:
+                            EdgeInsets.symmetric(vertical: sh * 0.016),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(sw * 0.02),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      child: Text('Delete',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirmed != true) return;
+
     try {
       await PetScope.of(context).deletePet(widget.petId);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Pet deleted successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pet deleted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
       Navigator.pop(context);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred while deleting pet')),
+        const SnackBar(
+          content: Text('An error occurred while deleting pet'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -236,7 +328,43 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error loading pet'));
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: sw * 0.08),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline,
+                        size: sw * 0.15, color: Colors.red.shade300),
+                    SizedBox(height: sh * 0.02),
+                    Text(
+                      'Failed to load pet details.\nPlease try again.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: sw * 0.038, color: Colors.grey.shade600),
+                    ),
+                    SizedBox(height: sh * 0.025),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _petFuture =
+                              PetScope.of(context).getPetDetail(widget.petId);
+                        });
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.darkPink,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(sw * 0.03),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
           final pet = snapshot.data!;

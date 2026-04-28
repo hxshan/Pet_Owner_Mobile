@@ -26,7 +26,6 @@ class _EditProfilePageState extends State<EditProfileScreen> {
   bool _saving = false;
 
   String? _nicNumber;
-  bool? _isNicVerified;
 
   @override
   void initState() {
@@ -46,7 +45,6 @@ class _EditProfilePageState extends State<EditProfileScreen> {
       _addressCtrl.text = user.address ?? '';
 
       _nicNumber = user.nicNumber;
-      _isNicVerified = user.isNicVerified;
     } catch (e) {
       if (mounted) {
         _showSnack('Failed to load profile: $e');
@@ -70,12 +68,28 @@ class _EditProfilePageState extends State<EditProfileScreen> {
       );
 
       if (mounted) {
-        _showSnack('Profile updated successfully');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Profile updated successfully'),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
+        );
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        _showSnack('Update failed: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Update failed: $e'),
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

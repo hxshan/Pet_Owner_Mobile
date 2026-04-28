@@ -1,10 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:pet_owner_mobile/services/location_service.dart';
+import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/services/push_service.dart';
 import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
+
+// ── Local event model (mirrors the one in my_pets_page) ─────────────────────
+
+class _PetEvent {
+  final String message;
+  final String type;
+  final DateTime date;
+  final String petId;
+
+  const _PetEvent({
+    required this.message,
+    required this.type,
+    required this.date,
+    required this.petId,
+  });
+
+  factory _PetEvent.fromJson(Map<String, dynamic> json) => _PetEvent(
+        message: (json['message'] ?? '').toString(),
+        type: (json['type'] ?? '').toString(),
+        date: DateTime.tryParse((json['date'] ?? '').toString())?.toLocal() ??
+            DateTime.now(),
+        petId: (json['petId'] ?? '').toString(),
+      );
+
+  bool get isAppointment => type == 'appointment';
+  bool get isOverdue => type == 'vaccination_overdue';
+
+  int get _daysUntil => date.difference(DateTime.now()).inDays;
+
+  Color get accentColor {
+    if (isOverdue) return AppColors.errorMessage;
+    if (type == 'vaccination_due') {
+      final d = _daysUntil;
+      if (d <= 3) return AppColors.errorMessage;
+      if (d <= 7) return const Color(0xFFE65100);
+      return const Color(0xFF2E7D32);
+    }
+    if (isAppointment) return const Color(0xFF1565C0);
+    return Colors.grey.shade700;
+  }
+
+  IconData get icon {
+    if (isOverdue) return Icons.warning_amber_rounded;
+    if (type == 'vaccination_due') {
+      return _daysUntil <= 3 ? Icons.warning_amber_rounded : Icons.vaccines_outlined;
+    }
+    if (isAppointment) return Icons.calendar_today_outlined;
+    return Icons.notifications_outlined;
+  }
+
+  String get formattedDate => DateFormat('dd MMM yyyy').format(date);
+}
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -15,14 +69,20 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final LocationService _locationService = LocationService();
+  final PetService _petService = PetService();
+
   String firstName = 'User';
   String _currentLocation = '';
+
+  List<_PetEvent> _events = [];
+  bool _eventsLoading = true;
 
   @override
   initState() {
     super.initState();
     _loadUserData();
     _loadLocation();
+    _loadEvents();
     _requestNotificationPermittion();
     // Trigger pet list load via store (no-op if already cached)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -45,6 +105,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final locationText = await _locationService.getLocationForUI();
     if (!mounted) return;
     setState(() => _currentLocation = locationText);
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() => _eventsLoading = true);
+    try {
+      final raw = await _petService.getUpcomingEvents();
+      if (!mounted) return;
+      setState(() {
+        _events = raw.map((e) => _PetEvent.fromJson(e)).toList()
+          ..sort((a, b) => a.date.compareTo(b.date));
+      });
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _eventsLoading = false);
+    }
+  }
+
+  void _handleEventTap(_PetEvent event) {
+    if (event.isAppointment) {
+      context.pushNamed('UpcomingAppointmentsScreen');
+    } else {
+      context.pushNamed(
+        'PetProfileScreen',
+        pathParameters: {'petId': event.petId},
+      );
+    }
   }
 
   @override
@@ -650,77 +736,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         SizedBox(height: sh * 0.015),
-        _buildReminderCard(
-          sw,
-          sh,
-          'Max - Vaccination',
-          'Tomorrow, 10:00 AM',
-          Icons.vaccines,
-          Colors.blue,
-        ),
-        SizedBox(height: sh * 0.012),
-        _buildReminderCard(
-          sw,
-          sh,
-          'Luna - Grooming',
-          'Nov 20, 2:00 PM',
-          Icons.content_cut,
-          Colors.pink,
-        ),
+        if (_eventsLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (_events.isEmpty)
+          Container(
+            padding: EdgeInsets.all(sw * 0.04),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(sw * 0.03),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle_outline,
+                    color: Colors.green.shade400, size: sw * 0.06),
+                SizedBox(width: sw * 0.03),
+                Text(
+                  'All caught up! No pending reminders.',
+                  style: TextStyle(
+                    fontSize: sw * 0.034,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _events.length > 3 ? 3 : _events.length,
+            separatorBuilder: (_, __) => SizedBox(height: sh * 0.012),
+            itemBuilder: (_, i) => _buildReminderCard(sw, sh, _events[i]),
+          ),
       ],
     );
   }
 
-  Widget _buildReminderCard(
-    double sw,
-    double sh,
-    String title,
-    String time,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(sw * 0.04),
-      decoration: BoxDecoration(
-        color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(sw * 0.03),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: sw * 0.12,
-            height: sw * 0.12,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(sw * 0.025),
+  Widget _buildReminderCard(double sw, double sh, _PetEvent event) {
+    final color = event.accentColor;
+    return GestureDetector(
+      onTap: () => _handleEventTap(event),
+      child: Container(
+        padding: EdgeInsets.all(sw * 0.04),
+        decoration: BoxDecoration(
+          color: AppColors.lightGray,
+          borderRadius: BorderRadius.circular(sw * 0.03),
+          border: Border.all(color: color.withOpacity(0.4), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: sw * 0.12,
+              height: sw * 0.12,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(sw * 0.025),
+              ),
+              child: Icon(event.icon, size: sw * 0.06, color: color),
             ),
-            child: Icon(icon, size: sw * 0.06, color: color),
-          ),
-          SizedBox(width: sw * 0.04),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: sw * 0.04,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+            SizedBox(width: sw * 0.04),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.message,
+                    style: TextStyle(
+                      fontSize: sw * 0.035,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                SizedBox(height: sh * 0.003),
-                Text(
-                  time,
-                  style: TextStyle(fontSize: sw * 0.033, color: Colors.black54),
-                ),
-              ],
+                  SizedBox(height: sh * 0.003),
+                  Text(
+                    event.formattedDate,
+                    style:
+                        TextStyle(fontSize: sw * 0.03, color: color),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Icon(Icons.chevron_right, size: sw * 0.06, color: Colors.black38),
-        ],
+            Icon(Icons.chevron_right, size: sw * 0.06, color: Colors.black38),
+          ],
+        ),
       ),
-    );  
+    );
   }
-}

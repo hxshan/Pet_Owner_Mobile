@@ -20,6 +20,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
   final _dietPlanService = DietPlanService();
 
   bool _loading = true;
+  bool _hasError = false;
   List<Map<String, dynamic>> _pets = [];
   List<Map<String, dynamic>> _plans = [];
 
@@ -30,7 +31,10 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
   }
 
   Future<void> _loadAll() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _hasError = false;
+    });
     try {
       final pets = await _petService.getMyPets();
       final plans = await _dietPlanService.getMyDietPlans();
@@ -43,8 +47,10 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _loading = false);
-      _showSnack('Failed to load meal plans');
+      setState(() {
+        _loading = false;
+        _hasError = true;
+      });
     }
   }
 
@@ -81,6 +87,43 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
+                  : _hasError
+                      ? Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: sw * 0.08),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.error_outline,
+                                    size: sw * 0.15,
+                                    color: Colors.red.shade300),
+                                SizedBox(height: sh * 0.02),
+                                Text(
+                                  'Failed to load meal plans.\nPlease try again.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: sw * 0.038,
+                                      color: Colors.grey.shade600),
+                                ),
+                                SizedBox(height: sh * 0.025),
+                                ElevatedButton.icon(
+                                  onPressed: _loadAll,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Retry'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.darkPink,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          sw * 0.03),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                   : _plans.isEmpty
                       ? _buildEmptyState(sw, sh)
                       : RefreshIndicator(

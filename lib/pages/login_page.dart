@@ -199,7 +199,20 @@ class _LoginPageState extends State<LoginPage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text(
+                              'Password reset is not available yet. Please contact support.',
+                            ),
+                            backgroundColor: Colors.orange[700],
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      },
                       child: Text(
                         'Forgot password?',
                         style: TextStyle(
@@ -354,7 +367,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(width: sw * 0.01),
                   Text(
-                    errorText!,
+                    errorText,
                     style: TextStyle(
                       color: AppColors.errorMessage,
                       fontSize: sw * 0.03,
@@ -461,7 +474,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(width: sw * 0.01),
                   Text(
-                    errorText!,
+                    errorText,
                     style: TextStyle(
                       color: AppColors.errorMessage,
                       fontSize: sw * 0.03,
