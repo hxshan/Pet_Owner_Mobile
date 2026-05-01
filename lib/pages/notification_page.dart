@@ -182,7 +182,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   }
 
                   if (errorText != null) {
-                    return Center(child: Text(errorText!));
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: sw * 0.08),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.error_outline,
+                                size: sw * 0.15, color: Colors.red.shade300),
+                            SizedBox(height: sh * 0.02),
+                            Text(
+                              'Failed to load notifications.\nPlease try again.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: sw * 0.038,
+                                  color: Colors.grey.shade600),
+                            ),
+                            SizedBox(height: sh * 0.025),
+                            ElevatedButton.icon(
+                              onPressed: _loadNotifications,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.darkPink,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(sw * 0.03),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   }
 
                   if (filteredNotifications.isEmpty) {

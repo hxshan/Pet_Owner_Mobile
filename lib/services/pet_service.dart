@@ -116,6 +116,23 @@ class PetService {
     return response.data;
   }
 
+  /// GET /pet/events/upcoming — returns upcoming appointments and
+  /// vaccination reminders (due / overdue) for all of the owner's pets.
+  Future<List<Map<String, dynamic>>> getUpcomingEvents() async {
+    try {
+      final response = await _dio.get(
+        '/pet/events/upcoming',
+        options: Options(extra: {'requiresAuth': true}),
+      );
+      final data = response.data;
+      if (data == null || data['events'] == null) return [];
+      return List<Map<String, dynamic>>.from(data['events']);
+    } catch (e) {
+      print('Error fetching upcoming events: $e');
+      return [];
+    }
+  }
+
   /// PUT /pet/:petId/profile-image — upload a pet profile image.
   /// Returns the new [profileImageUrl] from the response, or empty string.
   Future<String> uploadPetProfileImage({

@@ -351,7 +351,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'About',
                     'App version 1.0.0',
                     () {
-                      // Navigate to about
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(sw * 0.04),
+                          ),
+                          title: Row(
+                            children: [
+                              Icon(Icons.pets,
+                                  color: AppColors.darkPink, size: sw * 0.06),
+                              SizedBox(width: sw * 0.02),
+                              const Text('PawConnect'),
+                            ],
+                          ),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Version: 1.0.0',
+                                  style: TextStyle(fontSize: sw * 0.035)),
+                              SizedBox(height: sh * 0.008),
+                              Text(
+                                'PawConnect helps pet owners manage their pets\' health, appointments, vaccinations, and more.',
+                                style: TextStyle(
+                                    fontSize: sw * 0.032,
+                                    color: Colors.black54),
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: Text('Close',
+                                  style:
+                                      TextStyle(color: AppColors.darkPink)),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                   ),
 
