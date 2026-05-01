@@ -264,6 +264,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final myPets = store.pets
         .map(
           (p) => {
+            'id': p.id,
             'name': p.name,
             'breed': p.breed,
             'species': p.species,
@@ -322,6 +323,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: _buildPetCard(
                           sw,
                           sh,
+                          myPets[i]['id']!, 
                           myPets[i]['name'] ?? 'Pet',
                           myPets[i]['breed'] ?? myPets[i]['species'] ?? '',
                           _formatPetAge(myPets[i]),
@@ -343,70 +345,83 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildPetCard(
     double sw,
     double sh,
+    String id,
     String name,
     String breed,
     String age,
     Color bgColor,
     String? profileImageUrl,
   ) {
-    return Container(
-      width: sw * 0.42,
-      padding: EdgeInsets.all(sw * 0.04),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(sw * 0.04),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: sw * 0.15,
-            height: sw * 0.15,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () {
+        context.pushNamed(
+          'PetProfileScreen',
+          pathParameters: {'petId': id},
+        );
+      },
+      child: Container(
+        width: sw * 0.42,
+        padding: EdgeInsets.all(sw * 0.04),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(sw * 0.04),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            child: ClipOval(
-              child: profileImageUrl != null && profileImageUrl.isNotEmpty
-                  ? Image.network(
-                      profileImageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: sw * 0.15,
+              height: sw * 0.15,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: ClipOval(
+                child: profileImageUrl != null && profileImageUrl.isNotEmpty
+                    ? Image.network(
+                        profileImageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.pets,
+                          size: sw * 0.08,
+                          color: Colors.grey[400],
+                        ),
+                      )
+                    : Icon(
                         Icons.pets,
                         size: sw * 0.08,
                         color: Colors.grey[400],
                       ),
-                    )
-                  : Icon(Icons.pets, size: sw * 0.08, color: Colors.grey[400]),
+              ),
             ),
-          ),
-          SizedBox(height: sh * 0.015),
-          Text(
-            name,
-            style: TextStyle(
-              fontSize: sw * 0.048,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+            SizedBox(height: sh * 0.015),
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: sw * 0.048,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
-          ),
-          SizedBox(height: sh * 0.005),
-          Text(
-            breed,
-            style: TextStyle(fontSize: sw * 0.032, color: Colors.black54),
-          ),
-          SizedBox(height: sh * 0.002),
-          Text(
-            age,
-            style: TextStyle(fontSize: sw * 0.03, color: Colors.black45),
-          ),
-        ],
+            SizedBox(height: sh * 0.005),
+            Text(
+              breed,
+              style: TextStyle(fontSize: sw * 0.032, color: Colors.black54),
+            ),
+            SizedBox(height: sh * 0.002),
+            Text(
+              age,
+              style: TextStyle(fontSize: sw * 0.03, color: Colors.black45),
+            ),
+          ],
+        ),
       ),
     );
   }
