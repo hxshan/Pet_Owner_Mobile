@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pet_owner_mobile/services/location_service.dart';
+import 'package:pet_owner_mobile/services/notification_service.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/services/push_service.dart';
 import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
 
-// ── Local event model (mirrors the one in my_pets_page) ─────────────────────
+//  Local event model (mirrors the one in my_pets_page)
 
 class _PetEvent {
   final String message;
@@ -24,12 +25,13 @@ class _PetEvent {
   });
 
   factory _PetEvent.fromJson(Map<String, dynamic> json) => _PetEvent(
-        message: (json['message'] ?? '').toString(),
-        type: (json['type'] ?? '').toString(),
-        date: DateTime.tryParse((json['date'] ?? '').toString())?.toLocal() ??
-            DateTime.now(),
-        petId: (json['petId'] ?? '').toString(),
-      );
+    message: (json['message'] ?? '').toString(),
+    type: (json['type'] ?? '').toString(),
+    date:
+        DateTime.tryParse((json['date'] ?? '').toString())?.toLocal() ??
+        DateTime.now(),
+    petId: (json['petId'] ?? '').toString(),
+  );
 
   bool get isAppointment => type == 'appointment';
   bool get isOverdue => type == 'vaccination_overdue';
@@ -51,7 +53,9 @@ class _PetEvent {
   IconData get icon {
     if (isOverdue) return Icons.warning_amber_rounded;
     if (type == 'vaccination_due') {
-      return _daysUntil <= 3 ? Icons.warning_amber_rounded : Icons.vaccines_outlined;
+      return _daysUntil <= 3
+          ? Icons.warning_amber_rounded
+          : Icons.vaccines_outlined;
     }
     if (isAppointment) return Icons.calendar_today_outlined;
     return Icons.notifications_outlined;
@@ -76,6 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   List<_PetEvent> _events = [];
   bool _eventsLoading = true;
+  bool _hasUnread = false;
 
   @override
   initState() {
@@ -84,6 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadLocation();
     _loadEvents();
     _requestNotificationPermittion();
+    _loadUnreadStatus();
     // Trigger pet list load via store (no-op if already cached)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PetScope.of(context).loadOnce();
@@ -130,6 +136,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'PetProfileScreen',
         pathParameters: {'petId': event.petId},
       );
+    }
+  }
+
+  Future<void> _loadUnreadStatus() async {
+    try {
+      final notifications = await NotificationService.instance
+          .fetchNotifications();
+      if (!mounted) return;
+      setState(() {
+        _hasUnread = notifications.any((n) => !n.isRead);
+      });
+    } catch (_) {
+      // silently ignore — dot just won't show
     }
   }
 
@@ -200,7 +219,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         GestureDetector(
-          onTap: () => {context.pushNamed('NotificationsScreen')},
+          onTap: () async {
+            await context.pushNamed('NotificationsScreen');
+            _loadUnreadStatus(); // re-check after user views notifications
+          },
           child: Container(
             padding: EdgeInsets.all(sw * 0.02),
             decoration: BoxDecoration(
@@ -214,18 +236,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   size: sw * 0.07,
                   color: Colors.black87,
                 ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: sw * 0.025,
-                    height: sw * 0.025,
-                    decoration: const BoxDecoration(
-                      color: AppColors.darkPink,
-                      shape: BoxShape.circle,
+                if (_hasUnread)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: sw * 0.025,
+                      height: sw * 0.025,
+                      decoration: const BoxDecoration(
+                        color: AppColors.darkPink,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -288,7 +311,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? _buildNoPetsCard(sw, sh)
               : ListView(
                   scrollDirection: Axis.horizontal,
-                      children: [
+                  children: [
                     for (
                       var i = 0;
                       i < (myPets.length > 2 ? 2 : myPets.length);
@@ -748,15 +771,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.check_circle_outline,
-                    color: Colors.green.shade400, size: sw * 0.06),
+                Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.green.shade400,
+                  size: sw * 0.06,
+                ),
                 SizedBox(width: sw * 0.03),
                 Text(
                   'All caught up! No pending reminders.',
-                  style: TextStyle(
-                    fontSize: sw * 0.034,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: sw * 0.034, color: Colors.black54),
                 ),
               ],
             ),
@@ -813,8 +836,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   SizedBox(height: sh * 0.003),
                   Text(
                     event.formattedDate,
-                    style:
-                        TextStyle(fontSize: sw * 0.03, color: color),
+                    style: TextStyle(fontSize: sw * 0.03, color: color),
                   ),
                 ],
               ),
