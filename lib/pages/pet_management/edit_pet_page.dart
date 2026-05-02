@@ -21,6 +21,7 @@ class _EditPetScreenState extends State<EditPetScreen> {
   final _breedController = TextEditingController();
   final _weightController = TextEditingController();
   final _colorController = TextEditingController();
+  final _ageController = TextEditingController();
 
   // State
   bool _loading = true;
@@ -28,10 +29,9 @@ class _EditPetScreenState extends State<EditPetScreen> {
   String? _selectedSpecies;
   String? _selectedGender;
   bool _neutered = false;
-  DateTime? _selectedDOB;
 
   final List<String> _animals = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Hamster', 'Other'];
-  final List<String> _genders = ['Male', 'Female', 'Unknown'];
+  final List<String> _genders = ['Male', 'Female'];
 
   @override
   void initState() {
@@ -45,6 +45,7 @@ class _EditPetScreenState extends State<EditPetScreen> {
     _breedController.dispose();
     _weightController.dispose();
     _colorController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
@@ -52,12 +53,17 @@ class _EditPetScreenState extends State<EditPetScreen> {
     try {
       final data = await PetService().getPetById(widget.petId);
 
-      // Parse DOB
-      DateTime? dob;
+      // Compute age from dob if available, otherwise fall back to 'age' field
+      int age = 0;
       if (data['dob'] != null) {
         try {
-          dob = DateTime.parse(data['dob']);
+          final dob = DateTime.parse(data['dob'] as String);
+          age = DateTime.now().year - dob.year;
         } catch (_) {}
+      }
+      if (age == 0) {
+        final rawAge = data['age'];
+        if (rawAge != null) age = int.tryParse(rawAge.toString()) ?? 0;
       }
 
       // Latest weight from history
@@ -76,10 +82,10 @@ class _EditPetScreenState extends State<EditPetScreen> {
       );
 
       // Normalize gender
-      final rawGender = data['gender'] as String? ?? 'Unknown';
+      final rawGender = data['gender'] as String? ?? '';
       final matchedGender = _genders.firstWhere(
         (g) => g.toLowerCase() == rawGender.toLowerCase(),
-        orElse: () => 'Unknown',
+        orElse: () => '',
       );
 
       setState(() {
@@ -87,9 +93,9 @@ class _EditPetScreenState extends State<EditPetScreen> {
         _breedController.text = data['breed'] ?? '';
         _colorController.text = data['color'] ?? '';
         _weightController.text = weight;
-        _selectedDOB = dob;
+        _ageController.text = age > 0 ? '$age' : '';
         _selectedSpecies = matchedSpecies.isEmpty ? null : matchedSpecies;
-        _selectedGender = matchedGender;
+        _selectedGender = matchedGender.isEmpty ? null : matchedGender;
         final neuteredVal = data['neutered'];
         _neutered = neuteredVal == true || neuteredVal == 'yes';
         _loading = false;
@@ -106,16 +112,10 @@ class _EditPetScreenState extends State<EditPetScreen> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDOB ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() => _selectedDOB = picked);
-    }
+  DateTime _dobFromAgeYears(String ageText) {
+    final years = int.tryParse(ageText.trim()) ?? 0;
+    final now = DateTime.now();
+    return DateTime(now.year - years, now.month, now.day);
   }
 
   Future<void> _submitForm() async {
@@ -128,7 +128,7 @@ class _EditPetScreenState extends State<EditPetScreen> {
         name: _petNameController.text.trim(),
         breed: _breedController.text.trim(),
         species: _selectedSpecies!,
-        dob: _selectedDOB!,
+        dob: _dobFromAgeYears(_ageController.text),
         gender: _selectedGender!,
         weight: _weightController.text.trim(),
         color: _colorController.text.trim(),
@@ -239,9 +239,21 @@ class _EditPetScreenState extends State<EditPetScreen> {
 
                         SizedBox(height: sh * 0.02),
 
-                        // ── Date of Birth ─────────────────────────────────
-                        _buildLabel('Date of Birth', sw * 0.035),
-                        _buildDateField(sw: sw, sh: sh),
+                        // ── Age ──────────────────────────────────────────
+                        _buildLabel('Age (years)', sw * 0.035),
+                        _buildTextField(
+                          controller: _ageController,
+                          hintText: 'e.g. 3',
+                          sw: sw,
+                          sh: sh,
+                          keyboardType: TextInputType.number,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Please enter age';
+                            final n = int.tryParse(v.trim());
+                            if (n == null || n < 0) return 'Enter a valid age';
+                            return null;
+                          },
+                        ),
 
                         SizedBox(height: sh * 0.02),
 
@@ -495,70 +507,4 @@ class _EditPetScreenState extends State<EditPetScreen> {
     );
   }
 
-  Widget _buildDateField({required double sw, required double sh}) {
-    return Padding(
-      padding: EdgeInsets.only(top: sh * 0.01),
-      child: FormField<DateTime>(
-        initialValue: _selectedDOB,
-        validator: (_) => _selectedDOB == null ? 'Please select date of birth' : null,
-        builder: (FormFieldState<DateTime> state) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: () async {
-                  await _selectDate(context);
-                  state.didChange(_selectedDOB);
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: sw * 0.04,
-                    vertical: sh * 0.018,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: state.hasError
-                          ? AppColors.errorMessage
-                          : const Color(0xFFE0E0E0),
-                    ),
-                    borderRadius: BorderRadius.circular(sw * 0.02),
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedDOB != null
-                            ? '${_selectedDOB!.day}/${_selectedDOB!.month}/${_selectedDOB!.year}'
-                            : 'Select date',
-                        style: TextStyle(
-                          fontSize: sw * 0.032,
-                          color: _selectedDOB != null
-                              ? Colors.black
-                              : Colors.grey[400],
-                        ),
-                      ),
-                      Icon(Icons.calendar_today,
-                          color: AppColors.darkPink, size: sw * 0.05),
-                    ],
-                  ),
-                ),
-              ),
-              if (state.hasError)
-                Padding(
-                  padding: EdgeInsets.only(top: sh * 0.008),
-                  child: Text(
-                    state.errorText ?? '',
-                    style: TextStyle(
-                      color: AppColors.errorMessage,
-                      fontSize: sw * 0.028,
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
 }

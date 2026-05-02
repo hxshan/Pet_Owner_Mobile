@@ -34,29 +34,50 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
     super.dispose();
   }
 
+  // ── Validators ────────────────────────────────────────────────────────────
+
+  /// Only letters, spaces, hyphens and apostrophes — no digits or symbols.
+  String? _validateName(String value, String fieldLabel) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '$fieldLabel is required';
+    if (trimmed.length < 2) return '$fieldLabel must be at least 2 characters';
+    if (!RegExp(r"^[a-zA-Z\s\-']+$").hasMatch(trimmed)) {
+      return '$fieldLabel can only contain letters';
+    }
+    return null;
+  }
+
+  /// Sri Lankan NIC: old = 9 digits + V/v, new = exactly 12 digits.
+  String? _validateNic(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return 'NIC number is required';
+    final oldNic = RegExp(r'^\d{9}[Vv]$');
+    final newNic = RegExp(r'^\d{12}$');
+    if (!oldNic.hasMatch(trimmed) && !newNic.hasMatch(trimmed)) {
+      return 'Enter a valid NIC — old format: 123456789V or new: 200012345678';
+    }
+    return null;
+  }
+
+  /// Sri Lankan mobile: 10 digits starting with 07.
+  String? _validatePhone(String value) {
+    final trimmed = value.replaceAll(RegExp(r'\s+'), '');
+    if (trimmed.isEmpty) return 'Phone number is required';
+    if (!RegExp(r'^07\d{8}$').hasMatch(trimmed)) {
+      return 'Enter a valid Sri Lankan number (e.g. 0771234567)';
+    }
+    return null;
+  }
+
   void validateAndSubmit() {
     setState(() {
-      firstNameError = null;
-      lastNameError = null;
-      nicError = null;
-      phoneError = null;
-      addressError = null;
-
-      if (firstNameController.text.isEmpty) {
-        firstNameError = 'First name is required';
-      }
-      if (lastNameController.text.isEmpty) {
-        lastNameError = 'Last name is required';
-      }
-      if (nicController.text.isEmpty) {
-        nicError = 'NIC number is required';
-      }
-      if (phoneController.text.isEmpty) {
-        phoneError = 'Phone number is required';
-      }
-      if (addressController.text.isEmpty) {
-        addressError = 'Home address is required';
-      }
+      firstNameError = _validateName(firstNameController.text, 'First name');
+      lastNameError  = _validateName(lastNameController.text,  'Last name');
+      nicError       = _validateNic(nicController.text);
+      phoneError     = _validatePhone(phoneController.text);
+      addressError   = addressController.text.trim().isEmpty
+          ? 'Home address is required'
+          : null;
     });
 
     if (firstNameError == null &&
@@ -276,6 +297,37 @@ class _RegistrationPageState extends State<PersonalInfoPage> {
                           ],
                         ),
                       ),
+                    ),
+                  ),
+
+                  SizedBox(height: sh * 0.03),
+
+                  // Already have an account?
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account?  ',
+                          style: TextStyle(
+                            fontSize: sw * 0.036,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => context.goNamed('LoginPage'),
+                          child: Text(
+                            'Log in',
+                            style: TextStyle(
+                              fontSize: sw * 0.036,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.blue[700],
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.blue[700],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 

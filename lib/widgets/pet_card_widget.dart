@@ -197,14 +197,22 @@ class PetCard extends StatelessWidget {
                     SizedBox(height: sh * 0.005),
 
                     // Animal & Breed
-                    Text(
-                      '${pet.breed} • ${pet.breed}',
-                      style: TextStyle(
-                        fontSize: sw * 0.035,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Builder(builder: (_) {
+                      final parts = <String>[];
+                      final species = pet.species;
+                      final breed = pet.breed;
+                      if (species.isNotEmpty && species.toLowerCase() != 'unknown') parts.add(species);
+                      if (breed.isNotEmpty && breed.toLowerCase() != 'unknown' && breed != '-') parts.add(breed);
+                      if (parts.isEmpty) return const SizedBox.shrink();
+                      return Text(
+                        parts.join(' • '),
+                        style: TextStyle(
+                          fontSize: sw * 0.035,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      );
+                    }),
 
                     SizedBox(height: sh * 0.012),
 
@@ -212,63 +220,68 @@ class PetCard extends StatelessWidget {
                     Row(
                       children: [
                         // Life Status Badge
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: sw * 0.025,
-                            vertical: sh * 0.005,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF4CAF50).withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(sw * 0.015),
-                            border: Border.all(
-                              color: Color(0xFF4CAF50).withOpacity(0.3),
-                              width: 1,
+                        if ((pet.lifeStatus ?? '').isNotEmpty &&
+                            pet.lifeStatus!.toLowerCase() != 'unknown') ...[
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: sw * 0.025,
+                              vertical: sh * 0.005,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF4CAF50).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(sw * 0.015),
+                              border: Border.all(
+                                color: Color(0xFF4CAF50).withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              pet.lifeStatus!,
+                              style: TextStyle(
+                                fontSize: sw * 0.028,
+                                color: Color(0xFF2E7D32),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                          child: Text(
-                            pet.lifeStatus ?? 'Unknown',
-                            style: TextStyle(
-                              fontSize: sw * 0.028,
-                              color: Color(0xFF2E7D32),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: sw * 0.02),
+                          SizedBox(width: sw * 0.02),
+                        ],
                         // Health Badge
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: sw * 0.025,
-                            vertical: sh * 0.005,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getHealthColor().withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(sw * 0.015),
-                            border: Border.all(
-                              color: _getHealthColor().withOpacity(0.3),
-                              width: 1,
+                        if ((pet.overallHealth ?? '').isNotEmpty &&
+                            pet.overallHealth!.toLowerCase() != 'unknown')
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: sw * 0.025,
+                              vertical: sh * 0.005,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getHealthColor().withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(sw * 0.015),
+                              border: Border.all(
+                                color: _getHealthColor().withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.favorite,
+                                  size: sw * 0.03,
+                                  color: _getHealthColor(),
+                                ),
+                                SizedBox(width: sw * 0.01),
+                                Text(
+                                  pet.overallHealth!,
+                                  style: TextStyle(
+                                    fontSize: sw * 0.028,
+                                    color: _getHealthColor(),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.favorite,
-                                size: sw * 0.03,
-                                color: _getHealthColor(),
-                              ),
-                              SizedBox(width: sw * 0.01),
-                              Text(
-                                pet.overallHealth ?? 'Unknown',
-                                style: TextStyle(
-                                  fontSize: sw * 0.028,
-                                  color: _getHealthColor(),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                   ],

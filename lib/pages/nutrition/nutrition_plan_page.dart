@@ -457,7 +457,7 @@ class _NutritionPlanScreenState extends State<NutritionPlanScreen> {
               final petName = (pet['name'] ?? 'Pet').toString();
               final petBreed = (pet['breed'] ?? '').toString();
 
-              context.goNamed(
+              context.pushNamed(
                 'NutritionPlanDetailsScreen',
                 extra: {
                   'plan': {

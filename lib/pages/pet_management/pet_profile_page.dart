@@ -198,10 +198,19 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
     );
   }
 
-  String ageFromDob(String dob) {
-    final birth = DateTime.parse(dob);
-    final now = DateTime.now();
-    return '${now.year - birth.year} Years';
+  String ageFromDob(String? dob, {dynamic fallbackAge}) {
+    if (dob != null && dob.isNotEmpty) {
+      try {
+        final birth = DateTime.parse(dob);
+        final now = DateTime.now();
+        return '${now.year - birth.year} yrs';
+      } catch (_) {}
+    }
+    if (fallbackAge != null) {
+      final years = int.tryParse(fallbackAge.toString());
+      if (years != null) return '$years yrs';
+    }
+    return 'Unknown';
   }
 
   Future<void> deletePet() async {
@@ -565,71 +574,81 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
 
                           SizedBox(height: sh * 0.005),
 
-                          // Health Status Badge
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: sw * 0.04,
-                              vertical: sh * 0.006,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(sw * 0.04),
-                              border: Border.all(color: Colors.green, width: 1),
-                            ),
-                            child: Text(
-                              pet['healthStatus'] ?? 'Unknown',
-                              style: TextStyle(
-                                fontSize: sw * 0.03,
-                                color: Colors.green.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: sh * 0.025),
-
-                          // Pet Info Grid
+                          // Health Status Badge — only shown when a real value exists
+                          Builder(builder: (_) {
+                            final health = (pet['healthStatus'] as String?) ?? '';
+                            if (health.isEmpty || health.toLowerCase() == 'unknown') {
+                              return const SizedBox.shrink();
+                            }
+                            return Column(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: sw * 0.04,
+                                    vertical: sh * 0.006,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(sw * 0.04),
+                                    border: Border.all(color: Colors.green, width: 1),
+                                  ),
+                                  child: Text(
+                                    health,
+                                    style: TextStyle(
+                                      fontSize: sw * 0.03,
+                                      color: Colors.green.shade700,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: sh * 0.025),
+                              ],
+                            );
+                          }),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              _buildInfoItem(
-                                sw,
-                                sh,
-                                'Animal',
-                                pet['species'] ?? 'Unknown',
-                                AppColors.darkPink,
-                              ),
-                              _buildInfoItem(
-                                sw,
-                                sh,
-                                'Breed',
-                                pet['breed'] ?? 'Unknown',
-                                Colors.blue,
-                              ),
-                              _buildInfoItem(
-                                sw,
-                                sh,
-                                'Age',
-                                ageFromDob(pet['dob']),
-                                Colors.blue,
-                              ),
+                              Builder(builder: (_) {
+                                final species = (pet['species'] as String?) ?? '';
+                                if (species.isEmpty || species.toLowerCase() == 'unknown') {
+                                  return const SizedBox.shrink();
+                                }
+                                return _buildInfoItem(sw, sh, 'Animal', species, AppColors.darkPink);
+                              }),
+                              Builder(builder: (_) {
+                                final breed = (pet['breed'] as String?) ?? '';
+                                if (breed.isEmpty || breed.toLowerCase() == 'unknown' || breed == '-') {
+                                  return const SizedBox.shrink();
+                                }
+                                return _buildInfoItem(sw, sh, 'Breed', breed, Colors.blue);
+                              }),
+                              Builder(builder: (_) {
+                                final age = ageFromDob(
+                                  pet['dob'] as String?,
+                                  fallbackAge: pet['computedAge'] ?? pet['age'],
+                                );
+                                if (age.toLowerCase() == 'unknown') {
+                                  return const SizedBox.shrink();
+                                }
+                                return _buildInfoItem(sw, sh, 'Age', age, Colors.blue);
+                              }),
                             ],
                           ),
 
                           SizedBox(height: sh * 0.015),
 
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildInfoItem(
-                                sw,
-                                sh,
-                                'Gender',
-                                pet['gender'] ?? 'Unknown',
-                                AppColors.darkPink,
-                              ),
-                            ],
-                          ),
+                          Builder(builder: (_) {
+                            final gender = (pet['gender'] as String?) ?? '';
+                            if (gender.isEmpty || gender.toLowerCase() == 'unknown') {
+                              return const SizedBox.shrink();
+                            }
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildInfoItem(sw, sh, 'Gender', gender, AppColors.darkPink),
+                              ],
+                            );
+                          }),
                         ],
                       ),
                     ),
