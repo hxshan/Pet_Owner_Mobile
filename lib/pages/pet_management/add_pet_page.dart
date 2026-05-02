@@ -24,6 +24,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
   String? _selectedAnimal;
   String? _selectedHealth;
   String? _selectedLifeStatus;
+  String? _selectedGender;
   bool _isLoading = false;
 
   final List<String> _animals = [
@@ -64,6 +65,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
         color: _colorController.text.trim(),
         health: _selectedHealth!,
         lifeStatus: _selectedLifeStatus!,
+        gender: _selectedGender!,
       );
 
       if (!mounted) return;
@@ -323,6 +325,21 @@ class _AddPetScreenState extends State<AddPetScreen> {
                             ),
                           ),
                         ],
+                      ),
+
+                      SizedBox(height: sh * 0.018),
+
+                      _buildFieldLabel('Gender', sw),
+                      _buildDropdown(
+                        value: _selectedGender,
+                        items: const ['Male', 'Female'],
+                        hintText: 'Select gender',
+                        prefixIcon: Icons.transgender_outlined,
+                        onChanged: (v) => setState(() => _selectedGender = v),
+                        sw: sw,
+                        sh: sh,
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Please select a gender' : null,
                       ),
 
                       SizedBox(height: sh * 0.04),

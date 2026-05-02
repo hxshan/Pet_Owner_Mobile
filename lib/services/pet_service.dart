@@ -16,6 +16,7 @@ class PetService {
     required String color,
     required String health,
     required String lifeStatus,
+    required String gender,
     File? image,
   }) async {
     final response = await _dio.post(
@@ -35,7 +36,7 @@ class PetService {
         'color': color,
         'health': health,
         'lifeStatus': lifeStatus,
-        'gender': 'Unknown',
+        'gender': gender,
       },
       options: Options(
         contentType: 'application/json',
