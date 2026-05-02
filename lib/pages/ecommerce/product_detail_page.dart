@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
 import 'package:pet_owner_mobile/models/ecommerce/product_review_model.dart';
 import 'package:pet_owner_mobile/services/ecommerce_service.dart';
@@ -10,7 +11,7 @@ class ProductDetailScreen extends StatefulWidget {
   final String productId;
 
   const ProductDetailScreen({Key? key, required this.productId})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailPageState();
@@ -25,6 +26,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
   bool isFavorite = false;
   int selectedImageIndex = 0;
   bool _addingToCart = false;
+  bool _buyingNow = false;
 
   @override
   void initState() {
@@ -42,14 +44,32 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     try {
       await _service.addToCart(productId: widget.productId, qty: quantity);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Added to cart')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Added to cart')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
     } finally {
       if (mounted) setState(() => _addingToCart = false);
+    }
+  }
+
+  Future<void> _handleBuyNow() async {
+    setState(() => _buyingNow = true);
+    try {
+      await _service.addToCart(productId: widget.productId, qty: quantity);
+      if (!mounted) return;
+      context.pushNamed('CheckoutScreen');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+    } finally {
+      if (mounted) setState(() => _buyingNow = false);
     }
   }
 
@@ -84,8 +104,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       _buildImageGallery(sw, sh, product),
                       SizedBox(height: sh * 0.02),
                       Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: sw * 0.05),
+                        padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -115,7 +134,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
+  //  Header
 
   Widget _buildHeader(double sw, double sh) {
     return Positioned(
@@ -160,7 +179,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
-  // ── Image gallery ─────────────────────────────────────────────────────────
+  //  Image gallery
 
   Widget _buildImageGallery(double sw, double sh, Product product) {
     final images = product.imageUrls.isNotEmpty ? product.imageUrls : [''];
@@ -186,20 +205,27 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                 clipBehavior: Clip.antiAlias,
                 child: url.isEmpty
                     ? Center(
-                        child: Icon(Icons.image_not_supported,
-                            size: sw * 0.2, color: Colors.black26),
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: sw * 0.2,
+                          color: Colors.black26,
+                        ),
                       )
                     : Image.network(
                         url,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Center(
-                          child: Icon(Icons.broken_image,
-                              size: sw * 0.2, color: Colors.black26),
+                          child: Icon(
+                            Icons.broken_image,
+                            size: sw * 0.2,
+                            color: Colors.black26,
+                          ),
                         ),
                         loadingBuilder: (context, child, progress) {
                           if (progress == null) return child;
                           return const Center(
-                              child: CircularProgressIndicator());
+                            child: CircularProgressIndicator(),
+                          );
                         },
                       ),
               );
@@ -228,7 +254,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
-  // ── Product info sections ─────────────────────────────────────────────────
+  //  Product info sections
 
   Widget _buildProductHeader(double sw, double sh, Product product) {
     return Column(
@@ -279,7 +305,11 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.star_rounded, size: sw * 0.04, color: Colors.amber),
+                  Icon(
+                    Icons.star_rounded,
+                    size: sw * 0.04,
+                    color: Colors.amber,
+                  ),
                   SizedBox(width: sw * 0.01),
                   Text(
                     rating == 0 ? 'N/A' : rating.toStringAsFixed(1),
@@ -310,8 +340,11 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
           ),
           child: Row(
             children: [
-              Icon(Icons.local_shipping_outlined,
-                  size: sw * 0.04, color: Colors.green),
+              Icon(
+                Icons.local_shipping_outlined,
+                size: sw * 0.04,
+                color: Colors.green,
+              ),
               SizedBox(width: sw * 0.01),
               Text(
                 'Free Shipping',
@@ -386,7 +419,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
-  // ── Reviews section (now API-driven) ─────────────────────────────────────
+  //  Reviews section (now API-driven)
 
   Widget _buildReviewsSection(double sw, double sh) {
     return Column(
@@ -436,10 +469,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                 padding: EdgeInsets.symmetric(vertical: sh * 0.02),
                 child: Text(
                   'Could not load reviews.',
-                  style: TextStyle(
-                    fontSize: sw * 0.032,
-                    color: Colors.black45,
-                  ),
+                  style: TextStyle(fontSize: sw * 0.032, color: Colors.black45),
                 ),
               );
             }
@@ -451,10 +481,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                 padding: EdgeInsets.symmetric(vertical: sh * 0.02),
                 child: Text(
                   'No reviews yet. Be the first to review!',
-                  style: TextStyle(
-                    fontSize: sw * 0.032,
-                    color: Colors.black45,
-                  ),
+                  style: TextStyle(fontSize: sw * 0.032, color: Colors.black45),
                 ),
               );
             }
@@ -486,7 +513,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
     );
   }
 
-  // ── Bottom action bar ─────────────────────────────────────────────────────
+  //  Bottom action bar
 
   Widget _buildBottomActionBar(double sw, double sh) {
     return Container(
@@ -528,8 +555,11 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(sw * 0.02),
                     ),
-                    child: Icon(Icons.remove,
-                        size: sw * 0.04, color: AppColors.darkPink),
+                    child: Icon(
+                      Icons.remove,
+                      size: sw * 0.04,
+                      color: AppColors.darkPink,
+                    ),
                   ),
                 ),
                 SizedBox(width: sw * 0.04),
@@ -551,8 +581,11 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(sw * 0.02),
                     ),
-                    child: Icon(Icons.add,
-                        size: sw * 0.04, color: AppColors.darkPink),
+                    child: Icon(
+                      Icons.add,
+                      size: sw * 0.04,
+                      color: AppColors.darkPink,
+                    ),
                   ),
                 ),
               ],
@@ -576,7 +609,9 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
                       ? SizedBox(
                           height: sw * 0.045,
                           width: sw * 0.045,
-                          child: const CircularProgressIndicator(strokeWidth: 2),
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
                         )
                       : Text(
                           'Add to Cart',
@@ -591,7 +626,7 @@ class _ProductDetailPageState extends State<ProductDetailScreen> {
               SizedBox(width: sw * 0.03),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _addingToCart || _buyingNow ? null : _handleBuyNow,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.darkPink,
                     padding: EdgeInsets.symmetric(vertical: sh * 0.018),
