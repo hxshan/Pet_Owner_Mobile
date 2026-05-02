@@ -21,7 +21,16 @@ class DietPlanService {
       options: Options(extra: {'requiresAuth': true}),
     );
 
-    return (res.data['plan'] as Map).cast<String, dynamic>();
+    final data = res.data;
+    if (data == null) {
+      throw Exception('Server returned an empty response. Please try again.');
+    }
+    if (data is Map && data['plan'] == null) {
+      // Surface any server-side error message if present
+      final serverMsg = data['message']?.toString() ?? data['error']?.toString();
+      throw Exception(serverMsg ?? 'Plan generation failed. Please check your pet\'s details and try again.');
+    }
+    return (data['plan'] as Map).cast<String, dynamic>();
   }
 
   Future<List<Map<String, dynamic>>> getMyDietPlans({String? petId}) async {
