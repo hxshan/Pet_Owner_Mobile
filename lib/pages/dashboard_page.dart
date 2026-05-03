@@ -5,6 +5,7 @@ import 'package:pet_owner_mobile/services/location_service.dart';
 import 'package:pet_owner_mobile/services/notification_service.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/services/push_service.dart';
+import 'package:pet_owner_mobile/services/vet_service.dart';
 import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/utils/secure_storage.dart';
@@ -74,6 +75,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final LocationService _locationService = LocationService();
   final PetService _petService = PetService();
+  final VetService _vetService = VetService();
 
   String firstName = 'User';
   String _currentLocation = '';
@@ -116,10 +118,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadEvents() async {
     setState(() => _eventsLoading = true);
     try {
-      final raw = await _petService.getUpcomingEvents();
+      // Fetch vaccination events and vet appointments in parallel
+      final results = await Future.wait([
+        _petService.getUpcomingEvents(),
+        _vetService.fetchUpcomingAppointments(),
+      ]);
+
+      final rawEvents = results[0] as List<Map<String, dynamic>>;
+      final appointments = results[1] as List;
+
+      final petEvents =
+          rawEvents.map((e) => _PetEvent.fromJson(e)).toList();
+
+      // Convert each AppointmentModel into a _PetEvent
+      final apptEvents = appointments.map((appt) {
+        final vetName =
+            '${appt.veterinarian.firstname} ${appt.veterinarian.lastname}'
+                .trim();
+        final clinic = appt.veterinarian.clinic.name;
+        final label = vetName.isNotEmpty ? vetName : clinic;
+        return _PetEvent(
+          message: 'Appointment with Dr. $label',
+          type: 'appointment',
+          date: appt.startTime,
+          petId: appt.pet.id,
+        );
+      }).toList();
+
       if (!mounted) return;
       setState(() {
-        _events = raw.map((e) => _PetEvent.fromJson(e)).toList()
+        _events = [...petEvents, ...apptEvents]
           ..sort((a, b) => a.date.compareTo(b.date));
       });
     } catch (_) {
