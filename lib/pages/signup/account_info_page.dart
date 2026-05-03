@@ -59,6 +59,12 @@ class _RegistrationPageState extends State<AccountInfoPage> {
   String? validatePassword(String password) {
     if (password.isEmpty) return 'Password is required';
     if (password.length < 8) return 'Password must be at least 8 characters';
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return 'Password must include at least one uppercase letter';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return 'Password must include at least one number';
+    }
     return null;
   }
 
@@ -117,8 +123,10 @@ class _RegistrationPageState extends State<AccountInfoPage> {
         if (!mounted) return;
 
         final message = e is DioException
-            ? e.error.toString()
-            : 'Something went wrong';
+            ? (e.response?.data?['message']?.toString() ??
+               e.message ??
+               'Registration failed. Please try again.')
+            : 'Something went wrong. Please try again.';
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.red),

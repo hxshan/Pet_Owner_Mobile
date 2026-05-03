@@ -334,6 +334,34 @@ class _DietFormDialogState extends State<DietFormDialog> {
                                 allergy: _allergy,
                               );
                               if (mounted) Navigator.pop(context);
+                            } catch (e) {
+                              if (!mounted) return;
+                              // Extract a human-readable message from DioException or any other error
+                              String msg = 'Failed to generate plan. Please try again.';
+                              try {
+                                final dio = e as dynamic;
+                                final serverMsg = dio.response?.data?['message']?.toString();
+                                if (serverMsg != null && serverMsg.isNotEmpty) {
+                                  msg = serverMsg;
+                                } else if (dio.message?.toString().isNotEmpty == true) {
+                                  msg = dio.message.toString();
+                                }
+                              } catch (_) {}
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      const Icon(Icons.error_outline, color: Colors.white, size: 18),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: Text(msg)),
+                                    ],
+                                  ),
+                                  backgroundColor: Colors.red.shade600,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                              );
                             } finally {
                               if (mounted) setState(() => _loading = false);
                             }

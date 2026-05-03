@@ -16,16 +16,21 @@ class PetService {
     required String color,
     required String health,
     required String lifeStatus,
+    required String gender,
     File? image,
   }) async {
+    // Backend requires a real dob for diet plan generation.
+    // If no explicit dob is supplied, approximate it from the age in years.
+    final DateTime effectiveDob = dob ?? _dobFromAgeYears(age);
+
     final response = await _dio.post(
       '/pet',
       data: {
         'name': name,
         'breed': breed,
         'species': animalType,
-        if (dob != null) 'dob': dob.toIso8601String(),
-        'age': age,
+        'dob': effectiveDob.toIso8601String(),
+        'age': int.tryParse(age.trim()) ?? 0,
         'weightHistory': [
           {
             'weight': double.tryParse(weight) ?? 0,
@@ -35,7 +40,7 @@ class PetService {
         'color': color,
         'health': health,
         'lifeStatus': lifeStatus,
-        'gender': 'Unknown',
+        'gender': gender,
       },
       options: Options(
         contentType: 'application/json',
@@ -44,6 +49,14 @@ class PetService {
     );
 
     return response.data;
+  }
+
+  /// Converts an age string like "3" into an approximate DateTime by
+  /// subtracting that many years from today's date.
+  DateTime _dobFromAgeYears(String age) {
+    final years = int.tryParse(age.trim()) ?? 0;
+    final now = DateTime.now();
+    return DateTime(now.year - years, now.month, now.day);
   }
 
   // Fetch pets of the logged-in user
