@@ -205,7 +205,7 @@ class AdoptionService {
   //    PATCH /adoption-applications/:id/withdraw
   // ─────────────────────────────────────────────────────────────────────────
   Future<void> withdrawApplication(String applicationId) async {
-    await _dio.patch(
+    await _dio.put(
       '/adoption-applications/$applicationId/withdraw',
       options: Options(extra: {'requiresAuth': true}),
     );
