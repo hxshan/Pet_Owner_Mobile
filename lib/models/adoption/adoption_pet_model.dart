@@ -113,13 +113,14 @@ class AdoptionPet {
   }
 
   factory AdoptionPet.fromJson(Map<String, dynamic> json) {
-    // photosUrls from backend, fall back to legacy 'photos' field
-    final rawPhotos = json['photosUrls'] ?? json['photos'];
+    // photosUrls — array of plain URL strings from backend
+    final rawPhotos = json['photosUrls'];
     final List<String> photoList = rawPhotos is List
-        ? rawPhotos.map((e) => e.toString()).toList()
+        ? rawPhotos
+            .map((e) => e?.toString() ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList()
         : [];
-
-    // profileImageUrl — dedicated profile image field (used directly in constructor)
 
     // score may come from recommendation endpoint
     double? scoreVal;
@@ -154,7 +155,10 @@ class AdoptionPet {
       goodWithPets: json['goodWithPets'] as bool?,
       description: json['description'] as String?,
       color: json['color'] as String?,
-      profileImageUrl: json['profileImageUrl'] as String?,
+      profileImageUrl: json['profileImageUrl'] is String &&
+              (json['profileImageUrl'] as String).isNotEmpty
+          ? json['profileImageUrl'] as String
+          : null,
       photos: photoList,
       adoptionFee: fee,
       adoptionCenterName: centerName,
@@ -194,6 +198,16 @@ class AdoptionApplication {
   });
 
   factory AdoptionApplication.fromJson(Map<String, dynamic> json) {
+    String? _extractUrl(dynamic item) {
+      if (item == null) return null;
+      if (item is String && item.isNotEmpty) return item;
+      if (item is Map) {
+        final u = item['url'] ?? item['uri'] ?? item['src'] ?? item['path'];
+        if (u is String && u.isNotEmpty) return u;
+      }
+      return null;
+    }
+
     final pet = json['pet'];
     String petName = '';
     String petId = '';
@@ -203,13 +217,11 @@ class AdoptionApplication {
       petName = pet['name']?.toString() ?? '';
       petId = pet['_id']?.toString() ?? '';
       // prefer profileImageUrl, fall back to first photo in photosUrls/photos
-      if (pet['profileImageUrl'] != null &&
-          (pet['profileImageUrl'] as String).isNotEmpty) {
-        petPhoto = pet['profileImageUrl'] as String;
-      } else {
+      petPhoto = _extractUrl(pet['profileImageUrl']);
+      if (petPhoto == null) {
         final photos = pet['photosUrls'] ?? pet['photos'];
         if (photos is List && photos.isNotEmpty) {
-          petPhoto = photos.first.toString();
+          petPhoto = _extractUrl(photos.first);
         }
       }
     } else if (pet is String) {
