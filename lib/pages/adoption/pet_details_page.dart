@@ -329,6 +329,37 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                     SizedBox(height: sh * 0.03),
 
                     // ── About Section ─────────────────────────────────────
+                    // ── Photo Gallery ────────────────────────────────────
+                    if (pet.photos.isNotEmpty) ...[
+                      _buildSectionTitle('Photos', sw),
+                      SizedBox(height: sh * 0.015),
+                      SizedBox(
+                        height: sw * 0.3,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: pet.photos.length,
+                          separatorBuilder: (_, __) => SizedBox(width: sw * 0.03),
+                          itemBuilder: (context, i) => ClipRRect(
+                            borderRadius: BorderRadius.circular(sw * 0.03),
+                            child: Image.network(
+                              pet.photos[i],
+                              width: sw * 0.3,
+                              height: sw * 0.3,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: sw * 0.3,
+                                height: sw * 0.3,
+                                color: AppColors.lightGray,
+                                child: Icon(Icons.pets,
+                                    size: sw * 0.1, color: AppColors.mainColor),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: sh * 0.03),
+                    ],
+
                     _buildSectionTitle('About ${pet.name}', sw),
                     SizedBox(height: sh * 0.015),
                     _buildInfoRow('Species', pet.species, sw),
