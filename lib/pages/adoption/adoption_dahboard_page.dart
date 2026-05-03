@@ -177,6 +177,15 @@ class _PetListingDashboardState extends State<PetListingDashboard> {
         actions: [
           IconButton(
             icon: Icon(
+              Icons.favorite_border_rounded,
+              color: AppColors.darkPink,
+              size: 24.sp,
+            ),
+            tooltip: 'Saved Pets',
+            onPressed: () => context.pushNamed('FavoritePetsPage'),
+          ),
+          IconButton(
+            icon: Icon(
               Icons.notifications_outlined,
               color: Colors.black,
               size: 24.sp,

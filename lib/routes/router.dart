@@ -7,6 +7,7 @@ import 'package:pet_owner_mobile/models/adoption/adoption_center_model.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_apply_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/adoption_dahboard_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/advanced_search_page.dart';
+import 'package:pet_owner_mobile/pages/adoption/favorites_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/my_applications_page.dart';
 import 'package:pet_owner_mobile/pages/adoption/pet_details_page.dart';
 import 'package:pet_owner_mobile/pages/adoption_center/adoption_center_home_screen.dart';
@@ -268,6 +269,11 @@ final GoRouter appRouter = GoRouter(
               path: 'my-applications',
               name: 'MyApplicationsPage',
               builder: (context, state) => const MyApplicationsPage(),
+            ),
+            GoRoute(
+              path: 'favorites',
+              name: 'FavoritePetsPage',
+              builder: (context, state) => const FavoritePetsPage(),
             ),
           ],
         ),

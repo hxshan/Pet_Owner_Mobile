@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
+import 'package:pet_owner_mobile/store/adoption_favorites_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 import 'package:pet_owner_mobile/widgets/custom_back_button.dart';
 
@@ -15,16 +16,10 @@ class PetDetailsPage extends StatefulWidget {
 }
 
 class _PetDetailsPageState extends State<PetDetailsPage> {
-  bool _isFavorite = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _isFavorite = widget.pet.isFavorite;
-  }
-
   @override
   Widget build(BuildContext context) {
+    final favStore = AdoptionFavoritesScope.of(context);
+    final isFavorite = favStore.contains(widget.pet.id);
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
     final pet = widget.pet;
@@ -42,30 +37,6 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
               backgroundColor: Colors.white,
               iconColor: AppColors.darkPink,
             ),
-            actions: [
-              // Share button
-              Container(
-                margin: EdgeInsets.all(sw * 0.02),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.share,
-                    color: Colors.black,
-                    size: sw * 0.06,
-                  ),
-                  onPressed: () {},
-                ),
-              ),
-            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -168,19 +139,19 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            setState(() => _isFavorite = !_isFavorite);
+                            favStore.toggle(widget.pet.id, pet: widget.pet);
                           },
                           child: Container(
                             padding: EdgeInsets.all(sw * 0.03),
                             decoration: BoxDecoration(
-                              color: _isFavorite
+                              color: isFavorite
                                   ? AppColors.darkPink
                                   : AppColors.lightGray,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.favorite,
-                              color: _isFavorite ? Colors.white : Colors.grey,
+                              color: isFavorite ? Colors.white : Colors.grey,
                               size: sw * 0.07,
                             ),
                           ),
@@ -458,11 +429,11 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                             height: sh * 0.065,
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                setState(() => _isFavorite = !_isFavorite);
+                                favStore.toggle(widget.pet.id, pet: widget.pet);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      _isFavorite
+                                      !isFavorite
                                           ? 'Pet saved!'
                                           : 'Removed from saved',
                                     ),
@@ -471,7 +442,7 @@ class _PetDetailsPageState extends State<PetDetailsPage> {
                                 );
                               },
                               icon: Icon(
-                                _isFavorite
+                                isFavorite
                                     ? Icons.bookmark
                                     : Icons.bookmark_outline,
                                 size: sw * 0.05,

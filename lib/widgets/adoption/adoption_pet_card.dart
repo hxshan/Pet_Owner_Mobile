@@ -3,9 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pet_owner_mobile/models/adoption/adoption_pet_model.dart';
+import 'package:pet_owner_mobile/store/adoption_favorites_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
-class PetCard extends StatefulWidget {
+class PetCard extends StatelessWidget {
   final AdoptionPet pet;
   final VoidCallback? onTap;
   final Function(bool)? onFavoriteToggle;
@@ -18,22 +19,12 @@ class PetCard extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<PetCard> createState() => _PetCardState();
-}
-
-class _PetCardState extends State<PetCard> {
-  late bool _isFavorite;
-
-  @override
-  void initState() {
-    super.initState();
-    _isFavorite = widget.pet.isFavorite;
-  }
-
   @override
   Widget build(BuildContext context) {
+    final favStore = AdoptionFavoritesScope.of(context);
+    final isFavorite = favStore.contains(pet.id);
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: onTap,
       child: Container(
         height: 115.h,
         decoration: BoxDecoration(
@@ -66,9 +57,9 @@ class _PetCardState extends State<PetCard> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(5.r),
-                child: widget.pet.primaryImage.isNotEmpty
+                child: pet.primaryImage.isNotEmpty
                     ? Image.network(
-                        widget.pet.primaryImage,
+                        pet.primaryImage,
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: double.infinity,
@@ -100,9 +91,9 @@ class _PetCardState extends State<PetCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Pet Name — 18sp, w500 (old style)
+                  // Pet Name
                   Text(
-                    widget.pet.name,
+                    pet.name,
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
@@ -113,9 +104,9 @@ class _PetCardState extends State<PetCard> {
                   ),
 
                   // Age
-                  if (widget.pet.age != null)
+                  if (pet.age != null)
                     Text(
-                      '${widget.pet.age} yrs old',
+                      '${pet.age} yrs old',
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w400,
@@ -125,7 +116,7 @@ class _PetCardState extends State<PetCard> {
 
                   // Breed
                   Text(
-                    widget.pet.breed,
+                    pet.breed,
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w400,
@@ -148,7 +139,7 @@ class _PetCardState extends State<PetCard> {
                       SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
-                          widget.pet.locationLabel,
+                          pet.locationLabel,
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w400,
@@ -174,12 +165,13 @@ class _PetCardState extends State<PetCard> {
                   padding: EdgeInsets.only(right: 8.w, top: 8.h),
                   child: GestureDetector(
                     onTap: () {
-                      setState(() => _isFavorite = !_isFavorite);
-                      widget.onFavoriteToggle?.call(_isFavorite);
+                      final newState = !isFavorite;
+                      favStore.toggle(pet.id, pet: pet);
+                      onFavoriteToggle?.call(newState);
                     },
                     child: Icon(
-                      _isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: _isFavorite ? AppColors.darkPink : Colors.grey,
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? AppColors.darkPink : Colors.grey,
                       size: 20.sp,
                     ),
                   ),
@@ -189,9 +181,9 @@ class _PetCardState extends State<PetCard> {
                 Padding(
                   padding: EdgeInsets.only(right: 8.w, bottom: 8.h),
                   child: Text(
-                    widget.pet.adoptionFee == 0
+                    pet.adoptionFee == 0
                         ? 'Free'
-                        : '\$${widget.pet.adoptionFee.toStringAsFixed(0)}',
+                        : '\$${pet.adoptionFee.toStringAsFixed(0)}',
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w400,
