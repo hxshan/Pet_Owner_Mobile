@@ -47,13 +47,17 @@ class AuthService {
     await SecureStorage.saveToken(loginResponse.token);
     await SecureStorage.saveData('first_name', loginResponse.user.firstname);
 
-    // Register FCM token to backend
-    final fcmToken =
-        await PushService.instance.getStoredToken() ??
-        await FirebaseMessaging.instance.getToken();
+    // Register FCM token to backend — best-effort, never block login
+    try {
+      final fcmToken =
+          await PushService.instance.getStoredToken() ??
+          await FirebaseMessaging.instance.getToken();
 
-    if (fcmToken != null) {
-      await PushService.instance.registerTokenToBackend(fcmToken);
+      if (fcmToken != null) {
+        await PushService.instance.registerTokenToBackend(fcmToken);
+      }
+    } catch (_) {
+      // FCM registration failure must not prevent the user from logging in
     }
 
     return loginResponse;

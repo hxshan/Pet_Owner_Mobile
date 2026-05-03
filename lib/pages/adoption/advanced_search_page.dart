@@ -118,28 +118,39 @@ class _AdvancedSearchPageState extends State<AdvancedSearchPage>
 
     try {
       ExtractedFilters extracted = ExtractedFilters.empty();
+      bool llmWorked = false;
+
       try {
         extracted = await _service.extractFiltersFromText(desc);
-      } catch (_) {}
-
-      final isGibberish = extracted.species == null &&
-          extracted.gender == null &&
-          extracted.size == null &&
-          extracted.energyLevel == null &&
-          extracted.goodWithKids == null &&
-          extracted.goodWithPets == null &&
-          extracted.color == null &&
-          extracted.detectedKeywords.isEmpty;
-
-      if (isGibberish) {
+        llmWorked = true;
+      } catch (e) {
+        // LLM unavailable — proceed with description-only matching
         setState(() {
-          _aiError =
-              'Please describe what you\'re looking for more clearly, '
-              'e.g. "calm golden dog, good with kids, apartment-friendly"';
-          _isLoading = false;
-          _hasSearched = false;
+          _aiError = 'AI filter extraction unavailable. Finding matches from your description only.';
         });
-        return;
+      }
+
+      // Only show gibberish error if LLM actually ran but found nothing
+      if (llmWorked) {
+        final isGibberish = extracted.species == null &&
+            extracted.gender == null &&
+            extracted.size == null &&
+            extracted.energyLevel == null &&
+            extracted.goodWithKids == null &&
+            extracted.goodWithPets == null &&
+            extracted.color == null &&
+            extracted.detectedKeywords.isEmpty;
+
+        if (isGibberish) {
+          setState(() {
+            _aiError =
+                'Please describe what you\'re looking for more clearly, '
+                'e.g. "calm golden dog, good with kids, apartment-friendly"';
+            _isLoading = false;
+            _hasSearched = false;
+          });
+          return;
+        }
       }
 
       _lastExtractedFilters = extracted;

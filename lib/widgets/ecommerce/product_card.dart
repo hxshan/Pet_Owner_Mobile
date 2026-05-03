@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pet_owner_mobile/models/ecommerce/product_model.dart';
 import 'package:pet_owner_mobile/store/wishlist_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
 
@@ -42,8 +43,21 @@ class _ProductCardState extends State<ProductCard> {
 
     final store = WishlistScope.of(context);
 
+    // Build a minimal Product from card data so the wishlist screen can show it.
+    final product = Product(
+      id: widget.productId,
+      name: widget.name,
+      price: double.tryParse(
+            widget.price.replaceAll(RegExp(r'[^0-9.]'), ''),
+          ) ??
+          0.0,
+      imageUrls: widget.imageUrl.isNotEmpty ? [widget.imageUrl] : [],
+      images: [],
+      rating: widget.rating,
+    );
+
     try {
-      await store.toggle(widget.productId);
+      await store.toggle(widget.productId, product: product);
     } catch (_) {
       _toast('Failed to update wishlist');
     } finally {

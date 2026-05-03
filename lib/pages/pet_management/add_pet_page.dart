@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pet_owner_mobile/services/pet_service.dart';
 import 'package:pet_owner_mobile/store/pet_scope.dart';
 import 'package:pet_owner_mobile/theme/app_colors.dart';
@@ -90,7 +91,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
 
       PetScope.of(context).refresh();
       Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) Navigator.pop(context);
+        if (mounted) context.pop();
       });
     } on DioException catch (e) {
       if (!mounted) return;

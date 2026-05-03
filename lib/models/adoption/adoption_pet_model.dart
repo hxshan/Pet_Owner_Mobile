@@ -11,6 +11,7 @@ class AdoptionPet {
   final bool? goodWithPets;
   final String? description;
   final String? color;
+  final String? profileImageUrl;
   final List<String> photos;
   final double adoptionFee;
   final String? adoptionCenterName;
@@ -30,6 +31,7 @@ class AdoptionPet {
     this.goodWithPets,
     this.description,
     this.color,
+    this.profileImageUrl,
     this.photos = const [],
     this.adoptionFee = 0,
     this.adoptionCenterName,
@@ -37,8 +39,11 @@ class AdoptionPet {
     this.isFavorite = false,
   });
 
-  /// First photo URL or empty string
-  String get primaryImage => photos.isNotEmpty ? photos.first : '';
+  /// Profile image first, then first photo, else empty
+  String get primaryImage =>
+      (profileImageUrl != null && profileImageUrl!.isNotEmpty)
+          ? profileImageUrl!
+          : (photos.isNotEmpty ? photos.first : '');
 
   /// Location label shown in UI
   String get locationLabel => adoptionCenterName ?? 'Adoption Center';
@@ -56,6 +61,7 @@ class AdoptionPet {
     bool? goodWithPets,
     String? description,
     String? color,
+    String? profileImageUrl,
     List<String>? photos,
     double? adoptionFee,
     String? adoptionCenterName,
@@ -75,6 +81,7 @@ class AdoptionPet {
       goodWithPets: goodWithPets ?? this.goodWithPets,
       description: description ?? this.description,
       color: color ?? this.color,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       photos: photos ?? this.photos,
       adoptionFee: adoptionFee ?? this.adoptionFee,
       adoptionCenterName: adoptionCenterName ?? this.adoptionCenterName,
@@ -106,10 +113,13 @@ class AdoptionPet {
   }
 
   factory AdoptionPet.fromJson(Map<String, dynamic> json) {
-    // photos can be a List<dynamic> from the backend
-    final rawPhotos = json['photos'];
+    // photosUrls — array of plain URL strings from backend
+    final rawPhotos = json['photosUrls'];
     final List<String> photoList = rawPhotos is List
-        ? rawPhotos.map((e) => e.toString()).toList()
+        ? rawPhotos
+            .map((e) => e?.toString() ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList()
         : [];
 
     // score may come from recommendation endpoint
@@ -145,6 +155,10 @@ class AdoptionPet {
       goodWithPets: json['goodWithPets'] as bool?,
       description: json['description'] as String?,
       color: json['color'] as String?,
+      profileImageUrl: json['profileImageUrl'] is String &&
+              (json['profileImageUrl'] as String).isNotEmpty
+          ? json['profileImageUrl'] as String
+          : null,
       photos: photoList,
       adoptionFee: fee,
       adoptionCenterName: centerName,
@@ -184,6 +198,16 @@ class AdoptionApplication {
   });
 
   factory AdoptionApplication.fromJson(Map<String, dynamic> json) {
+    String? _extractUrl(dynamic item) {
+      if (item == null) return null;
+      if (item is String && item.isNotEmpty) return item;
+      if (item is Map) {
+        final u = item['url'] ?? item['uri'] ?? item['src'] ?? item['path'];
+        if (u is String && u.isNotEmpty) return u;
+      }
+      return null;
+    }
+
     final pet = json['pet'];
     String petName = '';
     String petId = '';
@@ -192,9 +216,13 @@ class AdoptionApplication {
     if (pet is Map) {
       petName = pet['name']?.toString() ?? '';
       petId = pet['_id']?.toString() ?? '';
-      final photos = pet['photos'];
-      if (photos is List && photos.isNotEmpty) {
-        petPhoto = photos.first.toString();
+      // prefer profileImageUrl, fall back to first photo in photosUrls/photos
+      petPhoto = _extractUrl(pet['profileImageUrl']);
+      if (petPhoto == null) {
+        final photos = pet['photosUrls'] ?? pet['photos'];
+        if (photos is List && photos.isNotEmpty) {
+          petPhoto = _extractUrl(photos.first);
+        }
       }
     } else if (pet is String) {
       petId = pet;

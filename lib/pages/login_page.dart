@@ -69,7 +69,9 @@ class _LoginPageState extends State<LoginPage> {
       context.goNamed('DashboardScreen');
     } catch (e) {
       final message = e is DioException
-          ? e.error.toString()
+          ? (e.response?.data is Map
+              ? (e.response!.data['message']?.toString() ?? e.message ?? 'Login failed')
+              : (e.message ?? 'Login failed'))
           : 'Something went wrong';
 
       if (!mounted) return;

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pet_owner_mobile/services/ecommerce_service.dart';
 import 'package:pet_owner_mobile/store/wishlist_scope.dart';
 import 'package:pet_owner_mobile/store/wishlist_store.dart';
 
@@ -17,7 +16,7 @@ class _EcommerceShellState extends State<EcommerceShell> {
   @override
   void initState() {
     super.initState();
-    _wishlistStore = WishlistStore(EcommerceService());
+    _wishlistStore = WishlistStore();
   }
 
   @override
