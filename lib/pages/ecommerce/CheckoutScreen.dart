@@ -175,7 +175,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         // ── Shipping Address ──────────────────────────────
                         _sectionTitle('Shipping Address', sw),
                         SizedBox(height: sh * 0.012),
-                        _addressPicker(data.addresses, sw, sh),
+                        _addressSection(data.addresses, sw, sh),
 
                         SizedBox(height: sh * 0.03),
 
@@ -307,54 +307,261 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       );
 
-  Widget _addressPicker(
+  // ── New address section: dropdown + preview card + add button ──────────────
+  Widget _addressSection(
     List<Map<String, dynamic>> addresses,
     double sw,
     double sh,
   ) {
-    if (addresses.isEmpty) {
-      return Container(
-        padding: EdgeInsets.all(sw * 0.04),
-        decoration: BoxDecoration(
-          color: AppColors.lightGray,
-          borderRadius: BorderRadius.circular(sw * 0.03),
+    // Find the currently selected address map
+    final selected = addresses.cast<Map<String, dynamic>?>().firstWhere(
+          (a) =>
+              a != null &&
+              (a['_id'] ?? a['id']).toString() == _selectedAddressId,
+          orElse: () => null,
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Dropdown / empty state ──
+        if (addresses.isEmpty)
+          Container(
+            padding: EdgeInsets.all(sw * 0.04),
+            decoration: BoxDecoration(
+              color: AppColors.lightGray,
+              borderRadius: BorderRadius.circular(sw * 0.03),
+            ),
+            child: Text(
+              'No addresses saved yet.',
+              style: TextStyle(fontSize: sw * 0.032, color: Colors.black54),
+            ),
+          )
+        else
+          Container(
+            padding: EdgeInsets.symmetric(
+                horizontal: sw * 0.04, vertical: sh * 0.004),
+            decoration: BoxDecoration(
+              color: AppColors.lightGray,
+              borderRadius: BorderRadius.circular(sw * 0.03),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedAddressId,
+                isExpanded: true,
+                icon:
+                    const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
+                items: addresses.map((a) {
+                  final id = (a['_id'] ?? a['id']).toString();
+                  final label = (a['label'] ?? 'ADDRESS').toString();
+                  final line1 = (a['addressLine1'] ?? '').toString();
+                  final city = (a['city'] ?? '').toString();
+                  final isDefault = a['isDefault'] == true;
+
+                  return DropdownMenuItem(
+                    value: id,
+                    child: Text(
+                      '${isDefault ? "⭐ " : ""}$label — $line1, $city',
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          TextStyle(fontSize: sw * 0.033, color: Colors.black87),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (v) => setState(() => _selectedAddressId = v),
+              ),
+            ),
+          ),
+
+        // ── Address preview card ──
+        if (selected != null) ...[
+          SizedBox(height: sh * 0.012),
+          _addressPreviewCard(selected, sw, sh),
+        ],
+
+        // ── Add new address button ──
+        SizedBox(height: sh * 0.012),
+        GestureDetector(
+          onTap: () async {
+            await context.pushNamed('AddAddressScreen');
+            // Reload addresses after returning
+            setState(() => _future = _load());
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(
+                vertical: sh * 0.014, horizontal: sw * 0.04),
+            decoration: BoxDecoration(
+              color: AppColors.darkPink.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(sw * 0.03),
+              border: Border.all(
+                color: AppColors.darkPink.withOpacity(0.4),
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add_location_alt_outlined,
+                    color: AppColors.darkPink, size: sw * 0.05),
+                SizedBox(width: sw * 0.02),
+                Text(
+                  'Add New Address',
+                  style: TextStyle(
+                    fontSize: sw * 0.035,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.darkPink,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        child: Text(
-          'No addresses found. Please add an address first.',
-          style: TextStyle(fontSize: sw * 0.032, color: Colors.black54),
-        ),
-      );
-    }
+      ],
+    );
+  }
+
+  // ── Address preview card showing full details of selected address ──────────
+  Widget _addressPreviewCard(
+      Map<String, dynamic> addr, double sw, double sh) {
+    final label = (addr['label'] ?? 'ADDRESS').toString();
+    final name = (addr['name'] ?? '').toString();
+    final phone = (addr['phone'] ?? '').toString();
+    final line1 = (addr['addressLine1'] ?? '').toString();
+    final line2 = (addr['addressLine2'] ?? '').toString();
+    final city = (addr['city'] ?? '').toString();
+    final district = (addr['district'] ?? '').toString();
+    final province = (addr['province'] ?? '').toString();
+    final country = (addr['country'] ?? '').toString();
+    final postal = (addr['postalCode'] ?? '').toString();
+    final isDefault = addr['isDefault'] == true;
+
+    final addressLines = [
+      line1,
+      if (line2.isNotEmpty) line2,
+      '$city${district.isNotEmpty ? ', $district' : ''}',
+      '$province, $country${postal.isNotEmpty ? ' $postal' : ''}',
+    ].join('\n');
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: sw * 0.04, vertical: sh * 0.004),
+      padding: EdgeInsets.all(sw * 0.04),
       decoration: BoxDecoration(
-        color: AppColors.lightGray,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(sw * 0.03),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedAddressId,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
-          items: addresses.map((a) {
-            final id = (a['_id'] ?? a['id']).toString();
-            final label = (a['label'] ?? 'ADDRESS').toString();
-            final line1 = (a['addressLine1'] ?? '').toString();
-            final city = (a['city'] ?? '').toString();
-            final isDefault = a['isDefault'] == true;
-
-            return DropdownMenuItem(
-              value: id,
-              child: Text(
-                '${isDefault ? "⭐ " : ""}$label — $line1, $city',
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: sw * 0.033, color: Colors.black87),
-              ),
-            );
-          }).toList(),
-          onChanged: (v) => setState(() => _selectedAddressId = v),
+        border: Border.all(
+          color: AppColors.darkPink.withOpacity(0.25),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.darkPink.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Icon column
+          Container(
+            width: sw * 0.1,
+            height: sw * 0.1,
+            decoration: BoxDecoration(
+              color: AppColors.darkPink.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(sw * 0.025),
+            ),
+            child: Icon(
+              Icons.location_on_outlined,
+              color: AppColors.darkPink,
+              size: sw * 0.055,
+            ),
+          ),
+          SizedBox(width: sw * 0.035),
+
+          // Details column
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Label + default badge
+                Row(
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: sw * 0.036,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    if (isDefault) ...[
+                      SizedBox(width: sw * 0.02),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: sw * 0.02, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.darkPink.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(sw * 0.02),
+                        ),
+                        child: Text(
+                          'Default',
+                          style: TextStyle(
+                            fontSize: sw * 0.025,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.darkPink,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                SizedBox(height: sh * 0.005),
+
+                // Name
+                if (name.isNotEmpty)
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: sw * 0.033,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+
+                SizedBox(height: sh * 0.004),
+
+                // Address lines
+                Text(
+                  addressLines,
+                  style: TextStyle(
+                    fontSize: sw * 0.031,
+                    color: Colors.black54,
+                    height: 1.45,
+                  ),
+                ),
+
+                // Phone
+                if (phone.isNotEmpty) ...[
+                  SizedBox(height: sh * 0.006),
+                  Row(
+                    children: [
+                      Icon(Icons.phone_outlined,
+                          size: sw * 0.033, color: Colors.black38),
+                      SizedBox(width: sw * 0.015),
+                      Text(
+                        phone,
+                        style: TextStyle(
+                          fontSize: sw * 0.031,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
