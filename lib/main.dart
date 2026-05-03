@@ -11,12 +11,14 @@ import 'package:pet_owner_mobile/theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  // await Firebase.initializeApp();
 
   // Silently init push notifications — failures must not block startup
   try {
     await PushService.instance.initSilent();
   } catch (_) {}
+  // No permission prompt here
+  // await PushService.instance.initSilent();
 
   runApp(const MyApp());
 
